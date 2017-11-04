@@ -3,7 +3,7 @@
 
 typedef enum
 {
-    identifier, dataType, keyword, integer, decimal, string, lParenth, rParenth, startBlock, endBlock, plusOperator,
+    identifier, dataType, keyword, integer, decimal, string, leftParenth, rightParenth, startBlock, endBlock, plusOperator,
     minusOperator, mulOperator, divOperator, equalOperator, notEqualOperator, lessOperator, lessEqualOperator,
     greaterOperator, greaterEqualOperator, comma, semicolon, endOfLine, endOfFile
 } tokenType;
