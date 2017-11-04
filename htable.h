@@ -1,4 +1,5 @@
 // Přeloženo: gcc 5.4
+//
 
 #ifndef HTAB_H_INCLUDED
 #define HTAB_H_INCLUDED
@@ -8,8 +9,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include "scanner.h"
 
-struct htab_listitem {
+/*struct htab_listitem {
   char *key; //word find
   unsigned long data; //number of occurrences
   struct htab_listitem *next; //Pointer to another structure
@@ -19,7 +21,54 @@ typedef struct htabt {
   unsigned int arr_size; //Size of data field
   unsigned int n; //Number of htab_listitem in data
   struct htab_listitem *HashData[];
-} htab_t;
+} htab_t;*/
+
+//Typ premennej
+typedef enum {
+  variable_int;
+  variable_double;
+  variable_string;
+} VarType;
+
+//Struktura pre parametre funkcie --- staci typ?
+struct FuncPar {
+  VarType VariableType;
+  struct FuncPar *nextPar;
+  //char *ID; tokenValue ParamValue; ????
+}
+
+//Polozka tabulky funkcii
+typedef struct Func{
+  char *Fname; //Meno
+  VarType returnType; //Navratovy Typ
+  //List/zasobnik vsetkych veci ktore sa v ramci funkcie musia vykonat?
+  bool Declared; //Ci bola deklarovana
+  bool Defined; //Ci bola definovana
+  unsigned int numOfParams; //Pocet parametrov
+  struct FuncPar *Params; //Argumenty
+} FuncStruct;
+
+//Polozka tabulky premennych
+typedef struct Varb{
+  char *vName;
+  VarType TypeOfVar;
+  tokenValue VariableValue; //Hodnota premmennej TYP Z UNION ZO SCANNER.H
+  bool Inicialized;
+} VariableStruct;
+
+//Hashovacia tabulka pre funkcie
+typedef struct HTforFunc{
+  unsigned int arr_size; //Velkost pola
+  unsigned n; //Pocet poboziek v tabulke
+  FuncStruct *HashTData[];
+} FunctionsHashT
+
+//Hashovacia tabulka pre premenne
+typedef struct HTforVar{
+  unsigned int arr_size; //Velkost pola
+  unsigned n; //Pocet poboziek v tabulke
+  VariableStruct *HashTData[];
+} VariableHashT
 
 /**Constructor, creates and initializes hash table
 */

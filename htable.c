@@ -1,27 +1,27 @@
 #include "htable.h"
 //WORK IN PROGRESS
 
-//Constructor
-htab_t *htab_init(unsigned int size){
-  htab_t *t = NULL;
+//Constructor pre Tabulku funkcie
+FunctionsHashT *HashInitFunc(unsigned int size){
+  FunctionsHashT *t = NULL;
   if (size < 1){
     fprintf(stderr, "Size of Hash Table cannot be 0\n");
     return NULL;
   }
-  t = malloc(sizeof(htab_t) + size*sizeof(struct htab_listitem *)); //Malloc size of htab_t + size * pointer to struct of keys
+  t = malloc(sizeof(FunctionHashT) + size*sizeof(FuncStruct *)); //Malloc size of htab_t + size * pointer to struct of keys
   if (t == NULL){
     fprintf(stderr, "Cannot allocate memory for Hash Table\n");
     return NULL;
   }
   for (unsigned int i = 0; i < size; i++){ //All pointers in data shoud be NULL
-    t->HashData[i] = NULL;
+    t->HashTData[i] = NULL;
   }
   t->arr_size = size; //Save size to hash_table
   t->n = 0;
   return t;
 }
 
-//Destructor
+//Destructor pre Tabulku funkcie
 void htab_free(htab_t *t){
   htab_clear(t);
   free(t);
@@ -135,7 +135,7 @@ htab_t *htab_move(unsigned int newsize, htab_t *t2){
   struct htab_listitem *t1cmp;
   for(unsigned int i = 0; i < t2->arr_size; i++){ //For in Data t2
     t2cmp = t2->HashData[i];
-    while(t2cmp != NULL){ 
+    while(t2cmp != NULL){
       Hash = hash_function(t2cmp->key); //Hash key of t2cmp
       t1cmp = t1->HashData[Hash%t1->arr_size]; //When we do % newsize -> index can be different from index in t2
       if (t1cmp == NULL){ //In case that there is no list
@@ -143,7 +143,7 @@ htab_t *htab_move(unsigned int newsize, htab_t *t2){
         t2cmp = t2cmp->next; //Move to another one
         t2->HashData[i] = t2cmp; //At the and of cycle there is NULL
         t1->HashData[Hash%t1->arr_size]->next = NULL; //Set in struct in t1 next to NULL, so it doesnt point to another struct in t2
-      }else{ //In case there is a list 
+      }else{ //In case there is a list
         while(t1cmp->next != NULL){ //Until t1cmp->next != NULL
           t1cmp = t1cmp->next;
         }
