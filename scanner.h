@@ -8,14 +8,6 @@
  *	@todo Does scanner create nonToken type or print error and die?
  */
 
-
-// --- Constants and structures ---
-
-/**	@brief An enum type to determine token type
- *  @todo What means "Term" data type?
- */
-
-
  #define SUCCESS 0
  #define LEX_ERROR 1
  #define SYN_ERROR 2
@@ -24,6 +16,11 @@
  #define SEM_ERROR_OTHER 5
  #define INTERNAL_ERROR 99
 
+// --- Constants and structures ---
+
+/**	@brief An enum type to determine token type
+ *  @todo What means "Term" data type?
+ */
 typedef enum
 {
     TOK_identifier,
