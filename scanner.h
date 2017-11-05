@@ -14,6 +14,16 @@
 /**	@brief An enum type to determine token type
  *  @todo What means "Term" data type?
  */
+
+
+ #define SUCCESS 0
+ #define LEX_ERROR 1
+ #define SYN_ERROR 2
+ #define SEM_ERROR_FUNC 3
+ #define SEM_ERROR_COMP 4
+ #define SEM_ERROR_OTHER 5
+ #define INTERNAL_ERROR 99
+
 typedef enum
 {
     TOK_identifier,
@@ -80,58 +90,12 @@ typedef enum
 } tokenType_t;
 
 
-/**	@brief An enum type to determine keyword type
- *  @warning Do not change the order!
- */
-/**
-typedef enum
-{
-	KW_as,			/// Keyword "As"
-	KW_asc,			/// Keyword "Asc"
-	KW_declare,		/// Keyword "Declare"
-	KW_dim,			/// Keyword "Dim"
-	KW_do,			/// Keyword "Do"
-	KW_double,		/// Keyword "Double"
-	KW_else,		/// Keyword "Else"
-	KW_end,			/// Keyword "End"
-	KW_chr,			/// Keyword "Chr"
-	KW_function,	/// Keyword "Function"
-	KW_if,			/// Keyword "If"
-	KW_input,		/// Keyword "Input"
-	KW_integer,		/// Keyword "Integer"
-	KW_length,		/// Keyword "Length"
-	KW_loop,		/// Keyword "Loop"
-	KW_print,		/// Keyword "Print"
-	KW_return,		/// Keyword "Return"
-	KW_scope,		/// Keyword "Scope"
-	KW_string,		/// Keyword "String"
-	KW_subStr,		/// Keyword "SubStr"
-	KW_then,		/// Keyword "Then"
-	KW_while,		/// Keyword "While"
-	// -- Reserved words below (Maybe won't use them but they are part of extensions) --
-	KW_and,			///  Reserved keyword "And"
-	KW_boolean,		///  Reserved keyword "Boolean"
-	KW_continue,	///  Reserved keyword "Continue"
-	KW_elseif,		///  Reserved keyword "Elseif"
-	KW_exit,		///  Reserved keyword "Exit"
-	KW_false,		///  Reserved keyword "False"
-	KW_for,			///  Reserved keyword "For"
-	KW_next,		///  Reserved keyword "Next"
-	KW_not,			///  Reserved keyword "Not"
-	KW_or,			///  Reserved keyword "Or"
-	KW_shared,		///  Reserved keyword "Shared"
-	KW_static,		///  Reserved keyword "Static"
-	KW_true			///  Reserved keyword "True"
-} keywordType_t;
-**/
-
 ///	@brief An union type representing all possible data types of token value
 typedef union
 {
     string *stringVal;
     int integer;
     double decimal;
-    //keywordType_t keyword;
 } tokenValue_t;
 
 
