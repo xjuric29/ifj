@@ -6,5 +6,7 @@ int program();
 int FunctionDeclar();
 int FunctionDefinition();
 int ScopeBody();
+int FunctArgs();
+int MoreFunctArgs();
 
 #endif
