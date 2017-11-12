@@ -277,6 +277,7 @@ int MoreFunctArgs(){
                 case TOK_string:
                 case TOK_decimal:
                     //TODO pridelit do struktury tabulky
+                break;
 
                 default:
                     return SYN_ERROR;
@@ -298,10 +299,46 @@ int MoreFunctArgs(){
 
 
 /** @brief RULE:
-  * <function-definition> -> FUNCTION ID LEFT_BRACKET <function-args> AS <function-type> EOL <function-body>
+  * <function-definition> -> FUNCTION ID LEFT_BRACKET <function-args> AS <function-type> EOL <function-body> FUNCTION EOL
+  * FUNCTION was already check in <prog> so we start with ID
   * @return Type of error or success
   */
 int FunctionDefinition(){
+    int RecurCallResult = -1;
+
+    //ID
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != TOK_identifier){
+        return SYN_ERROR;
+    }
+    //TODO vlozit tam kde treba..
+
+    //LEFT_BRACKET
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != TOK_lParenth){
+        return SYN_ERROR;
+    }
+
+    //<function-args>
+    RecurCallResult = FunctArgs();
+    if (RecurCallResult != SUCCESS){
+        return RecurCallResult;
+    }
+
+    //AS
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != TOK_identifier){
+
+    }
+
+
+
     printf("FUNCTION DEFINITION\n");
     return SUCCESS;
 }
@@ -313,7 +350,7 @@ int ScopeBody(){
 
 
 /**TEST**/
-
+/*
 int a = 0;
 int getToken(token_t *loadedToken){
     a++;
@@ -366,4 +403,4 @@ int getToken(token_t *loadedToken){
 int main(){
     int ret = parse();
     printf("return %d\n", ret);
-};
+};*/
