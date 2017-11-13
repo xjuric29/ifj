@@ -1,3 +1,4 @@
+
 #include "symtab.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -129,13 +130,54 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
         st_local = st_local->next;
     }
     unsigned int loc_hash = hash_function(key->str) % st_local->local_size;
+    
+    st_element_t *st_elem = st_local->elements[loc_hash];
+    while(st_elem != NULL)
+    {
+        if(strCmpString(st_elem->key, key))
+            return st_elem;
+        st_elem = st_elem->next;
+    }
+
+    st_elem = malloc(sizeof(st_element_t));
+    st_elem->next = NULL;
+    strCopyString(st_elem->key, key);
+
+    if(st_local->elements[loc_hash] != NULL)
+    {
+        st_elem->next = st_local->elements[loc_hash];
+        st_local->elements[loc_hash] = st_elem;
+        st_local->elements[loc_hash]->el_n++;
+    }
+
+    else
+    {
+        st_local->elements[loc_hash] = st_elem;
+        st_local->elements[loc_hash]->el_n++;
+        st_local->local_n++;
+    }
+
     switch(type)
     {
         case 'V':
             break;
         case 'P':
-            
+            if(st_local->params == NULL)
+            {
+                st_local->params = malloc(sizeof(st_params_t));
+                st_local->params->params_n++;
+                st_local->params->first = st_elem;
+                st_local->params->last = st_elem;
+            }
+            else
+            {
+                st_local->params->params_n++;
+                st_local->params->last->next_param = st_elem;               
+                st_local->params->last = st_elem;
+            }
             break;
     }
+    
+    return st_elem;
     
 }
