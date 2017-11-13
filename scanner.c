@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "scanner.h"
+#include "str.h"
 
 /**	@file scanner.c
  *	@brief C file for scanner interface
@@ -54,6 +55,37 @@ int skipBlockComment()
     }
 }
 
+int getIDKeyword (token_t *loadedToken, char curChar, char *lastChar)
+{
+    /*char *keywords[] = {"as", "asc", "declare", "dim", "do", "double", "else", "end", "chr", "function", "if", "input",
+                         "integer", "length", "loop", "print", "return", "scope", "string", "substr", "then", "while",
+                         "and", "boolean", "continue", "elseif", "exit", "false", "for", "next", "not", "or", "shared",
+                         "static", "true"};*/
+    string id;
+
+    if (strInit(&id)) return 99;
+    strAddChar(&id, curChar);
+
+    while (true)    // String assembling
+    {
+        curChar = getchar();
+        if (curChar >= 'A' && curChar <= 'Z')
+        {
+            curChar += 32;  // From uppercase to lowercase
+            if (strAddChar(&id, curChar)) return 99;
+        }
+        else if ((curChar >= 'a' && curChar <= 'z') || curChar == '_' || (curChar >= '0' && curChar <= '9'))
+        {
+            if (strAddChar(&id, curChar)) return 99;
+        }
+        else break;
+    }
+    *lastChar = curChar;
+
+    for (int i = 0; i )
+    return 0;
+}
+
 int setTokenType(token_t *loadedToken, tokenType_t type)
 {
     loadedToken->type = type;
@@ -67,9 +99,7 @@ int getToken(token_t *loadedToken)
     static char lastChar;
     static bool useLastChar = false;
 
-    /*
-     * Step for calling this function after EOF token was send.
-     */
+    // Step for calling this function after EOF token was send.
     if (lastChar == EOF) return setTokenType(loadedToken, TOK_endOfLine);
     if (useLastChar)
     {
@@ -93,7 +123,7 @@ int getToken(token_t *loadedToken)
                  */
                 if (currChar == '\'')
                 {
-                    if (skipRowComment()) return 1;
+                    if (skipBlockComment()) return 1;
                     else
                     {
                         currChar = getNotWhiteChar();
@@ -101,17 +131,14 @@ int getToken(token_t *loadedToken)
                     }
                 } else
                 {
-                    if (isWhiteChar(currChar)) currChar = getNotWhiteChar();
-                    lastChar = currChar;
+                    if (isWhiteChar(currChar)) lastChar = getNotWhiteChar();
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_div);
                 }
 
             /// New line
             case '\n':
-                /*
-                 * If is in code multiple blank EOLs in succession the EOL token will be send just once.
-                 */
+                //If is in code multiple blank EOLs in succession the EOL token will be send just once.
                 if (lastChar == '\n')
                 {
                     currChar = getNotWhiteChar();
@@ -124,26 +151,30 @@ int getToken(token_t *loadedToken)
 
             /// ID|keyword and var values
             case '_':
-            case 'A' ... 'Z':   /// Range in case is supported just in gcc compiler!
+            case 'A' ... 'Z':   /// Range in case is supported only in gcc compiler!
             case 'a' ... 'z':
 
             /// Operators
             case '<':
-                currChar = getNotWhiteChar();
+                currChar = getchar();
                 lastChar = currChar;
+                // If the new curChar is white char load next char and send just less token
                 if (currChar == '=') return setTokenType(loadedToken, TOK_lessEqual);
                 else if (currChar == '>') return setTokenType(loadedToken, TOK_notEqual);
                 else
                 {
+                    if (isWhiteChar(currChar)) lastChar = getNotWhiteChar();
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_less);
                 }
             case '>':
-                currChar = getNotWhiteChar();
+                currChar = getchar();
                 lastChar = currChar;
+                // Same example as less operator
                 if (currChar == '=') return setTokenType(loadedToken, TOK_greaterEqual);
                 else
                 {
+                    if (isWhiteChar(currChar)) lastChar = getNotWhiteChar();
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_greater);
                 }
