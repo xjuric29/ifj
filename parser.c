@@ -91,7 +91,7 @@ int program(){
                 return SYN_ERROR; //Je to syntakticky error?
             }
             // <scope-body>
-            RecurCallResult = ScopeBody();
+            RecurCallResult = Stats();
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -334,23 +334,170 @@ int FunctionDefinition(){
         return LEX_ERROR;
     }
     if (CurrentToken.type != TOK_identifier){
-
+        return SYN_ERROR;
     }
 
+    //<data-type>
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    switch(CurrentToken.type){
+        case TOK_integer:
+        case TOK_string:
+        case TOK_decimal:
+            //TODO pridelit do struktury tabulky
+        break;
 
+        default:
+            return SYN_ERROR;
+    }
 
-    printf("FUNCTION DEFINITION\n");
+    //EOL
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != TOK_endOfLine){
+        return SYN_ERROR;
+    }
+
+    //<function-body>
+    RecurCallResult = Stats();
+    if(RecurCallResult != SUCCESS){
+        return RecurCallResult;
+    }
+
+    //FUNCTION
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != KW_function){
+        return SYN_ERROR;
+    }
+
+    //EOL
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    if (CurrentToken.type != TOK_endOfLine){
+        return SYN_ERROR;
+    }
     return SUCCESS;
 }
 
-int ScopeBody(){
-    printf("SCOPE BODY\n");
+
+/**@brief: Function or Scope BODY
+ * @return Type of error or SUCCESS
+ **/
+int Stats(){
+    int RecurCallResult = -1;
+
+    if (getToken(&CurrentToken) == LEX_ERROR){
+        return LEX_ERROR;
+    }
+    //Delete EOLs
+    while(CurrentToken.type == TOK_endOfLine){
+        if(getToken(&CurrentToken) == LEX_ERROR){
+            return LEX_ERROR;
+        }
+    }
+
+    switch (CurrentToken.type){
+        //END
+        case KW_end:
+            return SUCCESS;
+
+        //INPUT ID <stats>
+        case KW_input:
+            //ID
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != TOK_identifier){
+                return SYN_ERROR;
+            }
+
+            //TODO Kontrola ci ID existuje a ine veci..
+
+            //<stats>
+            return Stats();
+
+        //DIM ID AS <data-type> (EQUAL <expresion>) <stats>
+        case KW_dim:
+            //ID
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != TOK_identifier){
+                return SYN_ERROR;
+            }
+            //TODO Ulozit do tabulky
+            //Treba kontrolovat aj s globalnou tabulkou ci sa nejaka funkcia nevola ako premenna?
+
+            //AS
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != KW_as){
+                return SYN_ERROR;
+            }
+
+            //<data-type>
+            switch(CurrentToken.type){
+                case TOK_integer:
+                case TOK_string:
+                case TOK_decimal:
+                    //TODO pridelit do struktury tabulky
+                break;
+
+                default:
+                    return SYN_ERROR;
+            }
+
+            //EOL or EQUAL <stats>
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            switch (CurrentToken.type) {
+                case TOK_endOfLine:
+                    //<stats>
+                    return Stats();
+                //EQUAL
+                case TOK_equal:
+                    //TODO predat riadenie precedencnej analyze
+                    //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
+                    //takze to treba ceknut
+
+                    return Stats();
+
+                default:
+                    return SYN_ERROR;
+            }
+
+        //ID EQUAL <expresion>
+        case TOK_identifier:
+            //EQUAL
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != TOK_equal){
+                return SYN_ERROR;
+            }
+
+            //<expresion>
+            //TODO predat riadenie precedencnej analyze
+            //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
+            //takze to treba ceknut
+
+            return Stats();
+
+        //PRINT <expresion> SEMICOLON <more-print> <stats>
+        //case KW_print:
+    }
     return SUCCESS;
 }
-
 
 /**TEST**/
-/*
+
 int a = 0;
 int getToken(token_t *loadedToken){
     a++;
@@ -403,4 +550,4 @@ int getToken(token_t *loadedToken){
 int main(){
     int ret = parse();
     printf("return %d\n", ret);
-};*/
+}

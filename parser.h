@@ -28,9 +28,6 @@ int FunctionDeclar();
   */
 int FunctionDefinition();
 
-
-int ScopeBody();
-
 /**@brief RULES:
   * 1) <function-args> -> RIGHT_BRACKET
   * 2) <function-args> -> ID AS <data-type> <more-function-args>
@@ -44,5 +41,10 @@ int FunctArgs();
   * @return error type or success
   */
 int MoreFunctArgs();
+
+/**@brief: Function or Scope BODY
+ * @return Type of error or SUCCESS
+ **/
+int Stats();
 
 #endif
