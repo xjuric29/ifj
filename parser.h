@@ -1,6 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+
 int parse();
 
 
@@ -45,6 +46,6 @@ int MoreFunctArgs();
 /**@brief: Function or Scope BODY
  * @return Type of error or SUCCESS
  **/
-int Stats();
+int Stats(bool InScope);
 
 #endif

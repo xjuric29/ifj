@@ -91,7 +91,7 @@ int program(){
                 return SYN_ERROR; //Je to syntakticky error?
             }
             // <scope-body>
-            RecurCallResult = Stats();
+            RecurCallResult = Stats(true);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -361,7 +361,7 @@ int FunctionDefinition(){
     }
 
     //<function-body>
-    RecurCallResult = Stats();
+    RecurCallResult = Stats(false);
     if(RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
@@ -387,8 +387,9 @@ int FunctionDefinition(){
 
 /**@brief: Function or Scope BODY
  * @return Type of error or SUCCESS
+ * @param InScope --> signlize if stats was called from user function or from scope
  **/
-int Stats(){
+int Stats(bool InScope){
     int RecurCallResult = -1;
 
     if (getToken(&CurrentToken) == LEX_ERROR){
@@ -402,11 +403,11 @@ int Stats(){
     }
 
     switch (CurrentToken.type){
-        //END
+        //END --- functions and scope end with END
         case KW_end:
             return SUCCESS;
 
-        //INPUT ID <stats>
+        //INPUT ID EOL <stats>
         case KW_input:
             //ID
             if (getToken(&CurrentToken) == LEX_ERROR){
@@ -416,12 +417,19 @@ int Stats(){
                 return SYN_ERROR;
             }
 
+            //EOL
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
             //TODO Kontrola ci ID existuje a ine veci..
 
             //<stats>
-            return Stats();
+            return Stats(InScope);
 
-        //DIM ID AS <data-type> (EQUAL <expresion>) <stats>
+        //DIM ID AS <data-type> (EQUAL <expresion>) EOL <stats>
         case KW_dim:
             //ID
             if (getToken(&CurrentToken) == LEX_ERROR){
@@ -460,20 +468,21 @@ int Stats(){
             switch (CurrentToken.type) {
                 case TOK_endOfLine:
                     //<stats>
-                    return Stats();
+                    return Stats(InScope);
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
 
-                    return Stats();
+                    return Stats(InScope);
 
                 default:
                     return SYN_ERROR;
             }
 
         //ID EQUAL <expresion>
+        //          ID (function) <function-params-call> TODO
         case TOK_identifier:
             //EQUAL
             if (getToken(&CurrentToken) == LEX_ERROR){
@@ -483,15 +492,59 @@ int Stats(){
                 return SYN_ERROR;
             }
 
+
+            //<expresion>
+            //TODO Kedy predat riadenie precedencnej analyze?
+            //Treba rozhodnut ci sa jedna o vyraz alebo volanie funkcie
+            //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
+            //takze to treba ceknut
+
+            return Stats(InScope);
+
+        //RETURN <expresion> EOL <stats>
+        //Return can by use only inside functions, not inside Scope
+        case KW_return:
+            //Test if we are inside scope or inside user function, if inside Scope --> syn. error
+            if (InScope){
+                return SYN_ERROR;
+            }
+
             //<expresion>
             //TODO predat riadenie precedencnej analyze
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-            return Stats();
+            return Stats(InScope);
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
-        //case KW_print:
+        case KW_print:
+            //<expresion>
+            //TODO predat riadenie precedencnej analyze
+            //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
+            //Da sa to tak?
+
+            return Stats(InScope);
+
+        //TODO If a While --> zatial neviem ako sa s tym bude pracovat co sa tyka instrukcnej pasky..
+        //IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
+        /*case KW_if:
+            //<condition>
+            //TODO predat riadenie precedencnej
+            //Vrati mi zrejme THEN - treba to skontrolovat
+
+            //EOL
+            if (getToken(&CurrentToken) == LEX_ERROR){
+                return LEX_ERROR;
+            }
+            if (CurrentToken.type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
+
+            //Stats need to be called as they are inside of if so at the begining of line can be else
+            return Stats();
+            */
+        default:
+            return SYN_ERROR;
     }
     return SUCCESS;
 }
@@ -543,6 +596,10 @@ int getToken(token_t *loadedToken){
     }
     if(a == 13){
         loadedToken->type = TOK_endOfLine;
+        return SUCCESS;
+    }
+    if(a == 14){
+        loadedToken->type = KW_return;
         return SUCCESS;
     }
 }
