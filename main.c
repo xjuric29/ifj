@@ -17,5 +17,6 @@ int main ()
         else if (loadedToken.type >= 0 && loadedToken.type < 35) printf ("Keyword: %d\n", loadedToken.type);
         else printf("Other token: %d\n", loadedToken.type);
     }
+    strFree(&a);
     return 0;
 }
