@@ -2,14 +2,30 @@
 #include <stdio.h>
 #include "scanner.h"
 
+/**	@file scanner.c
+ *	@brief C file for scanner interface
+ *	@author Jiri Jurica (xjuric29)
+ *	@todo Another solution for case ranges
+ */
+
 /**
- * Returns char from stdin which isn't space, tab, VT, FF and CR. These white space chars will be skipped.
+ * Tests if input char is white char (space, tab, VT, FF and CR)
+ * @param input char
+ * @return true if input is white char else false
+ */
+int isWhiteChar(char input)
+{
+    return (input == ' ' || input == '\t' || (input >= 11 && input <= 13));
+}
+
+/**
+ * Returns char from stdin which isn't white. These chars will be skipped.
  * @return char from stdin
  */
-char getNotSpaceChar()
+char getNotWhiteChar()
 {
     char temp = getchar();
-    return (temp != ' ' && temp != '\t' && (temp < 11 || temp > 13)) ? temp : getNotSpaceChar();
+    return (isWhiteChar(temp)) ? getNotWhiteChar() : temp;
 }
 
 /**
@@ -19,11 +35,11 @@ char getNotSpaceChar()
 char skipRowComment()
 {
     char temp = getchar();
-    return (temp == '\n' || temp == EOF) ? temp : skipRowComment();
+    return (temp != '\n' && temp != EOF) ? skipRowComment() : temp;
 }
 
 /**
- * Skips all char until get sequence "'/"
+ * Skips all char until get sequence "'/".
  * @return 0 if comment ends correctly else 1
  */
 int skipBlockComment()
@@ -37,7 +53,6 @@ int skipBlockComment()
         lastChar = curChar;
     }
 }
-
 
 int setTokenType(token_t *loadedToken, tokenType_t type)
 {
@@ -60,18 +75,18 @@ int getToken(token_t *loadedToken)
     {
         currChar = lastChar;
         useLastChar = false;
-    } else currChar = getNotSpaceChar();
+    } else currChar = getNotWhiteChar();
 
     while (true)
     {
         switch (currChar)
         {
             /// Comments and division operator
-            case '\'':  // Skip comment and start new round of loop
+            case '\'':  // Skip comment and start new round of loop.
                 currChar = skipRowComment();
                 break;
             case '/':
-                currChar = getNotSpaceChar();
+                currChar = getchar();
                 /*
                  * If new curChar is "'" skip comment and start new round of loop. Else save new char for next calling
                  * this function and return division token.
@@ -81,11 +96,12 @@ int getToken(token_t *loadedToken)
                     if (skipRowComment()) return 1;
                     else
                     {
-                        currChar = getNotSpaceChar();
+                        currChar = getNotWhiteChar();
                         break;
                     }
                 } else
                 {
+                    if (isWhiteChar(currChar)) currChar = getNotWhiteChar();
                     lastChar = currChar;
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_div);
@@ -94,11 +110,11 @@ int getToken(token_t *loadedToken)
             /// New line
             case '\n':
                 /*
-                 * If is in code multiple blank EOLs in succession the EOL token will be send just once
+                 * If is in code multiple blank EOLs in succession the EOL token will be send just once.
                  */
                 if (lastChar == '\n')
                 {
-                    currChar = getNotSpaceChar();
+                    currChar = getNotWhiteChar();
                     break;
                 } else
                 {
@@ -106,9 +122,14 @@ int getToken(token_t *loadedToken)
                     return setTokenType(loadedToken, TOK_endOfLine);
                 }
 
+            /// ID|keyword and var values
+            case '_':
+            case 'A' ... 'Z':   /// Range in case is supported just in gcc compiler!
+            case 'a' ... 'z':
+
             /// Operators
             case '<':
-                currChar = getNotSpaceChar();
+                currChar = getNotWhiteChar();
                 lastChar = currChar;
                 if (currChar == '=') return setTokenType(loadedToken, TOK_lessEqual);
                 else if (currChar == '>') return setTokenType(loadedToken, TOK_notEqual);
@@ -118,7 +139,7 @@ int getToken(token_t *loadedToken)
                     return setTokenType(loadedToken, TOK_less);
                 }
             case '>':
-                currChar = getNotSpaceChar();
+                currChar = getNotWhiteChar();
                 lastChar = currChar;
                 if (currChar == '=') return setTokenType(loadedToken, TOK_greaterEqual);
                 else
