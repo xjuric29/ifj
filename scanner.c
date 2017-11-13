@@ -11,7 +11,7 @@
 
 /**
  * Tests if input char is white char (space, tab, VT, FF and CR)
- * @param input char
+ * @param input - char
  * @return true if input is white char else false
  */
 int isWhiteChar(char input)
@@ -27,6 +27,18 @@ char getNotWhiteChar()
 {
     char temp = getchar();
     return (isWhiteChar(temp)) ? getNotWhiteChar() : temp;
+}
+
+/**
+ * Simple function for shorter write. Sets just token type.
+ * @param loadedToken - token which will be send
+ * @param type - type of token to be used
+ * @return always 0
+ */
+int setTokenType(token_t *loadedToken, tokenType_t type)
+{
+    loadedToken->type = type;
+    return 0;
 }
 
 /**
@@ -55,41 +67,49 @@ int skipBlockComment()
     }
 }
 
-int getIDKeyword (token_t *loadedToken, char curChar, char *lastChar)
+/**
+ * Assembles name of the var or keyword and then sends correct token type
+ * @param loadedToken - token which will be send
+ * @param curChar
+ * @return 0 if everything is ok else 99 for allocation error
+ */
+int getIDKeyword (token_t *loadedToken, char *curChar)
 {
-    /*char *keywords[] = {"as", "asc", "declare", "dim", "do", "double", "else", "end", "chr", "function", "if", "input",
+    char *keywords[] = {"as", "asc", "declare", "dim", "do", "double", "else", "end", "chr", "function", "if", "input",
                          "integer", "length", "loop", "print", "return", "scope", "string", "substr", "then", "while",
                          "and", "boolean", "continue", "elseif", "exit", "false", "for", "next", "not", "or", "shared",
-                         "static", "true"};*/
+                         "static", "true"};
     string id;
 
     if (strInit(&id)) return 99;
-    strAddChar(&id, curChar);
 
-    while (true)    // String assembling
+    do    // String assembling
     {
-        curChar = getchar();
-        if (curChar >= 'A' && curChar <= 'Z')
+        if (*curChar >= 'A' && *curChar <= 'Z')
         {
-            curChar += 32;  // From uppercase to lowercase
-            if (strAddChar(&id, curChar)) return 99;
+            *curChar += 32;  // From uppercase to lowercase
+            if (strAddChar(&id, *curChar)) return 99;
+            *curChar = getchar();
         }
-        else if ((curChar >= 'a' && curChar <= 'z') || curChar == '_' || (curChar >= '0' && curChar <= '9'))
+        else if ((*curChar >= 'a' && *curChar <= 'z') || *curChar == '_' || (*curChar >= '0' && *curChar <= '9'))
         {
-            if (strAddChar(&id, curChar)) return 99;
+            if (strAddChar(&id, *curChar)) return 99;
+            *curChar = getchar();
         }
         else break;
+    } while (true);
+
+    for (int i = 0; i < 35; i++)    // Finding if string is a keyword
+    {
+        if (!strCmpConstStr(&id, keywords[i])) {
+            strFree(&id);
+            return setTokenType(loadedToken, i);
+        }
     }
-    *lastChar = curChar;
 
-    for (int i = 0; i )
-    return 0;
-}
-
-int setTokenType(token_t *loadedToken, tokenType_t type)
-{
-    loadedToken->type = type;
-    loadedToken->value.stringVal = NULL;
+    loadedToken->type = TOK_identifier;
+    strCopyString(loadedToken->value.stringVal, &id);
+    strFree(&id);
     return 0;
 }
 
@@ -138,21 +158,20 @@ int getToken(token_t *loadedToken)
 
             /// New line
             case '\n':
-                //If is in code multiple blank EOLs in succession the EOL token will be send just once.
-                if (lastChar == '\n')
-                {
-                    currChar = getNotWhiteChar();
-                    break;
-                } else
-                {
-                    lastChar = '\n';
-                    return setTokenType(loadedToken, TOK_endOfLine);
-                }
+                lastChar = '\n';
+                return setTokenType(loadedToken, TOK_endOfLine);
 
             /// ID|keyword and var values
             case '_':
             case 'A' ... 'Z':   /// Range in case is supported only in gcc compiler!
             case 'a' ... 'z':
+                if (getIDKeyword(loadedToken, &currChar) == 99) return 99;
+                else
+                {
+                    lastChar = isWhiteChar(currChar) ? getNotWhiteChar() : currChar;
+                    useLastChar = true;
+                    return 0;
+                }
 
             /// Operators
             case '<':

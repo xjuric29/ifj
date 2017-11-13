@@ -65,8 +65,6 @@ typedef enum
 
     // TOKEN TYPES
     TOK_identifier,
-    TOK_dataType,
-    TOK_keyword,		/// Specified in keywordType
     TOK_integer,
     TOK_decimal,
     TOK_string,
