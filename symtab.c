@@ -58,6 +58,7 @@ st_localTable_t *st_local_init(unsigned int size)
     st_local->local_n = 0;
     st_local->next = NULL;
     st_local->defined = false;
+    st_local->declared = false;
     st_local->params = NULL;
 
     return st_local;
@@ -74,9 +75,9 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     
     while(st_local != NULL)
     {
-        if(strcmp(st_local->key, key->str))
+        if(strCmpString(st_local->key, key))
         {
-            if(st_local->defined == true)
+            /*if(st_local->defined == true)
             {
                 fprintf(stderr, "multiple function definition");
                 return NULL;
@@ -84,7 +85,9 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
             else
             {
                 return st_local;
-            }
+            }*/
+            
+            return st_local;
         }
 
         st_local = st_local->next;
@@ -92,6 +95,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     
     st_local = st_local_init(ST_SIZE);
     st_local->next = NULL;
+    strCopyString(st_local->key, key);
     
     if(st_global->functions[hash] != NULL)
     {   
@@ -109,19 +113,29 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     return st_local;
 }
 
-st_element_t st_add_element(st_globalTable_t *st_global, string *func_name, string *key)
+st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, string *key, char type)
 {
     if(st_global == NULL || key->str == NULL)
         return NULL;
 
     unsigned int glob_hash = hash_function(func_name->str) % st_global->global_size;
     
-    st_func = st_global->functions[glob_hash];
+    st_localTable_t *st_local = st_global->functions[glob_hash];
 
-    while(st_func != NULL)
+    while(st_local != NULL)
     {
-        if(strcmp(st_func->key, key->str) == 0)
+        if(strCmpString(st_local->key, key))
             break;
-        st_func = st_func->next;
+        st_local = st_local->next;
     }
+    unsigned int loc_hash = hash_function(key->str) % st_local->local_size;
+    switch(type)
+    {
+        case 'V':
+            break;
+        case 'P':
+            
+            break;
+    }
+    
 }

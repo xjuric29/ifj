@@ -16,12 +16,13 @@ PRAVDEPODOBNE STRUKTURA NA TROJADRESNY KOD, TO SA PORIESI NESKOR
 
 unsigned int hash_function(const char *str);
  
-/*typedef enum
+typedef enum
 {
-    st_el_var
-    st_el_param
+    st_integer,
+    st_decimal,
+    st_string
 
-} el_type_t /// Rozlisovat medzi parametrom a premennymi je potrebne?*/
+} el_type_t;
 
 
 typedef union
@@ -35,11 +36,12 @@ typedef union
 
 typedef struct st_element_t
 {
-    char *key; /// Variable name
+    string *key; /// Variable name
     bool defined;
     st_value_t val;
+    struct st_element_t *next_param; ///NULL if element is not a parameter or if element is last parameter
     struct st_element_t *next;
-  //  el_type_t el_type;
+    el_type_t el_type;
 
 } st_element_t;
 
@@ -47,14 +49,15 @@ typedef struct
 {
     int params_n;
     struct st_element_t *first;
-    struct st_element_t *next;
+//    struct st_element_t *next;
 
 } st_params_t;
 
 
 typedef struct st_localTable_t
 {
-    char *key; /// Function name
+    string *key; /// Function name
+    bool declared;
     bool defined;
     unsigned int local_size;
     unsigned int local_n;
