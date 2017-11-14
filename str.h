@@ -2,6 +2,9 @@
 #ifndef STR_H
 #define STR_H
 
+#define STR_ERROR   111
+#define STR_SUCCESS 110
+
 typedef struct
 {
   char* str;		// misto pro dany retezec ukonceny znakem '\0'
@@ -9,10 +12,8 @@ typedef struct
   int allocSize;	// velikost alokovane pameti
 } string;
 
-
 int strInit(string *s);
 void strFree(string *s);
-
 void strClear(string *s);
 int strAddChar(string *s1, char c);
 int strCopyString(string *s1, string *s2);

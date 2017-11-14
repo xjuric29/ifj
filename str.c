@@ -6,10 +6,7 @@
 #define STR_LEN_INC 10
 // konstanta STR_LEN_INC udava, na kolik bytu provedeme pocatecni alokaci pameti
 // pokud nacitame retezec znak po znaku, pamet se postupne bude alkokovat na
-// nasobky tohoto cisla 
-
-#define STR_ERROR   1
-#define STR_SUCCESS 0
+// nasobky tohoto cisla
 
 int strInit(string *s)
 // funkce vytvori novy retezec
