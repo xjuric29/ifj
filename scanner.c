@@ -68,7 +68,7 @@ int skipBlockComment()
 }
 
 /**
- * Assembles name of the var or keyword and then sends correct token type
+ * Assembles name of the var or keyword and then sends the correct token type
  * @param loadedToken - token which will be send
  * @param curChar
  * @return 0 if everything is ok else 99 for allocation error
@@ -113,9 +113,68 @@ int getIDKeyword (token_t *loadedToken, char *curChar)
     return 0;
 }
 
+/**
+ * Assembles ints or floats and then sends the correct token type
+ * @param loadedToken - token which will be send
+ * @param curChar
+ * @return 0 if everything is ok, 1 if is fault in number string else 99 for allocation error
+ */
+int getNumber (token_t *loadedToken, char *curChar)
+{
+    string id;
+    bool decDot = false, sciNotation = false;
+    char previousChar;
+
+    if (strInit(&id)) return 99;
+    strAddChar(&id, *curChar);
+    previousChar = *curChar;
+    setTokenType(loadedToken, TOK_integer);
+
+    while (true)    // Number assembling
+    {
+        *curChar = getchar();
+        if (*curChar >= '0' && *curChar <= '9')
+        {
+            if (strAddChar(&id, *curChar)) return 99;
+        }
+        else if (*curChar == '.' && !sciNotation && !decDot)
+        {
+            if (strAddChar(&id, *curChar)) return 99;
+            decDot = true;
+            setTokenType(loadedToken, TOK_decimal);
+        }
+        else if ((*curChar == 'e' || *curChar == 'E') && !sciNotation && previousChar >= '0' && previousChar <= '9') {
+            if (strAddChar(&id, 'e')) return 99;
+            sciNotation = true;
+            setTokenType(loadedToken, TOK_decimal);
+        }
+        else if ((*curChar == '+' || *curChar == '-') && (previousChar == 'e' || previousChar == 'E'))
+        {
+            if (strAddChar(&id, *curChar)) return 99;
+        }
+        else
+        {
+            if (previousChar >= '0' && previousChar <= '9') break;
+            else return 1;
+        }
+        previousChar = *curChar;
+    }
+
+    if (loadedToken->type == TOK_integer)   // Converts string to correct data type
+    {
+        if (sscanf(strGetStr(&id), "%d", &loadedToken->value.integer) != 1) return 99;
+    }
+    else
+    {
+        if (sscanf(strGetStr(&id), "%lf", &loadedToken->value.decimal) != 1) return 99;
+    }
+    return 0;
+}
+
 int getToken(token_t *loadedToken)
 {
     char currChar;
+    int retCode;
     static char lastChar;
     static bool useLastChar = false;
 
@@ -161,7 +220,7 @@ int getToken(token_t *loadedToken)
                 lastChar = '\n';
                 return setTokenType(loadedToken, TOK_endOfLine);
 
-            /// ID|keyword and var values
+            /// ID|keyword
             case '_':
             case 'A' ... 'Z':   /// Range in case is supported only in gcc compiler!
             case 'a' ... 'z':
@@ -172,6 +231,17 @@ int getToken(token_t *loadedToken)
                     useLastChar = true;
                     return 0;
                 }
+
+            /// Values
+            case '0' ... '9':
+                if ((retCode = getNumber(loadedToken, &currChar))) return retCode;
+                else
+                {
+                    lastChar = isWhiteChar(currChar) ? getNotWhiteChar() : currChar;
+                    useLastChar = true;
+                    return 0;
+                }
+            case '!':
 
             /// Operators
             case '<':
