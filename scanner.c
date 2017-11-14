@@ -68,6 +68,28 @@ int skipBlockComment()
 }
 
 /**
+ * Converts escaped numbers from stdin stream to int
+ * @param curChar - first loaded digit
+ * @return 1-255 on success else -1
+ */
+int escapedNumber (char curChar)
+{
+    char textNumber[] = {curChar, '0', '0', '\0'};    // For three-digit number prepare the string
+    int convertedNumber;
+
+    for (int i = 1; i < 3; i++)
+    {
+        if ((curChar = getchar()) >= '0' && curChar <= '9') textNumber[i] = curChar;
+        else return -1;
+    }
+    if (sscanf (textNumber, "%d", &convertedNumber) == 1 && convertedNumber >= 1 && convertedNumber <= 255)
+    {
+        return convertedNumber;
+    }
+    else return -1;
+}
+
+/**
  * Assembles name of the var or keyword and then sends the correct token type
  * @param loadedToken - token which will be send
  * @param curChar
@@ -171,6 +193,58 @@ int getNumber (token_t *loadedToken, char *curChar)
     return 0;
 }
 
+/**
+ * Assembles string and sends it as token
+ * @param loadedToken - token which will be send
+ * @return 0 if everything is ok, 1 if is fault in string else 99 for allocation error
+ */
+int getString(token_t *loadedToken)
+{
+    string id;
+    char curChar, previousChar = '0';   // The previousChar must be initialized for while loop
+    int escapedChar;
+
+    if (strInit(&id)) return 99;
+    setTokenType(loadedToken, TOK_string);
+
+    while (true)
+    {
+        curChar = getchar();
+        if (curChar == '\"' && previousChar != '\\') break;
+        if (curChar == '\n' || curChar == EOF) return 1;
+        if (curChar == '\\') {  // Escape sequences part
+            curChar = getchar();
+            switch (curChar)
+            {
+                case 'n':
+                    if (strAddChar(&id, '\n')) return 99;
+                    break;
+                case 't':
+                    if (strAddChar(&id, '\t')) return 99;
+                    break;
+                case '\"':
+                    if (strAddChar(&id, '\"')) return 99;
+                    break;
+                case '\\':
+                    if (strAddChar(&id, '\\')) return 99;
+                    break;
+                case '0' ... '9':
+                    if ((escapedChar = escapedNumber(curChar)) == -1) return 1;
+                    else
+                    {
+                        if (strAddChar(&id, escapedChar)) return 99;
+                    }
+                default:
+                    return 1;
+            }
+        }
+        previousChar = curChar;
+    }
+    strCopyString(loadedToken->value.stringVal, &id);
+    strFree(&id);
+    return 0;
+}
+
 int getToken(token_t *loadedToken)
 {
     char currChar;
@@ -242,6 +316,14 @@ int getToken(token_t *loadedToken)
                     return 0;
                 }
             case '!':
+                currChar = getchar();
+                if (currChar == '\"')
+                {
+                    if ((retCode = getString(loadedToken))) return retCode;
+                    lastChar = '\"';
+                    return 0;
+                }
+                else return 1;
 
             /// Operators
             case '<':
