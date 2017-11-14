@@ -33,7 +33,7 @@ typedef union
 
 typedef struct st_element_t
 {
-    string *key; /// Variable name
+    string key; /// Variable name
     unsigned int el_n;
     bool defined;
     st_value_t val;
@@ -54,7 +54,7 @@ typedef struct
 
 typedef struct st_localTable_t
 {
-    string *key; /// Function name
+    string key; /// Function name
     bool declared;
     bool defined;
     unsigned int local_size;
@@ -65,7 +65,7 @@ typedef struct st_localTable_t
 
 } st_localTable_t; /// Local table for a fuction
 
-typedef struct
+typedef struct st_globalTable_t
 {
     unsigned int global_size;
     unsigned int global_n;

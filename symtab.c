@@ -7,6 +7,19 @@
 
 int main()
 {
+    st_globalTable_t *glob = st_global_init(100);
+    printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
+    string key;
+    printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
+    key.str = "haha";
+    printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
+    st_add_func(glob, &key);
+    st_localTable_t *tmp = st_add_func(glob, &key);
+    printf("%s\t%d\t%d\n", tmp->key.str, tmp->key.length, tmp->key.allocSize);
+    printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
+    string key_el;
+    key_el.str = "argc";
+    st_add_element(glob, &key, &key_el, 'P');
     return 0;
 }
 
@@ -76,7 +89,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     
     while(st_local != NULL)
     {
-        if(strCmpString(st_local->key, key))
+        if(strCmpString(&st_local->key, key))
         {
             /*if(st_local->defined == true)
             {
@@ -96,8 +109,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     
     st_local = st_local_init(ST_SIZE);
     st_local->next = NULL;
-    strCopyString(st_local->key, key);
-    
+    strCopyString(&st_local->key, key);
     if(st_global->functions[hash] != NULL)
     {   
         st_local->next = st_global->functions[hash];
@@ -125,7 +137,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
 
     while(st_local != NULL)
     {
-        if(strCmpString(st_local->key, key))
+        if(strCmpString(&st_local->key, key))
             break;
         st_local = st_local->next;
     }
@@ -134,14 +146,14 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     st_element_t *st_elem = st_local->elements[loc_hash];
     while(st_elem != NULL)
     {
-        if(strCmpString(st_elem->key, key))
+        if(strCmpString(&st_elem->key, key))
             return st_elem;
         st_elem = st_elem->next;
     }
 
     st_elem = malloc(sizeof(st_element_t));
     st_elem->next = NULL;
-    strCopyString(st_elem->key, key);
+    strCopyString(&st_elem->key, key);
 
     if(st_local->elements[loc_hash] != NULL)
     {
