@@ -212,7 +212,8 @@ int getString(token_t *loadedToken)
         curChar = getchar();
         if (curChar == '\"' && previousChar != '\\') break;
         if (curChar == '\n' || curChar == EOF) return 1;
-        if (curChar == '\\') {  // Escape sequences part
+        if (curChar == '\\')    // Escape sequences part
+        {
             curChar = getchar();
             switch (curChar)
             {
@@ -234,9 +235,13 @@ int getString(token_t *loadedToken)
                     {
                         if (strAddChar(&id, escapedChar)) return 99;
                     }
+                    break;
                 default:
                     return 1;
             }
+        } else
+        {
+            if (strAddChar(&id, curChar)) return 99;
         }
         previousChar = curChar;
     }
