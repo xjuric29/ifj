@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-int main()
+/************ JEDNODUCHE TESTY A PRIKLADY VOLANIA FUNKCII ************/
+
+/*int main()
 {
     st_globalTable_t *glob = st_global_init(100);
     printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
@@ -20,8 +22,9 @@ int main()
     string key_el;
     key_el.str = "argc";
     st_add_element(glob, &key, &key_el, 'P');
+    st_delete(glob);
     return 0;
-}
+}*/
 
 unsigned int hash_function(const char *str)
 {
@@ -193,3 +196,36 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     return st_elem;
     
 }
+
+void st_delete(st_globalTable_t *st_global)
+{
+    for(unsigned int i = 0; i < st_global->global_size; i++)
+    {   
+        st_localTable_t *st_local = st_global->functions[i];
+        while(st_local != NULL)
+        {
+            for(unsigned int j = 0; j < st_local->local_size; j++)
+            {
+                    st_element_t *st_element = st_local->elements[j];
+                    while(st_element != NULL)
+                    {
+                        st_element_t *tmp = st_element;
+                        st_element = st_element->next;
+                        strFree(&tmp->key);
+                        free(tmp);   
+                    }
+            }
+         //   free(st_local->elements);
+            st_localTable_t *tmp = st_local;
+            st_local = st_local->next;
+            if(tmp->params != NULL)
+                free(tmp->params);
+            strFree(&tmp->key);
+            free(tmp);
+            
+        }
+    }
+    free(st_global);
+}
+
+// Přeloženo: gcc 5.4

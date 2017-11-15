@@ -116,6 +116,8 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key); ///
 
 st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, string *key, char type);
 
+void st_delete(st_globalTable_t *st_global);
+
 
 
 #endif
