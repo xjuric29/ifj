@@ -2,8 +2,8 @@
 #ifndef STR_H
 #define STR_H
 
-#define STR_ERROR   111
-#define STR_SUCCESS 110
+#define STR_ERROR   1
+#define STR_SUCCESS 0
 
 typedef struct
 {
