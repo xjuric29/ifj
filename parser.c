@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "parser.h"
 #include "scanner.h"
 #include "str.h"
@@ -11,17 +12,21 @@
 
 
 
+//strInit(CurrentToken.value.stringVal);
+bool DecOrDefAndEOF = false; //To check if program have scope and then eof
+int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
+
 int parse(){
     int Error;
-    Error = program();
+    token_t CurrentToken;
+    CurrentToken.value.stringVal = malloc(sizeof(string));
+    strInit(CurrentToken.value.stringVal);
+    Error = program(CurrentToken);
+    strFree(CurrentToken.value.stringVal);
+    free(CurrentToken.value.stringVal);
     return Error;
+
 }
-
-
-
-token_t CurrentToken;
-bool DecOrDefAndEOF = false; //To check if program have scope and then eof
-
 
 //TODO: Skontrolovanie prazdneho suboru
 
@@ -33,17 +38,16 @@ bool DecOrDefAndEOF = false; //To check if program have scope and then eof
     * 4) <prog> -> EOF
     * @return type of error or succes
 **/
-int program(){
+int program(token_t CurrentToken){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
-
     //Skip all empty lines at beggining of code/between declarations
     while(CurrentToken.type == TOK_endOfLine){
-        if (getToken(&CurrentToken) == LEX_ERROR){
-            return LEX_ERROR;
+        if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+            return ScannerInt;
         }
     }
     //Switch rule
@@ -57,13 +61,13 @@ int program(){
 
         //<prog>	-> <function-declaration> <prog>
         case KW_declare:
-            RecurCallResult = FunctionDeclar();
+            RecurCallResult = FunctionDeclar(CurrentToken);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
             DecOrDefAndEOF = true; //?
             //<prog>
-            RecurCallResult = program();
+            RecurCallResult = program(CurrentToken);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -71,30 +75,53 @@ int program(){
 
         //<prog>	-> <function-definition> <prog>
         case KW_function:
-            RecurCallResult = FunctionDefinition();
+            RecurCallResult = FunctionDefinition(CurrentToken);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
             //prog
-            RecurCallResult = program();
+            RecurCallResult = program(CurrentToken);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
             return SUCCESS;
 
-        // <prog>	-> SCOPE EOL <scope-body>
+        // <prog>	-> SCOPE EOL <scope-body> SCOPE EOF
         case KW_scope:
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_endOfLine){
                 return SYN_ERROR; //Je to syntakticky error?
             }
             // <scope-body>
-            RecurCallResult = Stats(true);
+            RecurCallResult = Stats(CurrentToken, true);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
+
+            //SCOPE
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
+            }
+            if (CurrentToken.type != KW_scope){
+                return SYN_ERROR;
+            }
+
+            //EOF
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
+            }
+            //Skip EOLs..
+            while(CurrentToken.type == TOK_endOfLine){
+                if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                    return ScannerInt;
+                }
+            }
+            if (CurrentToken.type != TOK_endOfFile){
+                return SYN_ERROR;
+            }
+
             return SUCCESS;
 
         default:
@@ -107,20 +134,20 @@ int program(){
  * DECLARE was already checked so we start with FUNCTION
  * @return type of error or succes
  **/
-int FunctionDeclar(){
+int FunctionDeclar(token_t CurrentToken){
     string FunctionID;
     int RecurCallResult = -1;
     //FUNCTION
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != KW_function){
         return SYN_ERROR;
     }
 
     //ID
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_identifier){
         return SYN_ERROR;
@@ -133,45 +160,47 @@ int FunctionDeclar(){
     //Praca s ID vlozit do hash table...//TODO
 
     //LEFT_BRACKET
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_lParenth){
         return SYN_ERROR;
     }
 
+
     //<function-args>
-    RecurCallResult = FunctArgs();
+    RecurCallResult = FunctArgs(CurrentToken);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
+
     //AS
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != KW_as){
         return SYN_ERROR;
     }
 
     //<function-type>
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
+
     switch(CurrentToken.type){
-        case TOK_string:
-        case TOK_decimal:
-        case TOK_integer:
+        case KW_string:
+        case KW_double:
+        case KW_integer:
             //TODO ulozit niekde -> prerobit tento switch na vlastnu funkciu?
 
-            break;
+        break;
 
         default:
             return SYN_ERROR;
     }
-
     //EOL
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_endOfLine){
         return SYN_ERROR;
@@ -186,10 +215,10 @@ int FunctionDeclar(){
   * 2) <function-args> -> ID AS <data-type> <more-function-args>
   * @return type of error or succes
   **/
-int FunctArgs(){
+int FunctArgs(token_t CurrentToken){
     int RecurCallResult = -1;
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     switch(CurrentToken.type){
         //RIGHT_BRACKET
@@ -200,24 +229,24 @@ int FunctArgs(){
             //TODO Ulozit do tabulky,
 
             //AS
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != KW_as){
                 return SYN_ERROR;
             }
 
             //<data-type>
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             switch(CurrentToken.type){
-                case TOK_string:
-                case TOK_integer:
-                case TOK_decimal:
+                case KW_string:
+                case KW_double:
+                case KW_integer:
                     //TODO pridelit do struktury funkcie
 
-                RecurCallResult = MoreFunctArgs();
+                RecurCallResult = MoreFunctArgs(CurrentToken);
                 if(RecurCallResult != SUCCESS){
                     return RecurCallResult;
                 }
@@ -239,10 +268,10 @@ int FunctArgs(){
   * <more-function-args>    -> RIGHT_BRACKET
   * @return error type or success
   */
-int MoreFunctArgs(){
+int MoreFunctArgs(token_t CurrentToken){
     int RecurCallResult = -1;
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     switch(CurrentToken.type){
         //RIGHT_BRACKET
@@ -251,8 +280,8 @@ int MoreFunctArgs(){
 
         //COMMA ID AS ...
         case TOK_comma:
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             //ID
             if(CurrentToken.type != TOK_identifier){
@@ -261,21 +290,21 @@ int MoreFunctArgs(){
             //TODO ulozit do tabulky
 
             //AS
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != KW_as){
                 return SYN_ERROR;
             }
 
             //<data-type>
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             switch(CurrentToken.type){
-                case TOK_integer:
-                case TOK_string:
-                case TOK_decimal:
+                case KW_string:
+                case KW_double:
+                case KW_integer:
                     //TODO pridelit do struktury tabulky
                 break;
 
@@ -284,7 +313,7 @@ int MoreFunctArgs(){
             }
 
             //<more-function-args>
-            RecurCallResult = MoreFunctArgs();
+            RecurCallResult = MoreFunctArgs(CurrentToken);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -303,12 +332,12 @@ int MoreFunctArgs(){
   * FUNCTION was already check in <prog> so we start with ID
   * @return Type of error or success
   */
-int FunctionDefinition(){
+int FunctionDefinition(token_t CurrentToken){
     int RecurCallResult = -1;
 
     //ID
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_identifier){
         return SYN_ERROR;
@@ -316,35 +345,35 @@ int FunctionDefinition(){
     //TODO vlozit tam kde treba..
 
     //LEFT_BRACKET
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_lParenth){
         return SYN_ERROR;
     }
 
     //<function-args>
-    RecurCallResult = FunctArgs();
+    RecurCallResult = FunctArgs(CurrentToken);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
 
     //AS
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
-    if (CurrentToken.type != TOK_identifier){
+    if (CurrentToken.type != KW_as){
         return SYN_ERROR;
     }
 
     //<data-type>
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     switch(CurrentToken.type){
-        case TOK_integer:
-        case TOK_string:
-        case TOK_decimal:
+        case KW_string:
+        case KW_double:
+        case KW_integer:
             //TODO pridelit do struktury tabulky
         break;
 
@@ -353,30 +382,30 @@ int FunctionDefinition(){
     }
 
     //EOL
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_endOfLine){
         return SYN_ERROR;
     }
 
     //<function-body>
-    RecurCallResult = Stats(false);
+    RecurCallResult = Stats(CurrentToken, false);
     if(RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
 
     //FUNCTION
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != KW_function){
         return SYN_ERROR;
     }
 
     //EOL
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     if (CurrentToken.type != TOK_endOfLine){
         return SYN_ERROR;
@@ -389,16 +418,16 @@ int FunctionDefinition(){
  * @return Type of error or SUCCESS
  * @param InScope --> signlize if stats was called from user function or from scope
  **/
-int Stats(bool InScope){
+int Stats(token_t CurrentToken, bool InScope){
     int RecurCallResult = -1;
 
-    if (getToken(&CurrentToken) == LEX_ERROR){
-        return LEX_ERROR;
+    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+        return ScannerInt;
     }
     //Delete EOLs
     while(CurrentToken.type == TOK_endOfLine){
-        if(getToken(&CurrentToken) == LEX_ERROR){
-            return LEX_ERROR;
+        if((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+            return ScannerInt;
         }
     }
 
@@ -410,16 +439,16 @@ int Stats(bool InScope){
         //INPUT ID EOL <stats>
         case KW_input:
             //ID
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_identifier){
                 return SYN_ERROR;
             }
 
             //EOL
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_endOfLine){
                 return SYN_ERROR;
@@ -427,13 +456,13 @@ int Stats(bool InScope){
             //TODO Kontrola ci ID existuje a ine veci..
 
             //<stats>
-            return Stats(InScope);
+            return Stats(CurrentToken, InScope);
 
         //DIM ID AS <data-type> (EQUAL <expresion>) EOL <stats>
         case KW_dim:
             //ID
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_identifier){
                 return SYN_ERROR;
@@ -442,18 +471,21 @@ int Stats(bool InScope){
             //Treba kontrolovat aj s globalnou tabulkou ci sa nejaka funkcia nevola ako premenna?
 
             //AS
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != KW_as){
                 return SYN_ERROR;
             }
 
             //<data-type>
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
+            }
             switch(CurrentToken.type){
-                case TOK_integer:
-                case TOK_string:
-                case TOK_decimal:
+                case KW_string:
+                case KW_double:
+                case KW_integer:
                     //TODO pridelit do struktury tabulky
                 break;
 
@@ -462,20 +494,20 @@ int Stats(bool InScope){
             }
 
             //EOL or EQUAL <stats>
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             switch (CurrentToken.type) {
                 case TOK_endOfLine:
                     //<stats>
-                    return Stats(InScope);
+                    return Stats(CurrentToken, InScope);
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
 
-                    return Stats(InScope);
+                    return Stats(CurrentToken, InScope);
 
                 default:
                     return SYN_ERROR;
@@ -485,8 +517,8 @@ int Stats(bool InScope){
         //          ID (function) <function-params-call> TODO
         case TOK_identifier:
             //EQUAL
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_equal){
                 return SYN_ERROR;
@@ -499,7 +531,7 @@ int Stats(bool InScope){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-            return Stats(InScope);
+            return Stats(CurrentToken, InScope);
 
         //RETURN <expresion> EOL <stats>
         //Return can by use only inside functions, not inside Scope
@@ -514,7 +546,7 @@ int Stats(bool InScope){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-            return Stats(InScope);
+            return Stats(CurrentToken, InScope);
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
         case KW_print:
@@ -523,7 +555,7 @@ int Stats(bool InScope){
             //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
             //Da sa to tak?
 
-            return Stats(InScope);
+            return Stats(CurrentToken, InScope);
 
         //TODO If a While --> zatial neviem ako sa s tym bude pracovat co sa tyka instrukcnej pasky..
         //IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
@@ -533,8 +565,8 @@ int Stats(bool InScope){
             //Vrati mi zrejme THEN - treba to skontrolovat
 
             //EOL
-            if (getToken(&CurrentToken) == LEX_ERROR){
-                return LEX_ERROR;
+            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
             if (CurrentToken.type != TOK_endOfLine){
                 return SYN_ERROR;
@@ -543,66 +575,18 @@ int Stats(bool InScope){
             //Stats need to be called as they are inside of if so at the begining of line can be else
             return Stats();
             */
+        case KW_if:
+            //TODO
+
+        case KW_while:
+            //TODO
+
         default:
             return SYN_ERROR;
     }
     return SUCCESS;
 }
 
-/**TEST**/
-
-int a = 0;
-int getToken(token_t *loadedToken){
-    a++;
-    if(a < 2){
-    loadedToken->type = TOK_endOfLine;
-    return SUCCESS;
-    }
-    if(a == 2){
-        loadedToken->type = KW_declare;
-        return SUCCESS;
-    }
-    if(a == 3){
-        loadedToken->type = KW_function;
-        return SUCCESS;
-    }
-    if(a == 4){
-        loadedToken->type = TOK_identifier;
-        return SUCCESS;
-    }
-    if(a == 5){
-        loadedToken->type = TOK_lParenth;
-        return SUCCESS;
-    }
-    if(a ==  6){
-        loadedToken->type = TOK_rParenth;
-        return SUCCESS;
-    }
-    if(a == 7){
-        loadedToken->type = KW_as;
-        return SUCCESS;
-    }
-    if(a == 8){
-        loadedToken->type = TOK_string;
-        return SUCCESS;
-    }
-    if(a >= 9 && a < 12){
-        loadedToken->type = TOK_endOfLine;
-        return SUCCESS;
-    }
-    if(a == 12){
-        loadedToken->type = KW_scope;
-        return SUCCESS;
-    }
-    if(a == 13){
-        loadedToken->type = TOK_endOfLine;
-        return SUCCESS;
-    }
-    if(a == 14){
-        loadedToken->type = KW_return;
-        return SUCCESS;
-    }
-}
 
 int main(){
     int ret = parse();
