@@ -76,6 +76,7 @@ typedef enum
     TOK_minus,			/// Operator "-"
     TOK_mul,			/// Operator "*"
     TOK_div,			/// Operator "/"
+    TOK_divInt,			/// Operator "\"
     TOK_equal,			/// Operator "="
     TOK_notEqual,		/// Operator "<>"
     TOK_less,			/// Operator "<"
