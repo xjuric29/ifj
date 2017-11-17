@@ -16,7 +16,6 @@
 bool DecOrDefAndEOF = false; //To check if program have scope and then eof
 int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
 
-<<<<<<< HEAD
 /**@Brief Function to malloc space for token
   *@param Token
   *@return Pointer to alocated token
@@ -72,20 +71,6 @@ int parse(){
 
     return Result;
 
-=======
-int parse(){
-    int Error;
-    token_t CurrentToken;
-    CurrentToken.value.stringVal = malloc(sizeof(string));
-    strInit(CurrentToken.value.stringVal);
-    Error = program(CurrentToken);
-    strFree(CurrentToken.value.stringVal);
-    free(CurrentToken.value.stringVal);
-    return Error;
-
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
-}
-
 //TODO: Skontrolovanie prazdneho suboru
 
 /**
@@ -97,7 +82,7 @@ int parse(){
     * @param CurrentToken is pointer to the structure where is current loaded token
     * @return type of error or succes
 **/
-<<<<<<< HEAD
+
 int program(token_t *CurrentToken, struct check ToCheck){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
@@ -107,17 +92,6 @@ int program(token_t *CurrentToken, struct check ToCheck){
     //Skip all empty lines at beggining of code/between declarations
     while(CurrentToken->type == TOK_endOfLine){
         if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-int program(token_t CurrentToken){
-    int RecurCallResult = -1; //Variable for checking of recursive descent
-    //In global variable with type token_t will be stored token from scanner
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }
-    //Skip all empty lines at beggining of code/between declarations
-    while(CurrentToken.type == TOK_endOfLine){
-        if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
             return ScannerInt;
         }
     }
@@ -138,11 +112,7 @@ int program(token_t CurrentToken){
             }
             DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
-<<<<<<< HEAD
             RecurCallResult = program(CurrentToken, ToCheck);
-=======
-            RecurCallResult = program(CurrentToken);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -150,7 +120,6 @@ int program(token_t CurrentToken){
 
         //<prog>	-> <function-definition> <prog>
         case KW_function:
-<<<<<<< HEAD
             RecurCallResult = FunctionDefinition(CurrentToken, ToCheck);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
@@ -158,14 +127,6 @@ int program(token_t CurrentToken){
             DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
             RecurCallResult = program(CurrentToken, ToCheck);
-=======
-            RecurCallResult = FunctionDefinition(CurrentToken);
-            if (RecurCallResult != SUCCESS){
-                return RecurCallResult;
-            }
-            //prog
-            RecurCallResult = program(CurrentToken);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -173,54 +134,18 @@ int program(token_t CurrentToken){
 
         // <prog>	-> SCOPE EOL <scope-body> SCOPE EOF
         case KW_scope:
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_endOfLine){
                 return SYN_ERROR; //Je to syntakticky error?
             }
             // <scope-body>
-<<<<<<< HEAD
             ToCheck.InScope = true; //Set that we are entering scope.. return in scope is error
             RecurCallResult = Stats(CurrentToken, ToCheck);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-=======
-            RecurCallResult = Stats(CurrentToken, true);
-            if (RecurCallResult != SUCCESS){
-                return RecurCallResult;
-            }
-
-            //SCOPE
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
-            }
-            if (CurrentToken.type != KW_scope){
-                return SYN_ERROR;
-            }
-
-            //EOF
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
-            }
-            //Skip EOLs..
-            while(CurrentToken.type == TOK_endOfLine){
-                if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                    return ScannerInt;
-                }
-            }
-            if (CurrentToken.type != TOK_endOfFile){
-                return SYN_ERROR;
-            }
-
-            return SUCCESS;
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
-
             //SCOPE
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
@@ -256,19 +181,11 @@ int program(token_t CurrentToken){
  * @param CurrentToken is pointer to the structure where is current loaded token
  * @return type of error or succes
  **/
-<<<<<<< HEAD
 int FunctionDeclar(token_t *CurrentToken){
-=======
-int FunctionDeclar(token_t CurrentToken){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
     string FunctionID;
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //FUNCTION
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != KW_function){
@@ -276,11 +193,7 @@ int FunctionDeclar(token_t CurrentToken){
     }
 
     //ID
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_identifier){
@@ -294,11 +207,7 @@ int FunctionDeclar(token_t CurrentToken){
     //Praca s ID vlozit do hash table...//TODO
 
     //LEFT_BRACKET
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_lParenth){
@@ -313,11 +222,7 @@ int FunctionDeclar(token_t CurrentToken){
     }
 
     //AS
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != KW_as){
@@ -325,18 +230,10 @@ int FunctionDeclar(token_t CurrentToken){
     }
 
     //<function-type>
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     switch(CurrentToken->type){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }
-
-    switch(CurrentToken.type){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         case KW_string:
         case KW_double:
         case KW_integer:
@@ -348,11 +245,7 @@ int FunctionDeclar(token_t CurrentToken){
             return SYN_ERROR;
     }
     //EOL
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_endOfLine){
@@ -369,16 +262,10 @@ int FunctionDeclar(token_t CurrentToken){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return type of error or succes
   **/
-<<<<<<< HEAD
 int FunctArgs(token_t *CurrentToken){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //Get token and swich whitch of the rules will be used
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-int FunctArgs(token_t CurrentToken){
-    int RecurCallResult = -1;
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     switch(CurrentToken->type){
@@ -390,11 +277,7 @@ int FunctArgs(token_t CurrentToken){
             //TODO Ulozit do tabulky,
 
             //AS
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != KW_as){
@@ -402,17 +285,10 @@ int FunctArgs(token_t CurrentToken){
             }
 
             //<data-type>
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
             switch(CurrentToken->type){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
-            }
-            switch(CurrentToken.type){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 case KW_string:
                 case KW_double:
                 case KW_integer:
@@ -441,15 +317,9 @@ int FunctArgs(token_t CurrentToken){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return error type or success
   */
-<<<<<<< HEAD
 int MoreFunctArgs(token_t *CurrentToken){
     int RecurCallResult = -1;
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-int MoreFunctArgs(token_t CurrentToken){
-    int RecurCallResult = -1;
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     switch(CurrentToken->type){
@@ -459,11 +329,7 @@ int MoreFunctArgs(token_t CurrentToken){
 
         //COMMA ID AS ...
         case TOK_comma:
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             //ID
@@ -473,11 +339,7 @@ int MoreFunctArgs(token_t CurrentToken){
             //TODO ulozit do tabulky
 
             //AS
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != KW_as){
@@ -485,17 +347,10 @@ int MoreFunctArgs(token_t CurrentToken){
             }
 
             //<data-type>
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
             switch(CurrentToken->type){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
-            }
-            switch(CurrentToken.type){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 case KW_string:
                 case KW_double:
                 case KW_integer:
@@ -528,19 +383,11 @@ int MoreFunctArgs(token_t CurrentToken){
   * @param ToCheck is struct with variables to check if we are inside of While, If or Scope
   * @return Type of error or success
   */
-<<<<<<< HEAD
 int FunctionDefinition(token_t *CurrentToken, struct check ToCheck){
     int RecurCallResult = -1;
 
     //ID
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-int FunctionDefinition(token_t CurrentToken){
-    int RecurCallResult = -1;
-
-    //ID
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_identifier){
@@ -549,11 +396,7 @@ int FunctionDefinition(token_t CurrentToken){
     //TODO vlozit tam kde treba..
 
     //LEFT_BRACKET
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_lParenth){
@@ -567,32 +410,18 @@ int FunctionDefinition(token_t CurrentToken){
     }
 
     //AS
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     if (CurrentToken->type != KW_as){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }
-    if (CurrentToken.type != KW_as){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return SYN_ERROR;
     }
 
     //<data-type>
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     switch(CurrentToken->type){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }
-    switch(CurrentToken.type){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         case KW_string:
         case KW_double:
         case KW_integer:
@@ -604,11 +433,7 @@ int FunctionDefinition(token_t CurrentToken){
     }
 
     //EOL
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_endOfLine){
@@ -616,21 +441,13 @@ int FunctionDefinition(token_t CurrentToken){
     }
 
     //<function-body>
-<<<<<<< HEAD
     RecurCallResult = Stats(CurrentToken, ToCheck);
-=======
-    RecurCallResult = Stats(CurrentToken, false);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
     if(RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
 
     //FUNCTION
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != KW_function){
@@ -638,11 +455,7 @@ int FunctionDefinition(token_t CurrentToken){
     }
 
     //EOL
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
         return ScannerInt;
     }
     if (CurrentToken->type != TOK_endOfLine){
@@ -657,29 +470,16 @@ int FunctionDefinition(token_t CurrentToken){
  * @param ToCheck -> structure whit values to check if we are in scope if or while
  * @return Type of error or SUCCESS
  **/
-<<<<<<< HEAD
 int Stats(token_t *CurrentToken, struct check ToCheck){
-=======
-int Stats(token_t CurrentToken, bool InScope){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
     int RecurCallResult = -1;
     struct check SolveProblems; //auxiliary struct to solve problem for example with just ELSE in While:  While expresion EOL ....-> ELSE <-.... LOOP
 
-<<<<<<< HEAD
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     //Delete EOLs
     while(CurrentToken->type == TOK_endOfLine){
         if((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-    if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }
-    //Delete EOLs
-    while(CurrentToken.type == TOK_endOfLine){
-        if((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
             return ScannerInt;
         }
     }
@@ -695,11 +495,7 @@ int Stats(token_t CurrentToken, bool InScope){
         //INPUT ID EOL <stats>
         case KW_input:
             //ID
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_identifier){
@@ -707,11 +503,7 @@ int Stats(token_t CurrentToken, bool InScope){
             }
 
             //EOL
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_endOfLine){
@@ -720,20 +512,12 @@ int Stats(token_t CurrentToken, bool InScope){
             //TODO Kontrola ci ID existuje a ine veci..
 
             //<stats>
-<<<<<<< HEAD
             return Stats(CurrentToken, ToCheck);
-=======
-            return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
         //DIM ID AS <data-type> (EQUAL <expresion>) EOL <stats>
         case KW_dim:
             //ID
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_identifier){
@@ -743,11 +527,7 @@ int Stats(token_t CurrentToken, bool InScope){
             //Treba kontrolovat aj s globalnou tabulkou ci sa nejaka funkcia nevola ako premenna?
 
             //AS
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != KW_as){
@@ -755,17 +535,10 @@ int Stats(token_t CurrentToken, bool InScope){
             }
 
             //<data-type>
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
             switch(CurrentToken->type){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
-            }
-            switch(CurrentToken.type){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 case KW_string:
                 case KW_double:
                 case KW_integer:
@@ -777,32 +550,20 @@ int Stats(token_t CurrentToken, bool InScope){
             }
 
             //EOL or EQUAL <stats>
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             switch (CurrentToken->type) {
                 case TOK_endOfLine:
                     //<stats>
-<<<<<<< HEAD
                     return Stats(CurrentToken, ToCheck);
-=======
-                    return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
 
-<<<<<<< HEAD
                     return Stats(CurrentToken, ToCheck);
-=======
-                    return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
                 default:
                     return SYN_ERROR;
@@ -812,11 +573,7 @@ int Stats(token_t CurrentToken, bool InScope){
         //          ID (function) <function-params-call> TODO
         case TOK_identifier:
             //EQUAL
-<<<<<<< HEAD
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-=======
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_equal){
@@ -830,11 +587,7 @@ int Stats(token_t CurrentToken, bool InScope){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-<<<<<<< HEAD
             return Stats(CurrentToken, ToCheck);
-=======
-            return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
         //RETURN <expresion> EOL <stats>
         //Return can by use only inside functions, not inside Scope
@@ -849,11 +602,7 @@ int Stats(token_t CurrentToken, bool InScope){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-<<<<<<< HEAD
             return Stats(CurrentToken, ToCheck);
-=======
-            return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
         case KW_print:
@@ -862,15 +611,10 @@ int Stats(token_t CurrentToken, bool InScope){
             //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
             //Da sa to tak?
 
-<<<<<<< HEAD
             return Stats(CurrentToken, ToCheck);
-=======
-            return Stats(CurrentToken, InScope);
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
         //TODO If a While --> zatial neviem ako sa s tym bude pracovat co sa tyka instrukcnej pasky..
 
-<<<<<<< HEAD
 
         //IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL <stats>
         case KW_if:
@@ -904,11 +648,6 @@ int Stats(token_t CurrentToken, bool InScope){
             RecurCallResult = WhileStat(CurrentToken, SolveProblems);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
-=======
-            //EOL
-            if ((ScannerInt = getToken(&CurrentToken)) != SUCCESS){
-                return ScannerInt;
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
             }
             //TODO nejake navestia...
 
@@ -929,26 +668,13 @@ int Stats(token_t CurrentToken, bool InScope){
             }else{ //otherwise syn. error
                 return SYN_ERROR;
             }
-
-<<<<<<< HEAD
-=======
-            //Stats need to be called as they are inside of if so at the begining of line can be else
-            return Stats();
-            */
-        case KW_if:
-            //TODO
-
-        case KW_while:
-            //TODO
-
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
+		    
         default:
             return SYN_ERROR;
     }
     return SUCCESS;
 }
 
-<<<<<<< HEAD
 /**
   * @brief: Function for dealing with while in program
   * RULE: DO WHILE <expresion> EOL <stats> LOOP EOL <stats>
@@ -1043,8 +769,6 @@ int IfStat(token_t *CurrentToken, struct check ToCheck){
     }
     return SUCCESS;
 }
-=======
->>>>>>> e7fb055d0550973a614110a0bc68c2b460576d8a
 
 int main(){
     int ret = parse();
