@@ -67,11 +67,11 @@ int parse(){
     ToCheck.InScope = false; ToCheck.InWhile = false; ToCheck.InIf = false;
 
     //Start recursive descent
-    Result = program(CurrentToken, ToCheck);
+    Result = program(CurrentToken, ToCheck, GlobalTable);
 
-    //Free Token
-    TokenFree(CurrentToken);
-    st_delete(GlobalTable);
+
+    TokenFree(CurrentToken); //Free Token
+    st_delete(GlobalTable); //Free Global table
 
     return Result;
 }
@@ -87,7 +87,7 @@ int parse(){
     * @param CurrentToken is pointer to the structure where is current loaded token
     * @return type of error or succes
 **/
-int program(token_t *CurrentToken, struct check ToCheck){
+int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -110,13 +110,13 @@ int program(token_t *CurrentToken, struct check ToCheck){
 
         //<prog>	-> <function-declaration> <prog>
         case KW_declare:
-            RecurCallResult = FunctionDeclar(CurrentToken);
+            RecurCallResult = FunctionDeclar(CurrentToken, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
             DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
-            RecurCallResult = program(CurrentToken, ToCheck);
+            RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -124,13 +124,13 @@ int program(token_t *CurrentToken, struct check ToCheck){
 
         //<prog>	-> <function-definition> <prog>
         case KW_function:
-            RecurCallResult = FunctionDefinition(CurrentToken, ToCheck);
+            RecurCallResult = FunctionDefinition(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
             DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
-            RecurCallResult = program(CurrentToken, ToCheck);
+            RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -146,7 +146,7 @@ int program(token_t *CurrentToken, struct check ToCheck){
             }
             // <scope-body>
             ToCheck.InScope = true; //Set that we are entering scope.. return in scope is error
-            RecurCallResult = Stats(CurrentToken, ToCheck);
+            RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -184,10 +184,12 @@ int program(token_t *CurrentToken, struct check ToCheck){
  * <function-declaration>   -> DECLARE FUNCTION ID LEFT_BRACKET <function-args> AS <function-type> EOL
  * DECLARE was already checked so we start with FUNCTION
  * @param CurrentToken is pointer to the structure where is current loaded token
+ * @param GlobalTable is pointer to Symbol Table...
  * @return type of error or succes
  **/
-int FunctionDeclar(token_t *CurrentToken){
+int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
     string FunctionID;
+    
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //FUNCTION
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -389,7 +391,7 @@ int MoreFunctArgs(token_t *CurrentToken){
   * @param ToCheck is struct with variables to check if we are inside of While, If or Scope
   * @return Type of error or success
   */
-int FunctionDefinition(token_t *CurrentToken, struct check ToCheck){
+int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
 
     //ID
@@ -447,7 +449,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck){
     }
 
     //<function-body>
-    RecurCallResult = Stats(CurrentToken, ToCheck);
+    RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
     if(RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
@@ -476,7 +478,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck){
  * @param ToCheck -> structure whit values to check if we are in scope if or while
  * @return Type of error or SUCCESS
  **/
-int Stats(token_t *CurrentToken, struct check ToCheck){
+int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
     struct check SolveProblems; //auxiliary struct to solve problem for example with just ELSE in While:  While expresion EOL ....-> ELSE <-.... LOOP
 
@@ -523,7 +525,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             //TODO Kontrola ci ID existuje a ine veci..
 
             //<stats>
-            return Stats(CurrentToken, ToCheck);
+            return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //DIM ID AS <data-type> (EQUAL <expresion>) EOL <stats>
         case KW_dim:
@@ -567,14 +569,14 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             switch (CurrentToken->type) {
                 case TOK_endOfLine:
                     //<stats>
-                    return Stats(CurrentToken, ToCheck);
+                    return Stats(CurrentToken, ToCheck, GlobalTable);
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
 
-                    return Stats(CurrentToken, ToCheck);
+                    return Stats(CurrentToken, ToCheck, GlobalTable);
 
                 default:
                     return SYN_ERROR;
@@ -598,7 +600,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-            return Stats(CurrentToken, ToCheck);
+            return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //RETURN <expresion> EOL <stats>
         //Return can by use only inside functions, not inside Scope
@@ -613,7 +615,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
             //takze to treba ceknut
 
-            return Stats(CurrentToken, ToCheck);
+            return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
         case KW_print:
@@ -622,7 +624,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
             //Da sa to tak?
 
-            return Stats(CurrentToken, ToCheck);
+            return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //TODO If a While --> zatial neviem ako sa s tym bude pracovat co sa tyka instrukcnej pasky..
 
@@ -634,13 +636,13 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             SolveProblems.InIf = true; //Set InIf to true so token ELSE is SUCCESS
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
             //Call function that will check whole structure IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
-            RecurCallResult = IfStat(CurrentToken, SolveProblems);
+            RecurCallResult = IfStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
 
             //last <stats>
-            return Stats(CurrentToken, ToCheck);
+            return Stats(CurrentToken, ToCheck, GlobalTable);
 
         case KW_else:
             //If we are not inside if
@@ -657,7 +659,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             SolveProblems.InIf = false; //Set InIf to false so token ELSE that come before LOOP won`t be evaluated as SUCCESS
             SolveProblems.InWhile = true; //Set InWhile to true so LOOP is success
             //Call function to result while..
-            RecurCallResult = WhileStat(CurrentToken, SolveProblems);
+            RecurCallResult = WhileStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -671,7 +673,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
                 return SYN_ERROR;
             }
 
-            return Stats(CurrentToken, ToCheck); //Continue to check other stats, recurively
+            return Stats(CurrentToken, ToCheck, GlobalTable); //Continue to check other stats, recurively
 
         //We must test if we are inside WHILE otherwise its error
         case KW_loop:
@@ -695,7 +697,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return Type of error or SUCCESS
  **/
-int WhileStat(token_t *CurrentToken, struct check ToCheck){
+int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
     //WHILE, do was already checked
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -715,7 +717,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck){
         return SYN_ERROR;
     }
     //<stat>
-    RecurCallResult = Stats(CurrentToken, ToCheck);
+    RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
@@ -730,7 +732,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return Type of error or SUCCESS
   */
-int IfStat(token_t *CurrentToken, struct check ToCheck){
+int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
     //<condition>
     //TODO predat riadenie precedencnej
@@ -752,14 +754,14 @@ int IfStat(token_t *CurrentToken, struct check ToCheck){
         return SYN_ERROR;
     }
     //RecurCallResult will be SUCCESS only if we found ELSE...
-    RecurCallResult = Stats(CurrentToken, ToCheck);
+    RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
 
     //else <stat>
     ToCheck.InIf = false; //We are entering Else <stat> so we are not inside if.. another ELSE is error
-    RecurCallResult = Stats(CurrentToken, ToCheck);
+    RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
