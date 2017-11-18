@@ -7,12 +7,12 @@
 
 /************ JEDNODUCHE TESTY A PRIKLADY VOLANIA FUNKCII ************/
 
-int main()
+/*int main()
 {
     st_globalTable_t *glob = st_global_init(100);
     printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
     string key;
-    printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
+ //   printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
     key.str = "haha";
     printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
     st_add_func(glob, &key);
@@ -22,9 +22,15 @@ int main()
     string key_el;
     key_el.str = "haha";
     st_add_element(glob, &key, &key_el, 'P');
+    key_el.str = "huhu";
+    st_add_element(glob, &key, &key_el, 'P');
+    key_el.str = "hihi";
+    st_add_element(glob, &key, &key_el, 'P');
+	struct st_localTable_t *st_local = glob->functions[50];
+	printf("%s\t%s\t%s\n\n", st_local->params->first->key.str, st_local->params->first->next_param->key.str, st_local->params->last->key.str);
     st_delete(glob);
     return 0;
-}
+}*/
 
 unsigned int hash_function(const char *str)
 {
@@ -169,7 +175,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
 
     while(st_local != NULL)
     {
-        if(!strCmpString(&st_local->key, key))
+        if(!strCmpString(&st_local->key, func_name))
             break;
         st_local = st_local->next;
     }
@@ -185,6 +191,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
 
     st_elem = malloc(sizeof(st_element_t));
     st_elem->next = NULL;
+	st_elem->next_param = NULL;
     strCopyString(&st_elem->key, key);
 
     if(st_local->elements[loc_hash] != NULL)
