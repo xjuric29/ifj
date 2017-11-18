@@ -24,7 +24,7 @@
 typedef enum
 {
     // KEY WORDS
-    // Don't change order of keywords! This is important for correct identification
+    // Don't change order of keywords! This is important for correct identification in scanner
     KW_as,			/// Keyword "As"
     KW_asc,			/// Keyword "Asc"
     KW_declare,		/// Keyword "Declare"
@@ -107,8 +107,14 @@ typedef struct
     tokenValue_t value;
 } token_t;
 
+/**
+ * Reads part of code from stdin and coverts to correct token. If token type is TOK_identifier or TOK_string function
+ * also fills loadedToken.value.stringVal, if token type is TOK_integer fills loadedToken.value.integer and if token
+ * type is TOK_decimal fills loadedToken.value.decimal.
+ * @param loadedToken - Pre-allocated structure. Before using of this function is important to allocate and initialize
+ * loadedToken.value.stringVal
+ * @return 0 if everything is ok, 1 for lexical analysis error, else 99 for internal error
+ */
 int getToken (token_t *loadedToken);
-
-char getNotSpaceChar ();
 
 #endif
