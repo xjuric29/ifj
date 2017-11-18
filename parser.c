@@ -70,6 +70,7 @@ int parse(){
     TokenFree(CurrentToken);
 
     return Result;
+}
 
 //TODO: Skontrolovanie prazdneho suboru
 
@@ -82,7 +83,6 @@ int parse(){
     * @param CurrentToken is pointer to the structure where is current loaded token
     * @return type of error or succes
 **/
-
 int program(token_t *CurrentToken, struct check ToCheck){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
@@ -146,6 +146,7 @@ int program(token_t *CurrentToken, struct check ToCheck){
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
+
             //SCOPE
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
@@ -244,6 +245,7 @@ int FunctionDeclar(token_t *CurrentToken){
         default:
             return SYN_ERROR;
     }
+
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -488,6 +490,11 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
         //END --- functions and scope end with END
         case KW_end:
             if (ToCheck.InWhile){ //If we are inside While and comes end its error..
+                printf("Padlo na end in while\n");
+                return SYN_ERROR;
+            }
+            if (ToCheck.InIf){ //If we are inside IF we expect Else to end recursi not End
+                printf("Padlo na end in if\n");
                 return SYN_ERROR;
             }
             return SUCCESS;
@@ -634,6 +641,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
         case KW_else:
             //If we are not inside if
             if (!ToCheck.InIf){
+                printf("Padlo na elsee in while\n");
                 return SYN_ERROR;
             }
             return SUCCESS;
@@ -666,9 +674,10 @@ int Stats(token_t *CurrentToken, struct check ToCheck){
             if(ToCheck.InWhile){ //If we are in While its OK
                 return SUCCESS;
             }else{ //otherwise syn. error
+                printf("Padlo na loop\n");
                 return SYN_ERROR;
             }
-		    
+
         default:
             return SYN_ERROR;
     }
