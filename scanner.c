@@ -289,6 +289,7 @@ int getToken(token_t *loadedToken)
                     }
                 } else
                 {
+                    lastChar = currChar;
                     if (isWhiteChar(currChar)) lastChar = getNotWhiteChar();
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_div);
