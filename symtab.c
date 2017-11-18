@@ -7,6 +7,7 @@
 
 /************ JEDNODUCHE TESTY A PRIKLADY VOLANIA FUNKCII ************/
 
+/*
 int main()
 {
     st_globalTable_t *glob = st_global_init(100);
@@ -25,7 +26,7 @@ int main()
     st_delete(glob);
     return 0;
 }
-
+*/
 unsigned int hash_function(const char *str)
 {
     unsigned int h=0;
@@ -39,20 +40,20 @@ st_globalTable_t *st_global_init(unsigned int size)
 {
     assert(size != 0);
     st_globalTable_t *st_global = NULL;
-    
+
     st_global = malloc(sizeof(st_globalTable_t) + size*sizeof(st_localTable_t *));
     if(st_global == NULL)
     {
         fprintf(stderr, "Allocation error");
         return NULL;
     }
-    
+
     for(unsigned int i = 0; i < size; i++)
         st_global->functions[i] = NULL;
-    
+
     st_global->global_size = size;
     st_global->global_n = 0;
-    
+
     return st_global;
 }
 
@@ -60,14 +61,14 @@ st_localTable_t *st_local_init(unsigned int size)
 {
     assert(size != 0);
     st_localTable_t *st_local = NULL;
-    
+
     st_local = malloc(sizeof(st_localTable_t) + size*sizeof(st_element_t *));
     if(st_local == NULL)
     {
         fprintf(stderr, "Allocation error");
         return NULL;
     }
-    
+
     for(unsigned int i = 0; i < size; i++)
         st_local->elements[i] = NULL;
 
@@ -89,9 +90,9 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
 	printf("%d\n", hash);
-    
+
     st_localTable_t *st_local = st_global->functions[hash];
-    
+
     while(st_local != NULL)
     {
         if(!strCmpString(&st_local->key, key))
@@ -105,23 +106,23 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
             {
                 return st_local;
             }*/
-            
+
             return st_local;
         }
 
         st_local = st_local->next;
     }
-    
+
     st_local = st_local_init(ST_SIZE);
     st_local->next = NULL;
     strCopyString(&st_local->key, key);
     if(st_global->functions[hash] != NULL)
-    {   
+    {
         st_local->next = st_global->functions[hash];
         st_global->functions[hash] = st_local;
         st_global->functions[hash]->local_n++;
     }
-    
+
     else
     {
         st_global->functions[hash] = st_local;
@@ -137,22 +138,22 @@ st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key)
         return NULL;
 
     unsigned int hash = hash_function(key->str) % st_global->global_size;
-	
+
 	printf("%d\n", hash);
-	   
+
     st_localTable_t *st_local = st_global->functions[hash];
-    
+
     while(st_local != NULL)
     {
         if(!strCmpString(&st_local->key, key))
         {
-            
+
             return st_local;
         }
 
         st_local = st_local->next;
     }
-    
+
    return NULL;
 }
 
@@ -164,7 +165,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
         return NULL;
 
     unsigned int glob_hash = hash_function(func_name->str) % st_global->global_size;
-    
+
     st_localTable_t *st_local = st_global->functions[glob_hash];
 
     while(st_local != NULL)
@@ -174,7 +175,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
         st_local = st_local->next;
     }
     unsigned int loc_hash = hash_function(key->str) % st_local->local_size;
-    
+
     st_element_t *st_elem = st_local->elements[loc_hash];
     while(st_elem != NULL)
     {
@@ -216,20 +217,20 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
             else
             {
                 st_local->params->params_n++;
-                st_local->params->last->next_param = st_elem;               
+                st_local->params->last->next_param = st_elem;
                 st_local->params->last = st_elem;
             }
             break;
     }
-    
+
     return st_elem;
-    
+
 }
 
 void st_delete(st_globalTable_t *st_global)
 {
     for(unsigned int i = 0; i < st_global->global_size; i++)
-    {   
+    {
         st_localTable_t *st_local = st_global->functions[i];
         while(st_local != NULL)
         {
@@ -241,7 +242,7 @@ void st_delete(st_globalTable_t *st_global)
                         st_element_t *tmp = st_element;
                         st_element = st_element->next;
                         strFree(&tmp->key);
-                        free(tmp);   
+                        free(tmp);
                     }
             }
          //   free(st_local->elements);
@@ -251,7 +252,7 @@ void st_delete(st_globalTable_t *st_global)
                 free(tmp->params);
             strFree(&tmp->key);
             free(tmp);
-            
+
         }
     }
     free(st_global);

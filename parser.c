@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "str.h"
+#include "symtab.h"
 
 
 
@@ -59,6 +60,8 @@ int parse(){
     if (CurrentToken == NULL){
         return INTERNAL_ERROR;
     }
+    //Global table of functions
+    st_globalTable_t *GlobalTable = st_global_init(50);
     //Structure to check if we are inside Scope or While or If
     struct check ToCheck;
     ToCheck.InScope = false; ToCheck.InWhile = false; ToCheck.InIf = false;
@@ -68,6 +71,7 @@ int parse(){
 
     //Free Token
     TokenFree(CurrentToken);
+    st_delete(GlobalTable);
 
     return Result;
 }
