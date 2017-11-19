@@ -16,6 +16,7 @@
 //strInit(CurrentToken.value.stringVal);
 bool DecOrDefAndEOF = false; //To check if program have scope and then eof
 int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
+string FunctionID; //To know in which function we are
 
 /**@Brief Function to malloc space for token
   *@param Token
@@ -60,6 +61,7 @@ int parse(){
     if (CurrentToken == NULL){
         return INTERNAL_ERROR;
     }
+    strInit(&FunctionID);
     //Global table of functions
     st_globalTable_t *GlobalTable = st_global_init(50);
     //Structure to check if we are inside Scope or While or If
@@ -69,7 +71,7 @@ int parse(){
     //Start recursive descent
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
-
+    strFree(&FunctionID);
     TokenFree(CurrentToken); //Free Token
     st_delete(GlobalTable); //Free Global table
 
@@ -188,8 +190,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
  * @return type of error or succes
  **/
 int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
-    string FunctionID;
-    
+    st_localTable_t *Function; //Pointer to function in Hash Table
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //FUNCTION
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -207,11 +208,16 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         return SYN_ERROR;
     }
 
-    //Save ID to local variable FunctionID
-    /*if (strCopyString(&FunctionID, (CurrentToken.value.stringVal)) == STR_ERROR){
+    //Store ID to GlobalVariable FunctionID
+    if (strCopyString(&FunctionID, (CurrentToken->value.stringVal)) == STR_ERROR){
         return INTERNAL_ERROR;
-    }*/
-    //Praca s ID vlozit do hash table...//TODO
+    }
+
+    //Put ID to Global hash table
+    Function = st_add_func(GlobalTable, &FunctionID);
+    if (Function == NULL){ //If returns null -> error
+        return INTERNAL_ERROR;
+    }
 
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){

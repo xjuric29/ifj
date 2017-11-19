@@ -13,20 +13,40 @@ int main()
     st_globalTable_t *glob = st_global_init(100);
     printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
     string key;
-    printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
-    key.str = "haha";
+    //   printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
+    strInit(&key);
+    strAddChar(&key, 'A');
+    strAddChar(&key, 'B');
     printf("%s\t%d\t%d\n", key.str, key.length, key.allocSize);
     st_add_func(glob, &key);
     st_localTable_t *tmp = st_find_func(glob, &key);
     printf("%s\t%d\t%d\n", tmp->key.str, tmp->key.length, tmp->key.allocSize);
-    printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[50]);
+    printf("%u\t%u\t%p\n", glob->global_size, glob->global_n, (void*)glob->functions[1]);
     string key_el;
-    key_el.str = "haha";
+    strInit(&key_el);
+    strAddChar(&key_el, 'A');
+    strAddChar(&key_el, 'C');
     st_add_element(glob, &key, &key_el, 'P');
+    strAddChar(&key_el, 'A');
+    strAddChar(&key_el, 'A');
+    st_add_element(glob, &key, &key_el, 'P');
+    strAddChar(&key_el, 'B');
+    strAddChar(&key_el, 'D');
+    st_add_element(glob, &key, &key_el, 'P');
+    st_element_t *parametre = tmp->params->first;
+    while(parametre != NULL){
+        printf("Parametre %s\n", parametre->key.str);
+        parametre = parametre->next_param;
+    }
+    //struct st_localTable_t *st_local = glob->functions[50];
+    //printf("%s\t%s\t%s\n\n", st_local->params->first->key.str, st_local->params->first->next_param->key.str, st_local->params->last->key.str);
+
+    strFree(&key_el);
+    strFree(&key);
     st_delete(glob);
     return 0;
-}
-*/
+}*/
+
 unsigned int hash_function(const char *str)
 {
     unsigned int h=0;
@@ -89,7 +109,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
 
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
-	printf("%d\n", hash);
+	//printf("%d\n", hash);
 
     st_localTable_t *st_local = st_global->functions[hash];
 
@@ -114,6 +134,10 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     }
 
     st_local = st_local_init(ST_SIZE);
+    if(st_local == NULL){
+        return NULL;
+    }
+    strInit(&st_local->key);
     st_local->next = NULL;
     strCopyString(&st_local->key, key);
     if(st_global->functions[hash] != NULL)
@@ -139,7 +163,7 @@ st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key)
 
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
-	printf("%d\n", hash);
+	//printf("%d\n", hash);
 
     st_localTable_t *st_local = st_global->functions[hash];
 
@@ -170,12 +194,12 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
 
     while(st_local != NULL)
     {
-        if(!strCmpString(&st_local->key, key))
+        if(!strCmpString(&st_local->key, func_name))
             break;
         st_local = st_local->next;
     }
     unsigned int loc_hash = hash_function(key->str) % st_local->local_size;
-
+    
     st_element_t *st_elem = st_local->elements[loc_hash];
     while(st_elem != NULL)
     {
@@ -185,8 +209,13 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     }
 
     st_elem = malloc(sizeof(st_element_t));
+    if (st_elem == NULL){return NULL;} //Error in malloc
     st_elem->next = NULL;
-    strCopyString(&st_elem->key, key);
+    st_elem->next_param = NULL;
+    strInit(&st_elem->key);
+    if (strCopyString(&st_elem->key, key)){ //error in realloc
+        return NULL;
+    }
 
     if(st_local->elements[loc_hash] != NULL)
     {
