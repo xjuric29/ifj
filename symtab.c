@@ -6,6 +6,7 @@
 #include <string.h>
 
 /************ JEDNODUCHE TESTY A PRIKLADY VOLANIA FUNKCII ************/
+//TODO KONTROLY MALLOCKU, KED SA NIECO NEPODARI UVOLNIT NAALOKOVANE STRUKTURY VO FUNKCII A VRATIT NULL,
 
 /*
 int main()
@@ -35,8 +36,12 @@ int main()
     st_add_element(glob, &key, &key_el, 'P');
     st_element_t *parametre = tmp->params->first;
     while(parametre != NULL){
-        printf("Parametre %s\n", parametre->key.str);
+        printf("Parameter: %s je v poradi: %d\n", parametre->key.str, parametre->param_number);
         parametre = parametre->next_param;
+    }
+    st_element_t *Najdeny = st_find_element(glob, &key, &key_el);
+    if (Najdeny != NULL){
+        printf("Najdeny %s\n", Najdeny->key.str);
     }
     //struct st_localTable_t *st_local = glob->functions[50];
     //printf("%s\t%s\t%s\n\n", st_local->params->first->key.str, st_local->params->first->next_param->key.str, st_local->params->last->key.str);
@@ -181,6 +186,26 @@ st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key)
    return NULL;
 }
 
+st_element_t *st_find_element(st_globalTable_t *st_global, string *func_name, string *key)
+{
+    if(st_global == NULL || key->str == NULL || func_name->str == NULL)
+        return NULL;
+
+    st_localTable_t *function = st_find_func(st_global, func_name);
+
+    unsigned int loc_hash = hash_function(key->str) % function->local_size;
+
+    st_element_t *st_elem = function->elements[loc_hash];
+
+    while(st_elem != NULL)
+    {
+        if(!strCmpString(&st_elem->key, key))
+            return st_elem;
+        st_elem = st_elem->next;
+    }
+    return NULL;
+}
+
 
 
 st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, string *key, char type)
@@ -199,7 +224,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
         st_local = st_local->next;
     }
     unsigned int loc_hash = hash_function(key->str) % st_local->local_size;
-    
+
     st_element_t *st_elem = st_local->elements[loc_hash];
     while(st_elem != NULL)
     {
@@ -212,6 +237,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     if (st_elem == NULL){return NULL;} //Error in malloc
     st_elem->next = NULL;
     st_elem->next_param = NULL;
+    st_elem->param_number = -1; //Set to -1, if its parameter it will be changed later
     strInit(&st_elem->key);
     if (strCopyString(&st_elem->key, key)){ //error in realloc
         return NULL;
@@ -239,14 +265,17 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
             if(st_local->params == NULL)
             {
                 st_local->params = malloc(sizeof(st_params_t));
-                st_local->params->params_n++;
+                st_local->params->params_n = 1;
+                //st_local->params->params_n++;
                 st_local->params->first = st_elem;
                 st_local->params->last = st_elem;
+                st_elem->param_number = 0; //Set order of parameter
             }
             else
             {
                 st_local->params->params_n++;
                 st_local->params->last->next_param = st_elem;
+                st_elem->param_number = st_local->params->last->param_number + 1; //Set order of parameter
                 st_local->params->last = st_elem;
             }
             break;

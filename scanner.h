@@ -13,7 +13,7 @@
  #define SYN_ERROR 2
  #define SEM_ERROR_FUNC 3
  #define SEM_ERROR_COMP 4
- #define SEM_ERROR_OTHER 5
+ #define SEM_ERROR_OTHER 6
  #define INTERNAL_ERROR 99
 
 // --- Constants and structures ---
