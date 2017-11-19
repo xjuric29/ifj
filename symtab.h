@@ -15,11 +15,11 @@ PRAVDEPODOBNE STRUKTURA NA TROJADRESNY KOD, TO SA PORIESI NESKOR
 
 typedef enum
 {
-    st_integer,
-    st_decimal,
-    st_string
+    st_integer = 12, //Values from struct Token, for compatability
+    st_decimal = 5,
+    st_string = 18,
 
-} el_type_t;
+} type_t; //Type of Element or Function
 
 
 typedef union
@@ -39,7 +39,8 @@ typedef struct st_element_t
     st_value_t val;
     struct st_element_t *next_param; ///NULL if element is not a parameter or if element is last parameter
     struct st_element_t *next;
-    el_type_t el_type;
+    int param_number; //Which is in order
+    type_t el_type;
 
 } st_element_t;
 
@@ -57,6 +58,7 @@ typedef struct st_localTable_t
     string key; /// Function name
     bool declared;
     bool defined;
+    type_t func_type; //Return type of Function
     unsigned int local_size;
     unsigned int local_n;
     st_params_t *params;
@@ -116,11 +118,37 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key); ///
 
 st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, string *key, char type);
 
-
+/**
+* @brief for finding function in global hash table
+*
+* Looks for the function name in global hash table
+*
+* @param st_global searched global hash table
+* @param key function id
+* @return pointer to local hash table (function) or NULL
+*
+*/
 st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key); ///
 
+/**
+* @brief finding an element (variable) in local hash table (function)
+*
+* Looks for the variable name in local hash table
+* if the element is not found, returns NULL
+*
+* @param st_global searched global hash table
+* @func_name function id in which we are looking for key
+* @key variable id
+* @return pointer to the element or NULL
+*
+*/
+st_element_t *st_find_element(st_globalTable_t *st_global, string *func_name, string *key);
+
+/**
+* @brief Free and delete whole Global Table with all Local Tables
+*
+* @param st_global is pointer to global hash table
+*/
 void st_delete(st_globalTable_t *st_global);
-
-
 
 #endif

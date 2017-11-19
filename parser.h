@@ -46,14 +46,14 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
   * 2) <function-args> -> ID AS <data-type> <more-function-args>
   * @return type of error or succes
   **/
-int FunctArgs(token_t *CurrentToken);
+int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable);
 
 /** @brief RULES:
   * 1) <more-function-args>    -> COMMA ID AS <data-type> <more-function-args>
   * 2) <more-function-args>    -> RIGHT_BRACKET
   * @return error type or success
   */
-int MoreFunctArgs(token_t *CurrentToken);
+int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable);
 
 /**@brief: Function or Scope BODY
  * @param Current

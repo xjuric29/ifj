@@ -17,6 +17,7 @@
 bool DecOrDefAndEOF = false; //To check if program have scope and then eof
 int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
 string FunctionID; //To know in which function we are
+int ParamNumber; //To store number of parameter we are checking
 
 /**@Brief Function to malloc space for token
   *@param Token
@@ -71,6 +72,19 @@ int parse(){
     //Start recursive descent
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
+    //Test *********/
+    st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
+    if (FF->params != NULL){
+        st_element_t *Param = FF->params->first;
+        int i = 0;
+        printf("Pocet parametrov je: %d\n", FF->params->params_n);
+        while(Param != NULL){
+            i++;
+            printf("Parameter %d: %s --> %d\n", i, Param->key.str, Param->el_type);
+            Param = Param->next_param;
+        }
+    }
+    /**********/
     strFree(&FunctionID);
     TokenFree(CurrentToken); //Free Token
     st_delete(GlobalTable); //Free Global table
@@ -219,6 +233,11 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         return INTERNAL_ERROR;
     }
 
+    //Check if Function wasn`t already in Global Tabel which means it was already declared or defined
+    if (Function->declared || Function->defined){
+        return SEM_ERROR_FUNC;
+    }
+
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -227,9 +246,8 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         return SYN_ERROR;
     }
 
-
     //<function-args>
-    RecurCallResult = FunctArgs(CurrentToken);
+    RecurCallResult = FunctArgs(CurrentToken, GlobalTable);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
@@ -251,7 +269,7 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         case KW_double:
         case KW_integer:
             //TODO ulozit niekde -> prerobit tento switch na vlastnu funkciu?
-
+            Function->func_type = CurrentToken->type; //Save function type
         break;
 
         default:
@@ -266,6 +284,8 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         return SYN_ERROR;
     }
 
+    Function->declared = true; //Function was declared
+
     return SUCCESS;
 }
 
@@ -276,19 +296,50 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return type of error or succes
   **/
-int FunctArgs(token_t *CurrentToken){
+int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1; //Variable for checking of recursive descent
-    //Get token and swich whitch of the rules will be used
+    st_element_t *Parameter; //Variable to store pointer on parameter we are working with in Symtab
+    st_localTable_t *Function = st_find_func(GlobalTable, &FunctionID); //Pointer to function we are proccessing
+    ParamNumber = 0;
+    //Get token and swich which of the rules will be used
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     switch(CurrentToken->type){
         //RIGHT_BRACKET
         case TOK_rParenth:
+            if (Function->declared){ //If function was declared
+                if (Function->params != NULL){ //Definition has 0 params, but declaration has >0
+                    return SEM_ERROR_FUNC;
+                }
+            }
             return SUCCESS;
+
         //ID
         case TOK_identifier:
-            //TODO Ulozit do tabulky,
+            //If FunctArgs is called from Definition we need to check if there was declaration and check arguments.. and else
+
+            if (Function->declared){ //We are executing definition of function that was declared.. we need To check args.. and else
+
+                //Check if ID of first argument is equal to first argument in declaration
+                if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
+                    return SEM_ERROR_FUNC;
+                }
+
+            }else{ //We are executing declaration, or definition of function that wasn`t declared..
+
+                //Check If parameter ID isn`t also ID of any created Function TODO Treba to?
+                if(st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
+                    return SEM_ERROR_OTHER;
+                }
+
+                //Save element to Local Table of function.. Save it as parameter
+                Parameter = st_add_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal, 'P');
+                //TODO v Symtab.c kontroly..
+                if (Parameter == NULL){
+                    return INTERNAL_ERROR;
+                }
+            }
 
             //AS
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -306,17 +357,26 @@ int FunctArgs(token_t *CurrentToken){
                 case KW_string:
                 case KW_double:
                 case KW_integer:
-                    //TODO pridelit do struktury funkcie
-
-                RecurCallResult = MoreFunctArgs(CurrentToken);
-                if(RecurCallResult != SUCCESS){
-                    return RecurCallResult;
-                }
+                    if (Function->declared){ //If was declared we need to check data type
+                        if (CurrentToken->type != Parameter->el_type){
+                            return SEM_ERROR_FUNC;
+                        }
+                        ParamNumber++;
+                    }else{
+                        Parameter->el_type = CurrentToken->type; //Set type of parameter
+                    }
                 break;
                 //Token isn`t data-type
                 default:
                     return SYN_ERROR;
             }
+
+            //<more-function-args>
+            RecurCallResult = MoreFunctArgs(CurrentToken, GlobalTable);
+            if(RecurCallResult != SUCCESS){
+                return RecurCallResult;
+            }
+
             break;
         //Token isn`t ) or ID
         default:
@@ -331,14 +391,22 @@ int FunctArgs(token_t *CurrentToken){
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @return error type or success
   */
-int MoreFunctArgs(token_t *CurrentToken){
+int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
+    st_element_t *Parameter; //Variable to store pointer on parameter we are working with in Symtab
+    st_localTable_t *Function = st_find_func(GlobalTable, &FunctionID); //Pointer to function we are proccessing
+
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
     switch(CurrentToken->type){
         //RIGHT_BRACKET
         case TOK_rParenth:
+            if (Function->declared){ //If function was declared we need to check arguments
+                if (Function->params->params_n >= (ParamNumber + 1)){ //Token is ), we need to check if we don`t have less arguments then in declaration                    return SEM_ERROR_FUNC;
+                    return SEM_ERROR_OTHER;
+                }
+            }
             return SUCCESS;
 
         //COMMA ID AS ...
@@ -350,7 +418,28 @@ int MoreFunctArgs(token_t *CurrentToken){
             if(CurrentToken->type != TOK_identifier){
                 return SYN_ERROR;
             }
-            //TODO ulozit do tabulky
+            if (Function->declared){
+                //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
+                //Save element to Local Table of function.. Save it as parameter
+            }else{
+
+                //Check If parameter ID isn`t also ID of any created Function TODO Treba to?
+                if (st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
+                    return SEM_ERROR_OTHER;
+                }
+
+                //Check If parameter with this ID wasn`t already used
+                if (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal) != NULL){
+                    return SEM_ERROR_OTHER;
+                }
+
+                //Put param into local hash table
+                Parameter = st_add_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal, 'P');
+                //TODO v Symtab.c kontroly..
+                if (Parameter == NULL){
+                    return INTERNAL_ERROR;
+                }
+            }
 
             //AS
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -369,6 +458,11 @@ int MoreFunctArgs(token_t *CurrentToken){
                 case KW_double:
                 case KW_integer:
                     //TODO pridelit do struktury tabulky
+                    if (Function->declared){
+
+                    }else{
+                        Parameter->el_type = CurrentToken->type; //Set type of parameter
+                    }
                 break;
 
                 default:
@@ -376,7 +470,7 @@ int MoreFunctArgs(token_t *CurrentToken){
             }
 
             //<more-function-args>
-            RecurCallResult = MoreFunctArgs(CurrentToken);
+            RecurCallResult = MoreFunctArgs(CurrentToken, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
@@ -399,6 +493,7 @@ int MoreFunctArgs(token_t *CurrentToken){
   */
 int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
+    st_localTable_t *Function;
 
     //ID
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -409,6 +504,17 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     }
     //TODO vlozit tam kde treba..
 
+    //Store ID to GlobalVariable FunctionID
+    if (strCopyString(&FunctionID, (CurrentToken->value.stringVal)) == STR_ERROR){
+        return INTERNAL_ERROR;
+    }
+
+    //Put ID to Global hash table
+    Function = st_add_func(GlobalTable, &FunctionID);
+    if (Function == NULL){ //If returns null -> error
+        return INTERNAL_ERROR;
+    }
+
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -418,7 +524,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     }
 
     //<function-args>
-    RecurCallResult = FunctArgs(CurrentToken);
+    RecurCallResult = FunctArgs(CurrentToken, GlobalTable);
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
