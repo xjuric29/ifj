@@ -34,7 +34,7 @@ typedef union
 typedef struct st_element_t
 {
     string key; /// Variable name
-    unsigned int el_n;
+    //unsigned int el_n;
     bool defined;
     st_value_t val;
     struct st_element_t *next_param; ///NULL if element is not a parameter or if element is last parameter
@@ -60,7 +60,7 @@ typedef struct st_localTable_t
     bool defined;
     type_t func_type; //Return type of Function
     unsigned int local_size;
-    unsigned int local_n;
+    unsigned int local_n; //Elements in func
     st_params_t *params;
     struct st_localTable_t *next;
     st_element_t *elements[];

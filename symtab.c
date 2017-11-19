@@ -149,13 +149,13 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
     {
         st_local->next = st_global->functions[hash];
         st_global->functions[hash] = st_local;
-        st_global->functions[hash]->local_n++;
+        //st_global->functions[hash]->local_n++;
     }
 
     else
     {
         st_global->functions[hash] = st_local;
-        st_global->functions[hash]->local_n++;
+        //st_global->functions[hash]->local_n++;
         st_global->global_n++;
     }
     return st_local;
@@ -247,13 +247,13 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     {
         st_elem->next = st_local->elements[loc_hash];
         st_local->elements[loc_hash] = st_elem;
-        st_local->elements[loc_hash]->el_n++;
+        st_local->local_n++;
     }
 
     else
     {
         st_local->elements[loc_hash] = st_elem;
-        st_local->elements[loc_hash]->el_n++;
+        //st_local->elements[loc_hash]->el_n++;
         st_local->local_n++;
     }
 
@@ -269,7 +269,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
                 //st_local->params->params_n++;
                 st_local->params->first = st_elem;
                 st_local->params->last = st_elem;
-                st_elem->param_number = 0; //Set order of parameter
+                st_elem->param_number = 1; //Set order of parameter
             }
             else
             {
