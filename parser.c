@@ -84,6 +84,8 @@ int parse(){
             Param = Param->next_param;
         }
     }
+    printf ("Funkcii v tabulke je = %d\n", GlobalTable->global_n);
+    printf ("Prvkov vo funkcii je = %d\n", GlobalTable->functions[40]->local_n);
     /**********/
     strFree(&FunctionID);
     TokenFree(CurrentToken); //Free Token
@@ -300,7 +302,7 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     st_element_t *Parameter; //Variable to store pointer on parameter we are working with in Symtab
     st_localTable_t *Function = st_find_func(GlobalTable, &FunctionID); //Pointer to function we are proccessing
-    ParamNumber = 0;
+    ParamNumber = 1;
     //Get token and swich which of the rules will be used
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -310,6 +312,7 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         case TOK_rParenth:
             if (Function->declared){ //If function was declared
                 if (Function->params != NULL){ //Definition has 0 params, but declaration has >0
+                    printf("FunctArgs )\n");
                     return SEM_ERROR_FUNC;
                 }
             }
@@ -320,9 +323,13 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
             //If FunctArgs is called from Definition we need to check if there was declaration and check arguments.. and else
 
             if (Function->declared){ //We are executing definition of function that was declared.. we need To check args.. and else
-
+                if (Function->params == NULL){ //Declaration hadn`t any arguments
+                    printf("Prva\n");
+                    return SEM_ERROR_FUNC;
+                }
                 //Check if ID of first argument is equal to first argument in declaration
                 if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
+                    printf("FirsArg ID\n");
                     return SEM_ERROR_FUNC;
                 }
 
@@ -358,7 +365,8 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 case KW_double:
                 case KW_integer:
                     if (Function->declared){ //If was declared we need to check data type
-                        if (CurrentToken->type != Parameter->el_type){
+                        if (CurrentToken->type != Function->params->first->el_type){
+                            printf("FitstArg Type\n");
                             return SEM_ERROR_FUNC;
                         }
                         ParamNumber++;
@@ -370,7 +378,6 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 default:
                     return SYN_ERROR;
             }
-
             //<more-function-args>
             RecurCallResult = MoreFunctArgs(CurrentToken, GlobalTable);
             if(RecurCallResult != SUCCESS){
@@ -403,8 +410,9 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         //RIGHT_BRACKET
         case TOK_rParenth:
             if (Function->declared){ //If function was declared we need to check arguments
-                if (Function->params->params_n >= (ParamNumber + 1)){ //Token is ), we need to check if we don`t have less arguments then in declaration                    return SEM_ERROR_FUNC;
-                    return SEM_ERROR_OTHER;
+                if (Function->params->params_n >= ParamNumber){ //Token is ), we need to check if we don`t have less arguments then in declaration                    return SEM_ERROR_FUNC;
+                    printf("MoreFunctArgs )\n");
+                    return SEM_ERROR_FUNC;
                 }
             }
             return SUCCESS;
@@ -419,6 +427,15 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 return SYN_ERROR;
             }
             if (Function->declared){
+                Parameter = (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal));
+                if (Parameter == NULL){ //Parameter wasn`t found -> error
+                    printf("More, after comma\n");
+                    return SEM_ERROR_FUNC;
+                }
+                if (Parameter->param_number != ParamNumber){ //If param, we found hasn`t order we expect -> error
+                    printf("Order\n");
+                    return SEM_ERROR_FUNC;
+                }
                 //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
                 //Save element to Local Table of function.. Save it as parameter
             }else{
@@ -459,7 +476,11 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 case KW_integer:
                     //TODO pridelit do struktury tabulky
                     if (Function->declared){
-
+                        if (Parameter->el_type != CurrentToken->type){ //If data-type does`t correspondent
+                            printf("more type\n");
+                            return SEM_ERROR_FUNC;
+                        }
+                        ParamNumber++;
                     }else{
                         Parameter->el_type = CurrentToken->type; //Set type of parameter
                     }
@@ -515,6 +536,11 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         return INTERNAL_ERROR;
     }
 
+    //Check redefinition..
+    if (Function->defined){
+        return SEM_ERROR_FUNC;
+    }
+
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -546,6 +572,15 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         case KW_double:
         case KW_integer:
             //TODO pridelit do struktury tabulky
+            if (Function->declared){
+                if (Function->func_type != CurrentToken->type){
+                    printf("Funct Type\n");
+                    return SEM_ERROR_FUNC;
+                }
+            }else{
+                Function->func_type = CurrentToken->type;
+            }
+
         break;
 
         default:
@@ -581,6 +616,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     if (CurrentToken->type != TOK_endOfLine){
         return SYN_ERROR;
     }
+    Function->defined = true;
     return SUCCESS;
 }
 

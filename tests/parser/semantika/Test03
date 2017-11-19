@@ -1,0 +1,11 @@
+'DVOJITA DEFINICIA CHYBA
+
+function func(A as integer, B as double, C as string, D as double) as double
+end function
+
+function func(A as integer, B as double, C as string, D as double) as double
+end function
+
+scope
+end scope
+
