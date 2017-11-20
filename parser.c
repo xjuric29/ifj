@@ -73,7 +73,7 @@ int parse(){
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
     //Test *********/
-    st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
+    /*st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
     if (FF->params != NULL){
         st_element_t *Param = FF->params->first;
         int i = 0;
@@ -84,8 +84,8 @@ int parse(){
             Param = Param->next_param;
         }
     }
-    printf ("Funkcii v tabulke je = %d\n", GlobalTable->global_n);
-    printf ("Prvkov vo funkcii je = %d\n", GlobalTable->functions[40]->local_n);
+    //printf ("Funkcii v tabulke je = %d\n", GlobalTable->global_n);
+    //printf ("Prvkov vo funkcii je = %d\n", GlobalTable->functions[40]->local_n);
     /**********/
     strFree(&FunctionID);
     TokenFree(CurrentToken); //Free Token
@@ -237,6 +237,7 @@ int FunctionDeclar(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 
     //Check if Function wasn`t already in Global Tabel which means it was already declared or defined
     if (Function->declared || Function->defined){
+        printf("Dvojita deklaracia\n");
         return SEM_ERROR_FUNC;
     }
 
@@ -312,7 +313,7 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         case TOK_rParenth:
             if (Function->declared){ //If function was declared
                 if (Function->params != NULL){ //Definition has 0 params, but declaration has >0
-                    printf("FunctArgs )\n");
+                    printf("Definicia nema ziadne argumenty ale deklaracia ma\n");
                     return SEM_ERROR_FUNC;
                 }
             }
@@ -324,12 +325,12 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 
             if (Function->declared){ //We are executing definition of function that was declared.. we need To check args.. and else
                 if (Function->params == NULL){ //Declaration hadn`t any arguments
-                    printf("Prva\n");
+                    printf("Deklaracia nema ziadne argumenty ale definicia ma\n");
                     return SEM_ERROR_FUNC;
                 }
                 //Check if ID of first argument is equal to first argument in declaration
                 if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
-                    printf("FirsArg ID\n");
+                    printf("ID prveho argumentu nesedi\n");
                     return SEM_ERROR_FUNC;
                 }
 
@@ -337,6 +338,7 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 
                 //Check If parameter ID isn`t also ID of any created Function TODO Treba to?
                 if(st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
+                    printf("Parameter je ID sa rovna func ID\n");
                     return SEM_ERROR_OTHER;
                 }
 
@@ -366,7 +368,7 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 case KW_integer:
                     if (Function->declared){ //If was declared we need to check data type
                         if (CurrentToken->type != Function->params->first->el_type){
-                            printf("FitstArg Type\n");
+                            printf("Nesedi typ prveho argumentu\n");
                             return SEM_ERROR_FUNC;
                         }
                         ParamNumber++;
@@ -411,7 +413,7 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
         case TOK_rParenth:
             if (Function->declared){ //If function was declared we need to check arguments
                 if (Function->params->params_n >= ParamNumber){ //Token is ), we need to check if we don`t have less arguments then in declaration                    return SEM_ERROR_FUNC;
-                    printf("MoreFunctArgs )\n");
+                    printf("Definicia ma menej argumentov ako deklaracia\n");
                     return SEM_ERROR_FUNC;
                 }
             }
@@ -429,11 +431,11 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
             if (Function->declared){
                 Parameter = (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal));
                 if (Parameter == NULL){ //Parameter wasn`t found -> error
-                    printf("More, after comma\n");
+                    printf("Parameter nebol najdeny\n");
                     return SEM_ERROR_FUNC;
                 }
                 if (Parameter->param_number != ParamNumber){ //If param, we found hasn`t order we expect -> error
-                    printf("Order\n");
+                    printf("Pri parametre ktory sme nasli nesedi poradie, ktore parameter mal mat\n");
                     return SEM_ERROR_FUNC;
                 }
                 //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
@@ -477,7 +479,7 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                     //TODO pridelit do struktury tabulky
                     if (Function->declared){
                         if (Parameter->el_type != CurrentToken->type){ //If data-type does`t correspondent
-                            printf("more type\n");
+                            printf("Nesedi typ parametru, <more-function-args>\n");
                             return SEM_ERROR_FUNC;
                         }
                         ParamNumber++;
@@ -538,6 +540,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
 
     //Check redefinition..
     if (Function->defined){
+        printf("Redefinicia\n");
         return SEM_ERROR_FUNC;
     }
 
@@ -574,7 +577,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
             //TODO pridelit do struktury tabulky
             if (Function->declared){
                 if (Function->func_type != CurrentToken->type){
-                    printf("Funct Type\n");
+                    printf("Nesedi typ funkcie s deklaraciou\n");
                     return SEM_ERROR_FUNC;
                 }
             }else{
