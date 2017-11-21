@@ -5,11 +5,15 @@
 #include "symtab.h"
 
 /**Struct to check if we are inside Scope or While or If
+  * If we are entering If block, set InIf = true.. If inside If block comes While.. we Set While = True
+  * and InIf = false so if comes Else its error, when we Get back from While block, InWhile = false and InIf == True..
+  *
   */
 struct check{
-    bool InScope;
-    bool InWhile;
-    bool InIf;
+    bool InScope; //If comes token scope set to True
+    bool InWhile; //If comes token while set to True
+    bool InIf; //If comes token If set to True
+    bool InElse; //If comes token Else set to True
 };
 
 int parse();

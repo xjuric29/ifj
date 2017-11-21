@@ -35,7 +35,13 @@ int main()
     strAddChar(&key_el, 'D');
     st_add_element(glob, &key, &key_el, 'P');
     st_element_t *parametre = tmp->params->first;
+    parametre->val.stringVal = malloc(sizeof(string));
+    strInit(parametre->val.stringVal);
+    strAddChar(parametre->val.stringVal, 'A');
+    parametre->el_type = st_string;
     while(parametre != NULL){
+        //parametre->val.integer = 5;
+        //parametre->el_type = st_integer;
         printf("Parameter: %s je v poradi: %d\n", parametre->key.str, parametre->param_number);
         parametre = parametre->next_param;
     }
@@ -300,6 +306,12 @@ void st_delete(st_globalTable_t *st_global)
                         st_element_t *tmp = st_element;
                         st_element = st_element->next;
                         strFree(&tmp->key);
+                        if (tmp->el_type == st_string){
+                            if (tmp->val.stringVal != NULL){
+                                strFree(tmp->val.stringVal);
+                                free(tmp->val.stringVal);
+                            }
+                        }
                         free(tmp);
                     }
             }
