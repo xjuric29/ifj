@@ -2,7 +2,7 @@
 
 declare function func(A as integer, B as double, C as string) as double
 
-function func(A as integer, B as double, CA as string, D as double) as double
+function func(A as integer, B as double, C as string, D as double) as double
 end function
 
 scope
