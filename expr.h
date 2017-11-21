@@ -153,7 +153,7 @@ char expr_getCharFromIndex(precTableIndex_t index);
 // @todo Comment these functions
 void expr_shift(myStack_t *stack, char character);
 void expr_reduce();
-void expr_specialshift();
+void expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 

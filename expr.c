@@ -59,6 +59,8 @@ char *rule[RULES_COUNT] =
 	"i"
 };
 
+myStack_t dbg_postfix;     // DEBUG
+
 
 // ========== DEBUG ==========
 
@@ -66,6 +68,8 @@ char *rule[RULES_COUNT] =
 int main()
 {
 	token_t endToken;
+        
+        stackInit(&dbg_postfix);  // DEBUG
 	
 	token_t id;
 	id.type = TOK_identifier;
@@ -118,8 +122,10 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
                                 expr_algorithm(&stack, TOK_endOfFile);  // Continue with algorithm (Not really TOK_endOfFile, see header file at expr_algorithm())
                         }
                         
-                        DEBUG_PRINT("[DBG] Algorithm completed!\n");
+                        DEBUG_PRINT("[DBG] Algorithm completed!\n================\n");
                         stackInfo(&stack);
+                        stackPush(&dbg_postfix, '\0');
+                        DEBUG_PRINT("[DBG] Postfix: %s\n",&(dbg_postfix.arr));
 			return EXPR_SUCCESS;	// Return success	
 		}
 		
@@ -188,7 +194,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	precTableAction_t action;
 	action = expr_readTable(row, type);
 	
-	//DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
+	DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
 	
 	// Performing the action
 	switch(action)
@@ -201,7 +207,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
                         expr_algorithm(stack, tokenType);       // Use recursion (don't ask why, that's just the way it should be)
 			break;
 		case ACTION_specialShift:
-			expr_specialshift();	// @todo
+			expr_specialShift(stack, expr_getCharFromIndex(type));
 			break;
 		case ACTION_ilegal:
 			expr_error("expr_algorithm: Tried to perform an ilegal action");
@@ -301,6 +307,15 @@ void expr_reduce(myStack_t *stack)
 	string handle;	// Right side of grammar rule
 	strInit(&handle);	// Init string
 	
+        
+        // --- DEBUG --- (Generating postfix)
+        char terminal = stackGetTerminal(stack);
+        if(terminal != ')')
+                stackPush(&dbg_postfix, terminal);
+		
+        // --- END DEBUG ---
+        
+        
         // Find out what to reduce
 	char top = stackPop(stack);	// Get and remove character from top of the stack
 	while(top != '<' && top != STACK_ENDCHAR)	// Keep poping untill end of reduce or end of stack is found
@@ -334,8 +349,13 @@ void expr_reduce(myStack_t *stack)
         stackInfo(stack);	// Debug
 }
 
-void expr_specialshift()	// @todo
+void expr_specialShift(myStack_t *stack, char character)
 {
+        DEBUG_PRINT("[DBG] Operation =\n");
+        
+        stackPush(stack, character);    // Push the terminal at the end of the stack
+        
+        stackInfo(stack);	// Debug
 }
 
 
@@ -351,8 +371,10 @@ int expr_searchRule(string handle)
 	for(int i=0; i < RULES_COUNT; i++)	// Compare with every existing grammar rule
 	{
 		if(strCmpConstStr(&handle, rule[i]))	// If found a match
+                {
 			return i;	// Return rule number
-	}	
+                }
+        }	
 	
 	return EXPR_ERROR;	// If not found return fail
 }
