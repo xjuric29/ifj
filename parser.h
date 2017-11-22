@@ -82,4 +82,12 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
   */
 int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable);
 
+/**
+  * @brief: Function to check Function CalledFunction
+  * Check arguments, types and conversions
+  * @param CurrentToken is pointer to the structure where is current loaded token
+  * @param CalledFunction is pointer to function in Hash Table, function that is called
+  **/
+int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction);
+
 #endif

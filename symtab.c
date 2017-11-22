@@ -1,4 +1,8 @@
-
+/**
+ * @brief Symbol Table
+ * @author Peter Havan (xhavan00), Matej Stano (xstano04)
+ */
+ 
 #include "symtab.h"
 #include <assert.h>
 #include <stdlib.h>
