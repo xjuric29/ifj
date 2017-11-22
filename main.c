@@ -19,6 +19,7 @@ int main ()
             return 99;
         }
         else if (loadedToken.type == TOK_identifier) printf ("Var name: %s\n", loadedToken.value.stringVal->str);
+        else if (loadedToken.type == TOK_string) printf ("String: \n%s\n", loadedToken.value.stringVal->str);
         else if (loadedToken.type == TOK_integer) printf ("Int: %d\n", loadedToken.value.integer);
         else if (loadedToken.type == TOK_decimal) printf ("Dec: %lf %le\n", loadedToken.value.decimal,loadedToken.value.decimal);
         else if (loadedToken.type >= 0 && loadedToken.type < 35) printf ("Keyword: %d\n", loadedToken.type);

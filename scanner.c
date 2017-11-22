@@ -269,7 +269,7 @@ int getToken(token_t *loadedToken)
     {
         switch (currChar)
         {
-            /// Comments and division operator
+            /// Comments and floating point division operator
             case '\'':  // Skip comment and start new round of loop.
                 currChar = skipRowComment();
                 break;
@@ -289,6 +289,7 @@ int getToken(token_t *loadedToken)
                     }
                 } else
                 {
+                    lastChar = currChar;
                     if (isWhiteChar(currChar)) lastChar = getNotWhiteChar();
                     useLastChar = true;
                     return setTokenType(loadedToken, TOK_div);
@@ -375,6 +376,9 @@ int getToken(token_t *loadedToken)
             case '*':
                 lastChar = currChar;
                 return setTokenType(loadedToken, TOK_mul);
+            case '\\':
+                lastChar = currChar;
+                return setTokenType(loadedToken, TOK_divInt);
             case '=':
                 lastChar = currChar;
                 return setTokenType(loadedToken, TOK_equal);

@@ -1,0 +1,11 @@
+
+'CHYBA MENEJ ARGUMENTOV V DEKLARACII 4
+
+declare function func(A as integer) as double
+
+function func(A as integer, A as integer) as double
+end function
+
+scope
+end scope
+
