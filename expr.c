@@ -90,14 +90,23 @@ int main(int argc, char *argv[])
         testNum = strtol(argv[1], NULL, 10);
         TEST_generateInputStr(testNum);
 
-	token_t endToken;
+	token_t parserToken;
+        parserToken = TEST_getFirstToken();
         
         stackInit(&dbg_postfix);  // POSTFIX DEBUG
 
+        string function;
+        strInit(&function);
+        strAddChar(&function, 'T');
+        strAddChar(&function, 'e');
+        strAddChar(&function, 's');
+        strAddChar(&function, 't');
+        
 	
         int retVal;
-	retVal = expr_main(0, TEST_getFirstToken(), &endToken);
-	
+	retVal = expr_main(&parserToken, NULL, &function);
+        
+        strFree(&function);
         
 	expr_testFinish_retVal(retVal);
         return retVal;
@@ -110,10 +119,29 @@ int main(int argc, char *argv[])
 
 // ========== CORE FUNCTIONS ==========
 
-int expr_main(int context, token_t firstToken, token_t *endToken)
+int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_name)
 {
+        // --- Check arguments ---
+        /*
+        if(parserToken == NULL)
+        {
+                expr_error("expr_main: NULL pointer to parserToken");
+                return EXPR_RETURN_ERROR_INTERNAL;
+        }
+        if(st_global == NULL)
+        {
+                expr_error("expr_main: NULL pointer to st_global");
+                return EXPR_RETURN_ERROR_INTERNAL;
+        }
+        if(func_name == NULL)
+        {
+                expr_error("expr_main: NULL pointer to func_name");
+                return EXPR_RETURN_ERROR_INTERNAL;
+        }*/
+        
+        
         // --- Check first token type ---
-        if(expr_isFirstValid(firstToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
+        if(expr_isFirstValid(*parserToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
                 return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
         
         
@@ -124,7 +152,7 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
 	int continueLoading = 1;	// Determines if this module should read next token
 	
 	token_t loadedToken;
-	loadedToken = firstToken;	// Value for first run of loading cycle
+	loadedToken = *parserToken;	// Value for first run of loading cycle
 
 
 	// --- Loading tokens ---
@@ -132,14 +160,14 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
 	{		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, loadedToken.type);	// Use algorith on the loaded token
+		retVal = expr_algorithm(&stack, loadedToken);	// Use algorith on the loaded token
 		
 		 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // TERM_endingToken = Found token that doesn't belong to expression anymore
 		{
                         // --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
-			*endToken = loadedToken;	// Save token for parser to proceed
+			*parserToken = loadedToken;	// Save token for parser to proceed // Don't need this anymore
 		}       
                 else
 		{
@@ -160,12 +188,17 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
 	while(continueLoading);
         
         
-        // --- Finish algorith ---
+        // --- Finish the algorith ---
+        // (This happens when there are no more tokens to load but algorithm is still not finished)
         while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)  // Should algorithm continue?        
         {
-                // (This happens when there are no more tokens to load but algorithm is not finished)
-                int retVal;     // Return value of algorithm
-                retVal = expr_algorithm(&stack, TOK_endOfFile);  // Continue with algorithm (Not really TOK_endOfFile, see header file at expr_algorithm())
+                // --- Token indicating stop of loading ---
+                token_t noMoreTokens;
+                noMoreTokens.type = TOK_endOfFile; // (Not really TOK_endOfFile, see header file at expr_algorithm())
+                
+                // --- Continue with the algorithm ---
+                int retVal;     // Return value of the algorithm
+                retVal = expr_algorithm(&stack, noMoreTokens);  
                 
                 
                 // --- Check for error ---
@@ -180,16 +213,16 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
         return EXPR_RETURN_SUCC;        // Return success
 }
 
-int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
+int expr_algorithm(myStack_t *stack, token_t token)
 {
-        if(expr_isAlgotihmFinished(stack, tokenType) == EXPR_TRUE)      // Is algorithm finished?
+        if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)      // Is algorithm finished?
                 return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
         
         
 	precTableIndex_t type;	// Internal type of token = Column index
 	
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
-	switch(tokenType)  
+	switch(token.type)  
 	{
                 // Loaded token belong to the expression
 		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'
@@ -247,7 +280,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
                                 return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
                                 
                         // Otherwise continue with algorithm
-                        return expr_algorithm(stack, tokenType);       // Use recursion (don't ask why, that's just the way it should be)
+                        return expr_algorithm(stack, token);       // Use recursion (don't ask why, that's just the way it should be)
 		}
                 
                 // Operation SPECIAL SHIFT '='
@@ -361,10 +394,14 @@ int expr_reduce(myStack_t *stack)
 	// Initialize variable for handle
 	string handle;	// Right side of grammar rule
 	strInit(&handle);	// Init string
-	
+        
+        
+        // Generating instruction
+        char terminal = stackGetTerminal(stack);
+        expr_generateInstruction(terminal);
+        
         
         // --- DEBUG --- (Generating postfix)
-        char terminal = stackGetTerminal(stack);
         if(terminal != ')')
                 stackPush(&dbg_postfix, terminal);
         // --- END DEBUG ---
@@ -469,6 +506,11 @@ int expr_isFirstValid(token_t firstToken)
                         expr_error("expr_isFirstValid(): First token is not suitable for being first in expression");
                         return EXPR_FALSE;
         }
+}
+
+void expr_generateInstruction(char terminal)
+{
+        // @todo Filter bracktes, because they don't produce an instruction
 }
 
 // ========== OTHER FUNCTIONS ==========

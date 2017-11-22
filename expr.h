@@ -25,6 +25,7 @@
 // Module dependency
 #include "stack.c"
 #include "str.c"
+#include "symtab.c"
 #ifndef EXPR_TEST
 #include "scanner.c"
 #endif
@@ -32,6 +33,7 @@
 
 
 //	--- Constants ---
+// Internal values
 #define PREC_TABLE_SIZE 9	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
 #define RULES_COUNT     7	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
@@ -96,12 +98,14 @@ typedef enum
  * It's main function is to read all tokens and proceed them to expr_doOperation() untill it found the first one that doesn't belong to the expression.
  * When the non-expression token is found, it's sent back to parser to be proceed and this module is shut down.
  * 
- * @param context	Determines if it's comparasion or assignment (@todo)
- * @param firstToken	First token of the expression
- * @param endToken	First token that doesn't belong to expression anymore (return token to parser)
- * @return 1 = no error (@todo)
+ * Communicating with parser
+ * When this function is called by parser, parser sends first token that belong to expression via pointer. 
+ * When this module is shutting down, it puts first token that DOESN'T belong to the expression back to the pointer.
+ * 
+ * @param *parserToken	Pointer to token used for communicating with parser
+ * @return (@todo)
  */
-int expr_main(int context, token_t firstToken, token_t *endToken);
+int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_name);
 
 
 /**
@@ -119,7 +123,7 @@ int expr_main(int context, token_t firstToken, token_t *endToken);
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, tokenType_t tokenType);
+int expr_algorithm(myStack_t *stack, token_t tokenType);
 
 
 /**
@@ -173,6 +177,7 @@ int expr_reduce(myStack_t *stack);
 int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
+void expr_generateInstruction(char terminal);
 void expr_finish();
 void expr_testFinish_retVal(int retVal);
 
