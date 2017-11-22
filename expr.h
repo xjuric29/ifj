@@ -11,7 +11,7 @@
 
 //	--- Debugging ---
 #ifdef DEBUG
-#define DEBUG_PRINT printf
+#define DEBUG_PRINT     printf
 #else
 #define DEBUG_PRINT(...)
 #endif
@@ -20,6 +20,7 @@
 //	--- Includes ---
 // Libraries
 #include <stdio.h>
+#include <stdlib.h>     // For postfix debug
 
 // Module dependency
 #include "stack.c"
@@ -156,6 +157,7 @@ void expr_reduce();
 void expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
+void expr_finish();
 
 /**
  * @brief Prints an error to stderr

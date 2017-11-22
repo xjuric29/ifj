@@ -1,5 +1,18 @@
-#ifndef IFJ_COMPILATOR_SCANNER_H
-#define IFJ_COMPILATOR_SCANNER_H
+#ifndef EXPR_TEST_H
+#define EXPR_TEST_H
+
+#include <stdio.h>
+#include <string.h>
+
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_RESET   "\x1b[0m"
+
+#define EXPR_TESTSTR_LENGTH 1024
 
 typedef enum
 {
@@ -46,5 +59,11 @@ typedef struct
     tokenType_t type;
     tokenValue_t value;
 } token_t;
+
+
+//  ===== Prototypes =====
+token_t TEST_getFirstToken();
+token_t TEST_sendTokens();
+void TEST_getToken(token_t *loadedToken);
 
 #endif

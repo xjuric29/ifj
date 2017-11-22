@@ -19,7 +19,7 @@ void stackInit(myStack_t *stack)
 	stack->top = -1;    // Initialize top of the stack
 	stackPush(stack, STACK_ENDCHAR);	// Push "end of stack character" as first one
 		
-	stackInfo(stack);
+	//stackInfo(stack);
 }
 	
 	

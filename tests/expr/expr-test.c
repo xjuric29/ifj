@@ -1,46 +1,108 @@
 #include "expr-test.h"
 
-#define TEST_NUM 4
+// Note: First token sent from parser so you have to set it manually
 
-// Note: First token is always id, it's send from parser because it is in charge
+char input[EXPR_TESTSTR_LENGTH];
+char expected[EXPR_TESTSTR_LENGTH];
 
-#if TEST_NUM == 1
-// === TEST 1 ===
-// i + i * i
-// Output: $iii*+
+
+void TEST_generateInputStr(int testNum)
+{
+        expected[0] = '$';
+        switch(testNum)
+        {
+                case 1:
+                {
+                        char *expr = "i+i*i";
+                        strcpy(input, expr);
+                        char *output = "iii*+";
+                        strcpy(expected+1, output);
+                        break;
+                }
+                case 2:
+                {
+                        char *expr = "i+i*ii";
+                        strcpy(input, expr);
+                        char *output = "ERROR";
+                        strcpy(expected+1, output);
+                        break;
+                }
+                case 3:
+                {
+                        char *expr = "i+i*i*(i+i)";
+                        strcpy(input, expr);
+                        char *output = "iii*ii+*+";
+                        strcpy(expected+1, output);
+                        break;
+                }
+                case 4:
+                {
+                        char *expr = "i+(i+i*(i*(i+i*i)+i)*i)*i";
+                        strcpy(input, expr);
+                        char *output = "iiiiiii*+*i+*i*+i*+";
+                        strcpy(expected+1, output);
+                        break; 
+                }
+                default:
+                        fprintf(stderr, "[ERROR] Invalid test number\n");
+        }
+        
+        
+}
+
+token_t TEST_getFirstToken()
+{
+        return TEST_sendTokens();
+}
+
+token_t TEST_sendTokens()
+{
+        static int counter = 0;       // Create static variable for counter
+        token_t testToken;      // Create testing token to be sent
+        
+        if(input[counter] != '\0')     // If not end of expression string
+        {
+                switch(input[counter]) // Set tokenType depending on char in expression
+                {
+                        case '+':
+                                testToken.type = TOK_plus;
+                                break;
+                        case '-':
+                                testToken.type = TOK_minus;
+                                break;
+                        case '\\':
+                                testToken.type = TOK_divInt;
+                                break;
+                        case '*':
+                                testToken.type = TOK_mul;
+                                break;
+                        case '/':
+                                testToken.type = TOK_div;
+                                break;
+                        case '(':
+                                testToken.type = TOK_lParenth;
+                                break;
+                        case ')':
+                                testToken.type = TOK_rParenth;
+                                break;
+                        case 'i':
+                                testToken.type = TOK_identifier;
+                                break;
+                }
+                
+                counter++;
+        }
+        else
+                testToken.type = TOK_semicolon; // Token type that doesn't belong to expression anymore
+                
+       
+        return testToken;
+}
 
 void TEST_getToken(token_t *loadedToken)
 {
-	static int iter = 0;
-	
-	token_t id;
-	id.type = TOK_identifier;
-	token_t plus;
-	plus.type = TOK_plus;
-	token_t mul;
-	mul.type = TOK_mul;
-	token_t semicolon;
-	semicolon.type = TOK_semicolon;
-	
-	switch(iter)
-	{
-		case 1:
-		case 3:
-			*loadedToken = id;
-			break;
-		case 0:
-			*loadedToken = plus;
-			break;
-		case 2:
-			*loadedToken = mul;
-			break;
-		default:
-			*loadedToken = semicolon;
-			break;
-	}
-	iter++;
+        *loadedToken = TEST_sendTokens();
 }
-#endif
 
 #if TEST_NUM == 2
 // === TEST 2 ===
@@ -85,7 +147,7 @@ void TEST_getToken(token_t *loadedToken)
 #if TEST_NUM == 3
 // === TEST 3 ===
 // i + i * i * (i + i)
-// Output: i i i * i i + * +
+// Output: $iii*ii+*+
 
 void TEST_getToken(token_t *loadedToken)
 {
@@ -137,7 +199,7 @@ void TEST_getToken(token_t *loadedToken)
 #if TEST_NUM == 4
 // === TEST 4 ===
 // i + (i + i * (i * (i + i * i ) + i) * i) * i
-// Output: i i i i i i i * + * i + * i * + i * +
+// Output: $iiiiiii*+*i+*i*+i*+
 
 void TEST_getToken(token_t *loadedToken)
 {

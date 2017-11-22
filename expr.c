@@ -7,8 +7,12 @@
  
 // --- TESTING ---
 #define EXPR_TEST
+
 #ifdef EXPR_TEST
 #include "tests/expr/expr-test.c"
+int testNum;
+extern char input[EXPR_TESTSTR_LENGTH];
+extern char output[EXPR_TESTSTR_LENGTH];
 #endif
 
 
@@ -59,25 +63,33 @@ char *rule[RULES_COUNT] =
 	"i"
 };
 
-myStack_t dbg_postfix;     // DEBUG
+myStack_t dbg_postfix;     // POSTFIX DEBUG
+extern token_t firstTestToken;
 
 
 // ========== DEBUG ==========
 
 #ifdef EXPR_TEST
-int main()
+int main(int argc, char *argv[])
 {
+        if(argc != 2)
+        {
+                expr_error("main: Test number not specified");
+                return EXPR_FALSE;
+        }
+
+        testNum = strtol(argv[1], NULL, 10);
+        TEST_generateInputStr(testNum);
+
 	token_t endToken;
         
-        stackInit(&dbg_postfix);  // DEBUG
+        stackInit(&dbg_postfix);  // POSTFIX DEBUG
+
 	
-	token_t id;
-	id.type = TOK_identifier;
-	
-	expr_main(0, id, &endToken);
+	expr_main(0, TEST_getFirstToken(), &endToken);
 	
         
-	DEBUG_PRINT("[DBG] Returning token to parser (external type = %d)\n", endToken.type);
+	//DEBUG_PRINT("[DBG] Returning token to parser (external type = %d)\n", endToken.type);
 	return EXPR_SUCCESS;
 }
 #endif
@@ -100,7 +112,7 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
 	// --- Loading tokens ---
 	do
 	{
-		DEBUG_PRINT("------\n[DBG] Loading token (external type=%d)\n", loadedToken.type);
+		//DEBUG_PRINT("------\n[DBG] Loading token (external type=%d)\n", loadedToken.type);
 		
 		// CORE OF THE FUNCTION
 		int type;	// Internal type of token
@@ -122,10 +134,12 @@ int expr_main(int context, token_t firstToken, token_t *endToken)
                                 expr_algorithm(&stack, TOK_endOfFile);  // Continue with algorithm (Not really TOK_endOfFile, see header file at expr_algorithm())
                         }
                         
-                        DEBUG_PRINT("[DBG] Algorithm completed!\n================\n");
-                        stackInfo(&stack);
-                        stackPush(&dbg_postfix, '\0');
-                        DEBUG_PRINT("[DBG] Postfix: %s\n",&(dbg_postfix.arr));
+                        //DEBUG_PRINT("[DBG] Algorithm completed!\n================\n");
+                        //stackInfo(&stack);
+                       
+                        // ===== POSTFIX DEBUG =====
+                        expr_finish();
+
 			return EXPR_SUCCESS;	// Return success	
 		}
 		
@@ -194,7 +208,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	precTableAction_t action;
 	action = expr_readTable(row, type);
 	
-	DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
+	//DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
 	
 	// Performing the action
 	switch(action)
@@ -291,17 +305,17 @@ char expr_getCharFromIndex(precTableIndex_t index)
 
 void expr_shift(myStack_t *stack, char character)
 {
-	DEBUG_PRINT("[DBG] Operation <\n");
+	//DEBUG_PRINT("[DBG] Operation <\n");
 	
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
         
-        stackInfo(stack);	// Debug
+       //stackInfo(stack);	// Debug
 }
 
 void expr_reduce(myStack_t *stack)
 {
-	DEBUG_PRINT("[DBG] Operation >\n");
+	//DEBUG_PRINT("[DBG] Operation >\n");
 	
 	// Initialize variable for handle
 	string handle;	// Right side of grammar rule
@@ -346,16 +360,16 @@ void expr_reduce(myStack_t *stack)
         // Push left side of the rule to the stack (always E)
         stackPush(stack, 'E');
         
-        stackInfo(stack);	// Debug
+        //stackInfo(stack);	// Debug
 }
 
 void expr_specialShift(myStack_t *stack, char character)
 {
-        DEBUG_PRINT("[DBG] Operation =\n");
+        //DEBUG_PRINT("[DBG] Operation =\n");
         
         stackPush(stack, character);    // Push the terminal at the end of the stack
         
-        stackInfo(stack);	// Debug
+        //stackInfo(stack);	// Debug
 }
 
 
@@ -400,5 +414,17 @@ int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
 void expr_error(char *msg)
 {
 	fprintf(stderr, "[ERROR] %s\n", msg);
+        expr_finish();  // Postfix debug
+        exit(42);
 	// @todo This function should end whole module and return err value to parser
+}
+
+void expr_finish()
+{
+        // ===== Postfix debug =====
+        stackPush(&dbg_postfix, '\0');
+        DEBUG_PRINT("===TEST #%d===\n",testNum);
+        DEBUG_PRINT("%s [Input]\n",input);
+        DEBUG_PRINT("%s [Output]\n",&(dbg_postfix.arr));
+        DEBUG_PRINT("%s [Expected]\n",expected);        
 }
