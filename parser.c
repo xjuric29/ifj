@@ -342,11 +342,15 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                     fprintf(stderr,"Deklaracia nema ziadne argumenty ale definicia ma\n");
                     return SEM_ERROR_FUNC;
                 }
-                //Check if ID of first argument is equal to first argument in declaration
+                //Check if ID of first argument is equal to first argument in declaration if not, we need to save new ID
                 if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
-                    fprintf(stderr,"ID prveho argumentu nesedi\n");
-                    return SEM_ERROR_FUNC;
+                    printf("%s\n", Function->params->first->key.str);
+                    if (strCopyString(&Function->params->first->key, CurrentToken->value.stringVal)){
+                        return INTERNAL_ERROR;
+                    }
                 }
+                printf("%s\n", Function->params->first->key.str);
+                printf("-----------------\n");
 
             }else{ //We are executing declaration, or definition of function that wasn`t declared..
 
@@ -443,15 +447,36 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 return SYN_ERROR;
             }
             if (Function->declared){
-                Parameter = (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal));
-                if (Parameter == NULL){ //Parameter wasn`t found -> error
-                    fprintf(stderr,"Parameter nebol najdeny\n");
+                //Check If parameter ID isn`t also ID of any created Function
+                if (st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
                     return SEM_ERROR_FUNC;
                 }
-                if (Parameter->param_number != ParamNumber){ //If param, we found hasn`t order we expect -> error
-                    fprintf(stderr,"Pri parametre ktory sme nasli nesedi poradie, ktore parameter mal mat\n");
+
+                //Check if number of params in declaration is >= as order of parameter we are checking
+                if (Function->params->params_n < ParamNumber){
                     return SEM_ERROR_FUNC;
                 }
+
+                //Get to needed parameter + check colisisions with ID of previos parameters
+                Parameter = Function->params->first;
+                while(Parameter->param_number != ParamNumber){
+                    //If some of the previos parameters has same name as new paramater
+                    if (strCmpString(&Parameter->key, CurrentToken->value.stringVal) == STR_SUCCESS){
+                        return SEM_ERROR_FUNC;
+                    }
+                    Parameter = Parameter->next_param;
+                }
+
+                //Check if ID of argument is equal to argument in declaration, if not we need to save new ID
+                if (strCmpString(&Parameter->key, CurrentToken->value.stringVal)){
+                    printf("%s\n", Parameter->key.str);
+                    if (strCopyString(&Parameter->key, CurrentToken->value.stringVal)){
+                        return INTERNAL_ERROR;
+                    }
+                }
+                printf("%s\n", Parameter->key.str);
+                printf("-----------------\n");
+
                 //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
                 //Save element to Local Table of function.. Save it as parameter
             }else{
