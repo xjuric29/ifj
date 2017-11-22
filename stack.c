@@ -103,6 +103,7 @@ int stackFull(myStack_t *stack)
 
 void stackInfo(myStack_t *stack)
 {
+#ifdef DEBUG
 	if(stack == NULL)   // If the stack is not allocated
 	{
 		stackError(ERR_STACK_NULL);
@@ -117,6 +118,7 @@ void stackInfo(myStack_t *stack)
 			printf("%c",stack->arr[i]);
 	}
 	printf("'\n");
+#endif
 }
 
 int stackGetTerminalIndex(myStack_t *stack)

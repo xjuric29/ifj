@@ -62,7 +62,7 @@ char *rule[RULES_COUNT] =
 {
 	"E+E",
         "E-E",
-        "E\E",
+        "E\\E",
 	"E*E",
         "E/E",
 	"(E)",
@@ -106,6 +106,10 @@ int main(int argc, char *argv[])
 
 int expr_main(int context, token_t firstToken, token_t *endToken)
 {
+        // --- Check first token type ---
+        if(expr_isFirstValid(firstToken) == EXPR_FALSE)
+                return EXPR_ERROR;
+        
 	// --- Initializing stack and default values ---
 	myStack_t stack;	// Create stack
 	stackInit(&stack);	// Init stack (Push "$")
@@ -211,7 +215,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	precTableAction_t action;
 	action = expr_readTable(row, type);
 	
-	//DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
+	DEBUG_PRINT("[DBG] row=%d col=%d action=%d\n", row, type, action);
 	
 	// Performing the action
 	switch(action)
@@ -314,17 +318,17 @@ char expr_getCharFromIndex(precTableIndex_t index)
 
 void expr_shift(myStack_t *stack, char character)
 {
-	//DEBUG_PRINT("[DBG] Operation <\n");
+	DEBUG_PRINT("[DBG] Operation <\n");
 	
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
         
-        //stackInfo(stack);	// Debug
+        stackInfo(stack);	// Debug
 }
 
 void expr_reduce(myStack_t *stack)
 {
-	//DEBUG_PRINT("[DBG] Operation >\n");
+	DEBUG_PRINT("[DBG] Operation >\n");
 	
 	// Initialize variable for handle
 	string handle;	// Right side of grammar rule
@@ -369,16 +373,16 @@ void expr_reduce(myStack_t *stack)
         // Push left side of the rule to the stack (always E)
         stackPush(stack, 'E');
         
-        //stackInfo(stack);	// Debug
+        stackInfo(stack);	// Debug
 }
 
 void expr_specialShift(myStack_t *stack, char character)
 {
-        //DEBUG_PRINT("[DBG] Operation =\n");
+        DEBUG_PRINT("[DBG] Operation =\n");
         
         stackPush(stack, character);    // Push the terminal at the end of the stack
         
-        //stackInfo(stack);	// Debug
+        stackInfo(stack);	// Debug
 }
 
 
@@ -418,6 +422,22 @@ int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
         return EXPR_FALSE;      // Otherwise return false
 }
 
+int expr_isFirstValid(token_t firstToken)
+{
+        switch(firstToken.type) // Check token type
+        {      
+                // Legal terminals to stand as first
+		case TOK_lParenth:
+		case TOK_identifier:
+                        return EXPR_TRUE;
+                        
+                // Other terminals
+                default:
+                        expr_error("expr_isFirstValid(): First token is not suitable for being first in expression");
+                        return EXPR_FALSE;
+        }
+}
+
 // ========== OTHER FUNCTIONS ==========
 
 void expr_error(char *msg)
@@ -432,8 +452,8 @@ void expr_finish()
 {
         // ===== Postfix debug =====
         stackPush(&dbg_postfix, '\0');
-        DEBUG_PRINT("===TEST #%d===\n",testNum);
-        DEBUG_PRINT("%s [Input]\n",input);
-        DEBUG_PRINT("%s [Output]\n",&(dbg_postfix.arr));
-        DEBUG_PRINT("%s [Expected]\n",expected);        
+        printf("===TEST #%d===\n",testNum);
+        printf("%s [Input]\n",input);
+        printf("%s [Output]\n",&(dbg_postfix.arr));
+        printf("%s [Expected]\n",expected);        
 }

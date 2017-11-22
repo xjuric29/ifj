@@ -61,9 +61,9 @@ typedef enum
 {
 	TERM_plus,		/// Plus "+" [int+int = int, int+double = double, double+int = double, double+double = double, str+str = str]
         TERM_minus,	/// Minus "-" [int-int = int, int-double = double, double-int = double, double-double = double]
-	TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
+	TERM_divInt,	/// Integer division "\" [int\int = int]
         TERM_mul,		/// Multiplication "*" [int*int = int, int*double = double, double*int = double, double*double = double]
-        TERM_divInt,	/// Integer division "\" [int\int = int]
+        TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
 	TERM_lBrac,	/// Left bracket "("
 	TERM_rBrac,	/// Right bracket ")"
 	TERM_id,		/// Identificator	(@todo Not sure)
@@ -157,6 +157,13 @@ void expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 void expr_finish();
+
+/**
+ * @brief Check if token be used as begining of expression
+ * @param firstToken    Token structure to be checked
+ * @return EXPR_TRUE if can be first, EXPR_FALSE if cannot
+ */
+int expr_isFirstValid(token_t firstToken);
 
 /**
  * @brief Prints an error to stderr
