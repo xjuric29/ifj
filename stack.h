@@ -26,7 +26,7 @@
 #define STACK_ENDCHAR '$'	/// Character representing end of stack
 #define STACK_NULLCHAR 0	/// Character representing no value (returned when tried to pop/top empty stack)
 #define STACK_NOTFOUND -1       /// Return value representing "not found"
-#define TERMINAL_COUNT  6       /// Number of all possible terminals
+#define TERMINAL_COUNT  9       /// Number of all possible terminals
 
 typedef enum
 {
@@ -37,7 +37,7 @@ typedef enum
         ERR_STACK_TERM
 }	stackErrorCodes_t; 
 
-char terminals[TERMINAL_COUNT] = "+*()i$";
+char terminals[TERMINAL_COUNT] = "+-\\*/()i$";
 
 //	--- Strucutres ---
 typedef struct {

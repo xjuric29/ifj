@@ -11,35 +11,68 @@ void TEST_generateInputStr(int testNum)
         expected[0] = '$';
         switch(testNum)
         {
-                case 1:
+                case 1: // Basic test from lecture
                 {
                         char *expr = "i+i*i";
-                        strcpy(input, expr);
                         char *output = "iii*+";
+                        
+                        strcpy(input, expr);
                         strcpy(expected+1, output);
                         break;
                 }
-                case 2:
+                case 2: // Basic test for error (basic operators from lecture)
                 {
                         char *expr = "i+i*ii";
-                        strcpy(input, expr);
                         char *output = "ERROR";
+                        strcpy(input, expr);
                         strcpy(expected+1, output);
                         break;
                 }
-                case 3:
+                case 3: // Basic test for brackets (basic operators from lecture)
                 {
                         char *expr = "i+i*i*(i+i)";
-                        strcpy(input, expr);
                         char *output = "iii*ii+*+";
+                        strcpy(input, expr);
                         strcpy(expected+1, output);
                         break;
                 }
-                case 4:
+                case 4: // Advanced test for brackets (basic operators from lecture)
                 {
                         char *expr = "i+(i+i*(i*(i+i*i)+i)*i)*i";
-                        strcpy(input, expr);
                         char *output = "iiiiiii*+*i+*i*+i*+";
+                        strcpy(input, expr);
+                        strcpy(expected+1, output);
+                        break; 
+                }
+                case 5:         // THIS TEST IS SUCCESFUL WHEN EXPECTED ERROR
+                {
+                        char *expr = "+i+i*i";
+                        char *output = "ERROR";
+                        strcpy(input, expr);
+                        strcpy(expected+1, output);
+                        break; 
+                }
+                case 6: // Basic test for all arithmetic operators
+                {
+                        char *expr = "i+i\\i*i/i-i";
+                        char *output = "iiii*i/\\+i-";
+                        strcpy(input, expr);
+                        strcpy(expected+1, output);
+                        break; 
+                }
+                case 7: // Advanced test for all arithmetic operators
+                {
+                        char *expr = "i/(i+i/(i*i*i*i+i*-(i-i*i)/i)-i*i/i)+i-i-i/i/i*i*i/i-i";
+                        char *output = "iiiii*i*i*i*+iii*-i/-/+ii*i/-/i+i-ii/i/i*i*i/-i-";
+                        strcpy(input, expr);
+                        strcpy(expected+1, output);
+                        break; 
+                }
+                case 8: // Advanced test for all arithmetic operators (excluding integer divide)
+                {
+                        char *expr = "(i+(i/(i*i/i+i)*i*i*i/i-i+i*i)/i*i-i)/(i*(i-i/i)-i)+i";
+                        char *output = "iiii*i/i+/i*i*i*i/i-ii*+i/i*+i-iiii/-*i-/i+";
+                        strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
                 }

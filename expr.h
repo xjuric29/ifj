@@ -32,13 +32,13 @@
 
 
 //	--- Constants ---
-#define PREC_TABLE_SIZE 6	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
-#define RULES_COUNT 4	/// Number of all the grammar rules used
-#define EXPR_ERROR -1   /// Internal return value for error
-#define EXPR_SUCCESS 1  /// Intarnal return value for success
-#define EXPR_NOMORETOKENS -1    /// Internal value replacing tokenType_t when there are no more
-#define EXPR_TRUE 1  /// Intarnal return value for true
-#define EXPR_FALSE 0  /// Intarnal return value for false
+#define PREC_TABLE_SIZE 9	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
+#define RULES_COUNT     7	/// Number of all the grammar rules used
+#define EXPR_ERROR      -1   /// Internal return value for error
+#define EXPR_SUCCESS    1  /// Intarnal return value for success
+#define EXPR_NOMORETOKENS       -1    /// Internal value replacing tokenType_t when there are no more
+#define EXPR_TRUE       1  /// Intarnal return value for true
+#define EXPR_FALSE      0  /// Intarnal return value for false
 
 
 /**
@@ -60,7 +60,10 @@ typedef enum
 typedef enum
 {
 	TERM_plus,		/// Plus "+" [int+int = int, int+double = double, double+int = double, double+double = double, str+str = str]
-	TERM_mul,		/// Multiplication "*" [int*int = int, int*double = double, double*int = double, double*double = double]
+        TERM_minus,	/// Minus "-" [int-int = int, int-double = double, double-int = double, double-double = double]
+	TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
+        TERM_mul,		/// Multiplication "*" [int*int = int, int*double = double, double*int = double, double*double = double]
+        TERM_divInt,	/// Integer division "\" [int\int = int]
 	TERM_lBrac,	/// Left bracket "("
 	TERM_rBrac,	/// Right bracket ")"
 	TERM_id,		/// Identificator	(@todo Not sure)
@@ -69,10 +72,6 @@ typedef enum
 	TERM_expr,		/// Expression = "E" (in rule)
 	TERM_endingToken,	/// First token that doesn't belong to expression @warning This must be the last in this list!
 	
-	// For later use:
-	TERM_minus,	/// Minus "-" [int-int = int, int-double = double, double-int = double, double-double = double]
-	TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
-	TERM_intDiv,	/// Integer division "\" [int\int = int]
 	// Logic operators
 	TERM_equal,	/// Operator "="
         TERM_notEqual,	/// Operator "<>"

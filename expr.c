@@ -37,13 +37,16 @@ extern char output[EXPR_TESTSTR_LENGTH];
  */
 char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 {  
-//   +    *    (    )    i    $
-   {'>', '<', '<', '>', '<', '>'},	// +
-   {'>', '>', '<', '>', '<', '>'},	// *
-   {'<', '<', '<', '=', '<', '#'},	// (
-   {'>', '>', '#', '>', '#', '>'},	// )
-   {'>', '>', '#', '>', '#', '>'},	// i
-   {'<', '<', '<', '#', '<', '#'}	// $
+//  +    -    \    *    /    (    )    i    $   
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>'},	// +
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>'},        // -
+  {'>', '>', '>', '<', '<', '<', '>', '<', '>'},        // \    // The space after '\' is important
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>'},	// *
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>'},        // /
+  {'<', '<', '<', '<', '<', '<', '=', '<', '#'},	// (
+  {'>', '>', '>', '>', '>', '#', '>', '#', '>'},	// )
+  {'>', '>', '>', '>', '>', '#', '>', '#', '>'},	// i
+  {'<', '<', '<', '<', '<', '<', '#', '<', '#'}         // $
 };
 
 /**
@@ -58,7 +61,10 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 char *rule[RULES_COUNT] =
 {
 	"E+E",
+        "E-E",
+        "E\E",
 	"E*E",
+        "E/E",
 	"(E)",
 	"i"
 };
@@ -168,28 +174,25 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
 	switch(tokenType)  
 	{
-		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'	
+		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'
+                case TOK_minus:	type = TERM_minus;	break;	// Operator terminal '-'
+                case TOK_divInt:	type = TERM_divInt;	break;	// Operator terminal '\'			
 		case TOK_mul:	type = TERM_mul;	break;	// Operator terminal '*'
-		case TOK_lParenth:	type = TERM_lBrac;	break;	// Left parenthesis terminla = '('
-		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right parenthesis terminal = ')'
-		case TOK_identifier:	type = TERM_id;	break;	// @todo Is it "i"???
+                case TOK_div:	type = TERM_div;	break;	// Operator terminal '/'
+		case TOK_lParenth:	type = TERM_lBrac;	break;	// Left bracket terminlal = '('
+		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right bracket terminal = ')'
+		case TOK_identifier:	type = TERM_id;	break;	// Identifier terminal = 'i'
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
 		
 		default:	// Loaded token doesn't belong to the expression
 			return TERM_endingToken;	// End function and report it's not an expression token
 			
 		/* @todo More cases for later
-		case TOK_identifier:
 		case TOK_integer:
 		case TOK_decimal:
 		case TOK_string:
-		case TOK_lParenth:		// Left parenthesis = "("
-		case TOK_rParenth:		// Right parenthesis ")"
 		
-		case TOK_minus:			// Operator "-"
-		case TOK_mul:			// Operator "*"
-		case TOK_div:			// Operator "/"
-		case TOK_divInt			// Operator "\"
+
 		case TOK_equal:			// Operator "="
 		case TOK_notEqual:		// Operator "<>"
 		case TOK_less:			// Operator "<"
@@ -267,7 +270,10 @@ precTableIndex_t expr_getIndexFromChar(char character)
 	switch(character)	// Return precedent table index depending on character on top of the stack
 	{
 		case '+':	return TERM_plus;
+                case '-':	return TERM_minus;
+                case '\\':	return TERM_divInt;
 		case '*':	return TERM_mul;
+                case '/':	return TERM_div;
 		case '(':	return TERM_lBrac;
 		case ')':	return TERM_rBrac;
 		case 'i':	return TERM_id;
@@ -285,7 +291,10 @@ char expr_getCharFromIndex(precTableIndex_t index)
 	switch(index)	// Return precedent table index depending on character on top of the stack
 	{
 		case TERM_plus:	return '+';
+                case TERM_minus:	return '-';
+                case TERM_divInt:	return '\\';
 		case TERM_mul:	return '*';
+                case TERM_div:	return '/';
 		case TERM_lBrac:	return '(';
 		case TERM_rBrac:	return ')';
 		case TERM_id:	return 'i';
@@ -310,7 +319,7 @@ void expr_shift(myStack_t *stack, char character)
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
         
-       //stackInfo(stack);	// Debug
+        //stackInfo(stack);	// Debug
 }
 
 void expr_reduce(myStack_t *stack)
