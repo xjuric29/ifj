@@ -4,6 +4,7 @@
 
 char input[EXPR_TESTSTR_LENGTH];
 char expected[EXPR_TESTSTR_LENGTH];
+int expectedRetVal = 0; // Default value
 
 
 void TEST_generateInputStr(int testNum)
@@ -24,6 +25,8 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i+i*ii";
                         char *output = "ERROR";
+                        expectedRetVal = 2;
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break;
@@ -32,6 +35,7 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i+i*i*(i+i)";
                         char *output = "iii*ii+*+";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break;
@@ -40,14 +44,17 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i+(i+i*(i*(i+i*i)+i)*i)*i";
                         char *output = "iiiiiii*+*i+*i*+i*+";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
                 }
-                case 5:         // THIS TEST IS SUCCESFUL WHEN EXPECTED ERROR
+                case 5: 
                 {
                         char *expr = "+i+i*i";
                         char *output = "ERROR";
+                        expectedRetVal = 2;
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
@@ -56,6 +63,7 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i+i\\i*i/i-i";
                         char *output = "iiii*i/\\+i-";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
@@ -64,6 +72,7 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i/(i+i/(i*i*i*i+i*-(i-i*i)/i)-i*i/i)+i-i-i/i/i*i*i/i-i";
                         char *output = "iiiii*i*i*i*+iii*-i/-/+ii*i/-/i+i-ii/i/i*i*i/-i-";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
@@ -72,6 +81,7 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "(i+(i/(i*i/i+i)*i*i*i/i-i+i*i)/i*i-i)/(i*(i-i/i)-i)+i";
                         char *output = "iiii*i/i+/i*i*i*i/i-ii*+i/i*+i-iiii/-*i-/i+";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 
@@ -80,6 +90,7 @@ void TEST_generateInputStr(int testNum)
                 {
                         char *expr = "i/i*i/i";
                         char *output = "ii/i*i/";
+                        
                         strcpy(input, expr);
                         strcpy(expected+1, output);
                         break; 

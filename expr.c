@@ -2,17 +2,19 @@
  * @file expr.c
  * @author Jiri Furda (xfurda00)
  * @brief Source file for precedent analysis of expressions
- * @todo
+ * @todo Write test for return values
  */
  
 // --- TESTING ---
-#define EXPR_TEST
+#define EXPR_TEST       // Simulate scanner and generate postfix
+//#define DEBUG   // Print stack, operations and table indexes
 
 #ifdef EXPR_TEST
 #include "tests/expr/expr-test.c"
 int testNum;
 extern char input[EXPR_TESTSTR_LENGTH];
-extern char output[EXPR_TESTSTR_LENGTH];
+extern char expected[EXPR_TESTSTR_LENGTH];
+extern int expectedRetVal;
 #endif
 
 
@@ -69,13 +71,14 @@ char *rule[RULES_COUNT] =
 	"i"
 };
 
+
+
+// ========== DEBUG ==========
+#ifdef EXPR_TEST
 myStack_t dbg_postfix;     // POSTFIX DEBUG
 extern token_t firstTestToken;
 
 
-// ========== DEBUG ==========
-
-#ifdef EXPR_TEST
 int main(int argc, char *argv[])
 {
         if(argc != 2)
@@ -92,11 +95,12 @@ int main(int argc, char *argv[])
         stackInit(&dbg_postfix);  // POSTFIX DEBUG
 
 	
-	expr_main(0, TEST_getFirstToken(), &endToken);
+        int retVal;
+	retVal = expr_main(0, TEST_getFirstToken(), &endToken);
 	
         
-	//DEBUG_PRINT("[DBG] Returning token to parser (external type = %d)\n", endToken.type);
-	return EXPR_SUCCESS;
+	expr_testFinish_retVal(retVal);
+        return retVal;
 }
 #endif
 
@@ -104,73 +108,82 @@ int main(int argc, char *argv[])
 
 
 
+// ========== CORE FUNCTIONS ==========
+
 int expr_main(int context, token_t firstToken, token_t *endToken)
 {
         // --- Check first token type ---
-        if(expr_isFirstValid(firstToken) == EXPR_FALSE)
-                return EXPR_ERROR;
+        if(expr_isFirstValid(firstToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
+                return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
+        
         
 	// --- Initializing stack and default values ---
 	myStack_t stack;	// Create stack
 	stackInit(&stack);	// Init stack (Push "$")
-	
+        
 	int continueLoading = 1;	// Determines if this module should read next token
 	
 	token_t loadedToken;
 	loadedToken = firstToken;	// Value for first run of loading cycle
 
+
 	// --- Loading tokens ---
 	do
-	{
-		//DEBUG_PRINT("------\n[DBG] Loading token (external type=%d)\n", loadedToken.type);
+	{		
+		// --- CORE OF THE FUNCTION ---
+		int retVal;	// Internal terminal type
+		retVal = expr_algorithm(&stack, loadedToken.type);	// Use algorith on the loaded token
 		
-		// CORE OF THE FUNCTION
-		int type;	// Internal type of token
-		type = expr_algorithm(&stack, loadedToken.type);	// Perform operation based on loaded token
-		
-		
-		// End of expression (TERM_endingToken = Found token that doesn't belong to expression anymore (found in this run))
-		if(type == TERM_endingToken)   // (TERM_stackEnd = Already found token that doesn't belong to expression anymore (found before this run))
+		 
+		if(retVal == EXPR_RETURN_NOMORETOKENS)    // TERM_endingToken = Found token that doesn't belong to expression anymore
 		{
-			// @todo Later if it's going to be more advanced, put it in reutrnProceeding() but for now:
+                        // --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
 			*endToken = loadedToken;	// Save token for parser to proceed
-			// @todo Do something with the result and try to write this shit again like a human
-
-
-                        // Finish algorith (There are no more tokens to load but algorithm is not finished)
-                        while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)        
-                        {
-                                expr_algorithm(&stack, TOK_endOfFile);  // Continue with algorithm (Not really TOK_endOfFile, see header file at expr_algorithm())
-                        }
-                        
-                        //DEBUG_PRINT("[DBG] Algorithm completed!\n================\n");
-                        //stackInfo(&stack);
-                       
-                        // ===== POSTFIX DEBUG =====
-                        expr_finish();
-
-			return EXPR_SUCCESS;	// Return success	
-		}
-		
-		
-		// Get next token for next run of the cycle
-		#ifndef DEBUG
-		getToken(&loadedToken);
-		#else
-		TEST_getToken(&loadedToken);
-		#endif
+		}       
+                else
+		{
+                        // --- Check for error ---
+                        if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
+                                return retVal;  // End module and report error
+                                
+                                
+                        // --- Load next token ---
+                        #ifndef EXPR_TEST
+                        getToken(&loadedToken);
+                        #else
+                        TEST_getToken(&loadedToken);
+                        #endif
+                }
 		
 	}
 	while(continueLoading);
-	
-	return EXPR_ERROR;	// @todo Return values, this is here just because gcc won't stop bitching about it (If program gets to this line it means there is some strange smell of insect in the air)
+        
+        
+        // --- Finish algorith ---
+        while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)  // Should algorithm continue?        
+        {
+                // (This happens when there are no more tokens to load but algorithm is not finished)
+                int retVal;     // Return value of algorithm
+                retVal = expr_algorithm(&stack, TOK_endOfFile);  // Continue with algorithm (Not really TOK_endOfFile, see header file at expr_algorithm())
+                
+                
+                // --- Check for error ---
+                if(retVal != EXPR_RETURN_SUCC)
+                        return retVal;
+        }
+        
+       
+        // ===== POSTFIX DEBUG =====
+        expr_finish();
+
+        return EXPR_RETURN_SUCC;        // Return success
 }
 
 int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 {
         if(expr_isAlgotihmFinished(stack, tokenType) == EXPR_TRUE)      // Is algorithm finished?
-                return EXPR_SUCCESS;    // Return success
+                return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
         
         
 	precTableIndex_t type;	// Internal type of token = Column index
@@ -178,6 +191,7 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
 	switch(tokenType)  
 	{
+                // Loaded token belong to the expression
 		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'
                 case TOK_minus:	type = TERM_minus;	break;	// Operator terminal '-'
                 case TOK_divInt:	type = TERM_divInt;	break;	// Operator terminal '\'			
@@ -187,9 +201,9 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right bracket terminal = ')'
 		case TOK_identifier:	type = TERM_id;	break;	// Identifier terminal = 'i'
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
-		
-		default:	// Loaded token doesn't belong to the expression
-			return TERM_endingToken;	// End function and report it's not an expression token
+                
+                // Loaded token DOESN'T belong to the expression
+		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
 			
 		/* @todo More cases for later
 		case TOK_integer:
@@ -220,22 +234,34 @@ int expr_algorithm(myStack_t *stack, tokenType_t tokenType)
 	// Performing the action
 	switch(action)
 	{
-		case ACTION_shift:
-			expr_shift(stack, expr_getCharFromIndex(type));
-			break;
+                // Operation SHIFT '<'
+		case ACTION_shift:      return expr_shift(stack, expr_getCharFromIndex(type));
+                
+                // Operation REDUCE '>'
 		case ACTION_reduce:
-			expr_reduce(stack);
-                        expr_algorithm(stack, tokenType);       // Use recursion (don't ask why, that's just the way it should be)
-			break;
-		case ACTION_specialShift:
-			expr_specialShift(stack, expr_getCharFromIndex(type));
-			break;
-		case ACTION_ilegal:
+                {
+			int success;    // Return value of reducing (= searching for rule)
+                        success = expr_reduce(stack);
+                        
+                        if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
+                                return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+                                
+                        // Otherwise continue with algorithm
+                        return expr_algorithm(stack, tokenType);       // Use recursion (don't ask why, that's just the way it should be)
+		}
+                
+                // Operation SPECIAL SHIFT '='
+                case ACTION_specialShift:       return expr_specialShift(stack, expr_getCharFromIndex(type));
+		
+                // ILEGAL OPERATON '#'
+                case ACTION_ilegal:
 			expr_error("expr_algorithm: Tried to perform an ilegal action");
-			break;	
+                        return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
 	}
 	
-	return EXPR_SUCCESS;	// @todo Return values, this is here just because gcc won't stop bitching about it
+        // @todo Edit this function so this below doesn't look so stupid
+        expr_error("expr_algorithm: Shouldn't ever reach this line");
+	return EXPR_RETURN_ERROR_INTERNAL;
 }
 
 
@@ -316,7 +342,7 @@ char expr_getCharFromIndex(precTableIndex_t index)
 
 // ========== ACTION FUNCTIONS ==========
 
-void expr_shift(myStack_t *stack, char character)
+int expr_shift(myStack_t *stack, char character)
 {
 	DEBUG_PRINT("[DBG] Operation <\n");
 	
@@ -324,9 +350,11 @@ void expr_shift(myStack_t *stack, char character)
 	stackPush(stack, character);    // Push the terminal at the end of the stack
         
         stackInfo(stack);	// Debug
+        
+        return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
-void expr_reduce(myStack_t *stack)
+int expr_reduce(myStack_t *stack)
 {
 	DEBUG_PRINT("[DBG] Operation >\n");
 	
@@ -339,50 +367,55 @@ void expr_reduce(myStack_t *stack)
         char terminal = stackGetTerminal(stack);
         if(terminal != ')')
                 stackPush(&dbg_postfix, terminal);
-		
         // --- END DEBUG ---
         
         
         // Find out what to reduce
-	char top = stackPop(stack);	// Get and remove character from top of the stack
+	char top = stackPop(stack);	// Get and remove character from top of the stack (@todo check if din't try to pop empty stack)
 	while(top != '<' && top != STACK_ENDCHAR)	// Keep poping untill end of reduce or end of stack is found
 	{
 		int success;
 		success = strAddChar(&handle, top);	// Add character from top of the stack at the end of the string
 		if(success == STR_ERROR)	// If couldn't
 		{
+                        strFree(&handle);       // Avoid memory leak
 			expr_error("expr_reduce: Couldn't add char to end of string");
-			return;
+			return EXPR_RETURN_ERROR_INTERNAL;        // Return internal error
 		}
 		top = stackPop(stack);	// Get character from top of the stack for next run of the cycle
         }
         
         // Search for grammar rule
-	int rule;
-        rule = expr_searchRule(handle);
-        
+	int ruleFound;
+        ruleFound = expr_searchRule(handle);
         strFree(&handle);       // Free memory of the handle
         
         // Check if rule was found
-        if(rule == EXPR_ERROR)
+        if(ruleFound == EXPR_RETURN_ERROR_SYNTAX)
         {
                 expr_error("expr_reduce: Handle doen't match any rule");
-                return; // @todo This shouldn't be void function
+                return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
         }
         
-        // Push left side of the rule to the stack (always E)
-        stackPush(stack, 'E');
+        // Update stack
+        stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
         
-        stackInfo(stack);	// Debug
+        // Debug
+        stackInfo(stack);
+        
+        // Return value
+        return EXPR_RETURN_SUCC;       // Return success
 }
 
-void expr_specialShift(myStack_t *stack, char character)
+int expr_specialShift(myStack_t *stack, char character)
 {
         DEBUG_PRINT("[DBG] Operation =\n");
         
         stackPush(stack, character);    // Push the terminal at the end of the stack
         
         stackInfo(stack);	// Debug
+        
+        return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
 
@@ -399,11 +432,11 @@ int expr_searchRule(string handle)
 	{
 		if(strCmpConstStr(&handle, rule[i]))	// If found a match
                 {
-			return i;	// Return rule number
+			return EXPR_RETURN_SUCC;	// Return succes
                 }
         }	
 	
-	return EXPR_ERROR;	// If not found return fail
+	return EXPR_RETURN_ERROR_SYNTAX;	// If not found syntax error
 }
 
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
@@ -444,16 +477,27 @@ void expr_error(char *msg)
 {
 	fprintf(stderr, "[ERROR] %s\n", msg);
         expr_finish();  // Postfix debug
-        exit(42);
+//        exit(42);
 	// @todo This function should end whole module and return err value to parser
 }
 
 void expr_finish()
 {
+#ifdef EXPR_TEST
         // ===== Postfix debug =====
         stackPush(&dbg_postfix, '\0');
         printf("===TEST #%d===\n",testNum);
         printf("%s [Input]\n",input);
         printf("%s [Output]\n",&(dbg_postfix.arr));
-        printf("%s [Expected]\n",expected);        
+        printf("%s [Expected]\n",expected);
+
+#endif
+}
+
+void expr_testFinish_retVal(int retVal)
+{
+#ifdef EXPR_TEST
+        // ===== Postfix debug =====
+        printf("RetVal=%d [Expected=%d]\n",retVal,expectedRetVal);       
+#endif
 }

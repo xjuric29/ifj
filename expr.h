@@ -36,9 +36,15 @@
 #define RULES_COUNT     7	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
-#define EXPR_NOMORETOKENS       -1    /// Internal value replacing tokenType_t when there are no more
 #define EXPR_TRUE       1  /// Intarnal return value for true
 #define EXPR_FALSE      0  /// Intarnal return value for false
+#define EXPR_RETURN_NOMORETOKENS       420    /// Internal return value respresenting loaded token doen't belog to expression
+// External return values (@todo This is already defined somewhere for sure)
+#define EXPR_RETURN_SUCC        0
+#define EXPR_RETURN_ERROR_SYNTAX        2       // e.g. Missing operator/rule not found
+#define EXPR_RETURN_ERROR_SEM   3       // e.g. Varibale not defined
+#define EXPR_RETURN_ERROR_INTERNAL      99      // e.g. malloc fail
+
 
 
 /**
@@ -109,7 +115,7 @@ int expr_main(int context, token_t firstToken, token_t *endToken);
  * 
  * @warning TOK_endOfFile doesn't represent it's original purpose but here it symbolizes there are no more tokens to load that would belong to the expression
  * 
- * @param myStack_t *stack	Pointer to stack for the algorithm
+ * @param *stack	Pointer to stack for the algorithm
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
@@ -151,12 +157,24 @@ precTableIndex_t expr_getIndexFromChar(char character);
 char expr_getCharFromIndex(precTableIndex_t index);
 
 // @todo Comment these functions
-void expr_shift(myStack_t *stack, char character);
-void expr_reduce();
-void expr_specialShift(myStack_t *stack, char character);
+int expr_shift(myStack_t *stack, char character);
+
+/**
+ * @brief Algortihm operation reduce
+ * 
+ * @todo Description
+ * 
+ * @param *stack	Pointer to stack for the algorithm 
+ * @return      EXPR_RETURN_SUCC        when successful
+ *              EXPR_RETURN_ERROR_INTERNAL      when couldn't  add char to handle string
+ *              EXPR_RETURN_ERROR_SYNTAX        when rule not found
+ */
+int expr_reduce(myStack_t *stack);
+int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 void expr_finish();
+void expr_testFinish_retVal(int retVal);
 
 /**
  * @brief Check if token be used as begining of expression
