@@ -23,11 +23,11 @@
 #include <stdlib.h>     // For postfix debug
 
 // Module dependency
-#include "stack.c"
-#include "symtab.c"
+#include "stack.h"
+#include "symtab.h"
 #ifndef EXPR_TEST
-#include "str.c"
-#include "scanner.c"
+#include "str.h"
+#include "scanner.h"
 #endif
 
 

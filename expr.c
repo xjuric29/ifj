@@ -6,7 +6,7 @@
  */
  
 // --- TESTING ---
-#define EXPR_TEST       // Simulate scanner and generate postfix
+//#define EXPR_TEST       // Simulate scanner and generate postfix
 //#define DEBUG   // Print stack, operations and table indexes
 
 #ifdef EXPR_TEST

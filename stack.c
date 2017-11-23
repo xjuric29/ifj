@@ -127,7 +127,7 @@ int stackGetTerminalIndex(myStack_t *stack)
         {
                 for(int x = 0; x < TERMINAL_COUNT; x++) // Compare with every possible terminal
                 {
-                        if(stack->arr[i] == terminals[x])       // If it's a match
+                        if(stack->arr[i] == expr_terminals[x])       // If it's a match
                                 return i;       // Return terminal index
                 }
         }

@@ -37,7 +37,7 @@ typedef enum
         ERR_STACK_TERM
 }	stackErrorCodes_t; 
 
-char terminals[TERMINAL_COUNT] = "+-\\*/()i$";
+char expr_terminals[TERMINAL_COUNT] = "+-\\*/()i$";
 
 //	--- Strucutres ---
 typedef struct {
