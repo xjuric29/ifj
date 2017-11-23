@@ -8,7 +8,7 @@
 
 struct I_output *Instr = NULL;
 
-int add_instruction(int instType, token_t *op1, token_t *op2)
+int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 {
 	
 	
@@ -16,6 +16,14 @@ int add_instruction(int instType, token_t *op1, token_t *op2)
 	static int inst_else = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
+
+	if(Instr->alloc_lines == Instr->used_lines)
+	{
+		Instr = realloc(Instr, sizeof(struct I_output) + Instr->alloc_lines*2*sizeof(char*));
+		if(Instr == NULL)
+			return INTERNAL_ERROR;
+		Instr->alloc_lines*=2;
+	}
 	
 	switch(instType)
 	{
