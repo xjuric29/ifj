@@ -27,17 +27,20 @@
 #define READ 16
 #define WRITE 17
 #define JUMPIFEQS 18
-#define JUMP
+#define JUMPIFNQS 19
+#define JUMP 20
+#define PUSHFRAME 21
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
 
+#define INST (Instr->instrList[Instr->used_lines])
 
 typedef struct I_output
 {
 	unsigned alloc_lines;
 	unsigned used_lines;
-	char *instrList[INSTSIZE];
+	char *instrList[];
 
 } I_output;
 
