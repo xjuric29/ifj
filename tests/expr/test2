@@ -1,0 +1,7 @@
+'Add two int variables
+Scope
+Dim int1 As Integer
+Dim int2 As Integer
+Dim res As Integer
+res = int1 + int2
+End Scope
