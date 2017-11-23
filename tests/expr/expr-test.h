@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "../../str.c"
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -47,7 +48,7 @@ typedef enum
 ///	@brief An union type representing all possible data types of token value
 typedef struct
 {
-//    string *stringVal;
+    string *stringVal;
     int integer;
     double decimal;
 } tokenValue_t;

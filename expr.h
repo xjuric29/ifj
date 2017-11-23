@@ -24,9 +24,9 @@
 
 // Module dependency
 #include "stack.c"
-#include "str.c"
 #include "symtab.c"
 #ifndef EXPR_TEST
+#include "str.c"
 #include "scanner.c"
 #endif
 
@@ -173,11 +173,11 @@ int expr_shift(myStack_t *stack, char character);
  *              EXPR_RETURN_ERROR_INTERNAL      when couldn't  add char to handle string
  *              EXPR_RETURN_ERROR_SYNTAX        when rule not found
  */
-int expr_reduce(myStack_t *stack);
+int expr_reduce(myStack_t *stack, token_t token);
 int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
-void expr_generateInstruction(char terminal);
+void expr_generateInstruction(char terminal, token_t token);
 void expr_finish();
 void expr_testFinish_retVal(int retVal);
 

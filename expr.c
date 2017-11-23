@@ -157,7 +157,14 @@ int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_na
 
 	// --- Loading tokens ---
 	do
-	{		
+	{
+                // --- Check if variable exists ---
+                /*
+                if(loadedToken.type == TOK_identifier)  // If token is variable
+                        if(st_find_element(st_global, func_name, loadedToken.type.stringVal) == NULL)   // Haven't found it in the table
+                                return EXPR_RETURN_ERROR_SEM;   // Return semantics error
+                */
+                		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
 		retVal = expr_algorithm(&stack, loadedToken);	// Use algorith on the loaded token
@@ -215,10 +222,11 @@ int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_na
 
 int expr_algorithm(myStack_t *stack, token_t token)
 {
-        if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)      // Is algorithm finished?
+        // Check if algortihm is finished
+        if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
                 return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
         
-        
+        // Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
 	
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
@@ -232,8 +240,16 @@ int expr_algorithm(myStack_t *stack, token_t token)
                 case TOK_div:	type = TERM_div;	break;	// Operator terminal '/'
 		case TOK_lParenth:	type = TERM_lBrac;	break;	// Left bracket terminlal = '('
 		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right bracket terminal = ')'
-		case TOK_identifier:	type = TERM_id;	break;	// Identifier terminal = 'i'
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
+                
+                // Loaded token that has some value
+                case TOK_identifier:
+                case TOK_integer:
+                case TOK_decimal:
+                        type = TERM_id;	// Identifier terminal = 'i'
+                        // All these tokens are going to be represented by 'i' @todo Is this good method?
+                break;
+                
                 
                 // Loaded token DOESN'T belong to the expression
 		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
@@ -274,7 +290,7 @@ int expr_algorithm(myStack_t *stack, token_t token)
 		case ACTION_reduce:
                 {
 			int success;    // Return value of reducing (= searching for rule)
-                        success = expr_reduce(stack);
+                        success = expr_reduce(stack, token);
                         
                         if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
                                 return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
@@ -387,7 +403,7 @@ int expr_shift(myStack_t *stack, char character)
         return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
-int expr_reduce(myStack_t *stack)
+int expr_reduce(myStack_t *stack, token_t token)
 {
 	DEBUG_PRINT("[DBG] Operation >\n");
 	
@@ -398,13 +414,7 @@ int expr_reduce(myStack_t *stack)
         
         // Generating instruction
         char terminal = stackGetTerminal(stack);
-        expr_generateInstruction(terminal);
-        
-        
-        // --- DEBUG --- (Generating postfix)
-        if(terminal != ')')
-                stackPush(&dbg_postfix, terminal);
-        // --- END DEBUG ---
+        expr_generateInstruction(terminal, token);
         
         
         // Find out what to reduce
@@ -508,9 +518,55 @@ int expr_isFirstValid(token_t firstToken)
         }
 }
 
-void expr_generateInstruction(char terminal)
+void expr_generateInstruction(char terminal, token_t token) // @todo
 {
-        // @todo Filter bracktes, because they don't produce an instruction
+        
+
+#ifdef EXPR_TEST       
+        if(terminal != ')')     // Bracket doesn't produce any instruction
+        {
+                stackPush(&dbg_postfix, terminal);
+                //stackPush(&dbg_postfix, ' ');
+        }
+#else
+        switch(terminal)
+        {
+                // Operators
+                case '+':
+                        printf("ADDS\n");
+                        break;
+                case '-':
+                        printf("SUBS\n");
+                        break ;               
+                case '*':
+                        printf("MULS\n");
+                        break;
+                case '/':
+                case '\\':
+                        printf("DIVS\n");
+                        break;
+                        
+                case 'i':     // We have to find out value
+                {
+                        switch(token.type)
+                        {
+                                case TOK_identifier:
+                                        printf("PUSHS LF@%s\n", strGetStr(token.value.stringVal));
+                                        break;
+                                case TOK_integer:
+                                        printf("PUSHS %d\n", token.value.integer);
+                                        break;
+                                case TOK_decimal:
+                                        printf("PUSHS %f\n", token.value.decimal);
+                                        break;
+                                default:
+                                        expr_error("expr_generateInstruction: Stack is 'i' but token.type is strange");
+                                        return;
+                        }
+                }
+        }
+
+#endif
 }
 
 // ========== OTHER FUNCTIONS ==========
