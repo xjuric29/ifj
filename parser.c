@@ -9,6 +9,7 @@
 #include "scanner.h"
 #include "str.h"
 #include "symtab.h"
+#include "expr.h"
 
 
 
@@ -73,7 +74,7 @@ int parse(){
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
     //Testy *********/
-    st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
+    /*st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
     if (FF->params != NULL){
         st_element_t *Param = FF->params->first;
         int i = 0;
@@ -342,11 +343,15 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                     fprintf(stderr,"Deklaracia nema ziadne argumenty ale definicia ma\n");
                     return SEM_ERROR_FUNC;
                 }
-                //Check if ID of first argument is equal to first argument in declaration
+                //Check if ID of first argument is equal to first argument in declaration if not, we need to save new ID
                 if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
-                    fprintf(stderr,"ID prveho argumentu nesedi\n");
-                    return SEM_ERROR_FUNC;
+                    printf("%s\n", Function->params->first->key.str);
+                    if (strCopyString(&Function->params->first->key, CurrentToken->value.stringVal)){
+                        return INTERNAL_ERROR;
+                    }
                 }
+                printf("%s\n", Function->params->first->key.str);
+                printf("-----------------\n");
 
             }else{ //We are executing declaration, or definition of function that wasn`t declared..
 
@@ -443,15 +448,36 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 return SYN_ERROR;
             }
             if (Function->declared){
-                Parameter = (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal));
-                if (Parameter == NULL){ //Parameter wasn`t found -> error
-                    fprintf(stderr,"Parameter nebol najdeny\n");
+                //Check If parameter ID isn`t also ID of any created Function
+                if (st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
                     return SEM_ERROR_FUNC;
                 }
-                if (Parameter->param_number != ParamNumber){ //If param, we found hasn`t order we expect -> error
-                    fprintf(stderr,"Pri parametre ktory sme nasli nesedi poradie, ktore parameter mal mat\n");
+
+                //Check if number of params in declaration is >= as order of parameter we are checking
+                if (Function->params->params_n < ParamNumber){
                     return SEM_ERROR_FUNC;
                 }
+
+                //Get to needed parameter + check colisisions with ID of previos parameters
+                Parameter = Function->params->first;
+                while(Parameter->param_number != ParamNumber){
+                    //If some of the previos parameters has same name as new paramater
+                    if (strCmpString(&Parameter->key, CurrentToken->value.stringVal) == STR_SUCCESS){
+                        return SEM_ERROR_FUNC;
+                    }
+                    Parameter = Parameter->next_param;
+                }
+
+                //Check if ID of argument is equal to argument in declaration, if not we need to save new ID
+                if (strCmpString(&Parameter->key, CurrentToken->value.stringVal)){
+                    printf("%s\n", Parameter->key.str);
+                    if (strCopyString(&Parameter->key, CurrentToken->value.stringVal)){
+                        return INTERNAL_ERROR;
+                    }
+                }
+                printf("%s\n", Parameter->key.str);
+                printf("-----------------\n");
+
                 //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
                 //Save element to Local Table of function.. Save it as parameter
             }else{
@@ -647,6 +673,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
     int RecurCallResult = -1;
     st_element_t *Variable; //To save pointer on variable in hashTable
     struct check SolveProblems; //struct to solve problem with conflicts in while and if blocks
+    st_localTable_t *CalledFunction; //Pointer to hash table, for work with function Call
 
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -755,12 +782,24 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             switch (CurrentToken->type) {
                 case TOK_endOfLine:
                     //<stats>
+                    //TODO premennu inicializovat na nulu alebo prazdny string
+
                     return Stats(CurrentToken, ToCheck, GlobalTable);
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
+
+                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                        return RecurCallResult;
+                    }
+
+                    //Check token from expresion
+                    if (CurrentToken->type != TOK_endOfLine){
+                        return SYN_ERROR;
+                    }
 
                     return Stats(CurrentToken, ToCheck, GlobalTable);
 
@@ -769,8 +808,14 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
         //ID EQUAL <expresion>
-        //          ID (function) <function-params-call> TODO
+        //          ID (function) <function-params-call> <stats>
         case TOK_identifier:
+            //Check if variable exist in function
+            if ((Variable = st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal)) == NULL){
+                fprintf(stderr,"Pokus o priradenie do neexistujucej premennej: %s\n", CurrentToken->value.stringVal->str);
+                return SEM_ERROR_FUNC;
+            }
+
             //EQUAL
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
@@ -779,12 +824,73 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
 
-            if ((Variable = st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal)) == NULL){
-                fprintf(stderr,"Pokus o priradenie do neexistujucej premennej: %s\n", CurrentToken->value.stringVal->str);
-                return SEM_ERROR_FUNC;
+            //ID - we need to check if it`s function CALL or expresion
+            if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+                return ScannerInt;
             }
 
-            //<expresion>
+            //Check for Builtin Function
+            switch (CurrentToken->type){
+
+                //If we get ID we need to check if it`s function call or just expresion
+                case TOK_identifier:
+                    //Check if it`s function call
+                    if ((CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal)) == NULL){
+                        //If we don`t find function, check if we find variable in current function
+                        if (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal) == NULL){
+                            fprintf(stderr, "Prva premenna je hned nedefinovana\n");
+                            return SEM_ERROR_FUNC;
+                        }
+                        //fprintf(stderr, "Spracovava expresion\n");
+                        //TODO Call expresion
+                        //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                        if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                            return RecurCallResult;
+                        }
+
+                        //Check token from expresion
+                        if (CurrentToken->type != TOK_endOfLine){
+                            return SYN_ERROR;
+                        }
+
+                    }else{
+                        //Test if function vas declared or defined -> just because of recurcive call of function without declaration
+                        if ((CalledFunction->declared || CalledFunction->defined) == false){
+                            fprintf(stderr, "Rekurzivne volanie funkcie ktora nebola deklarovana\n");
+                            return SEM_ERROR_FUNC;
+                        }
+
+                        //Function was found check params
+                        if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction)) != SUCCESS){
+                            return RecurCallResult;
+                        }
+                    }
+
+                    break;
+
+                //Case built in functions
+                case KW_length:
+                case KW_subStr:
+                case KW_asc:
+                case KW_chr:
+                    //TODO buildin
+                    break;
+
+                default:
+                    //TODO Call expresion
+                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                        return RecurCallResult;
+                    }
+
+                    //Check token from expresion
+                    if (CurrentToken->type != TOK_endOfLine){
+                        return SYN_ERROR;
+                    }
+                    break;
+
+            }
+
             //TODO Kedy predat riadenie precedencnej analyze?
             //Treba rozhodnut ci sa jedna o vyraz alebo volanie funkcie
             //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
@@ -800,11 +906,19 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
 
-            //<expresion>
-            //TODO predat riadenie precedencnej analyze
-            //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
-            //takze to treba ceknut
+            //TODO Kde vyriesit kontrolu ci vraciame spravny typ akeho je typu funkcia
 
+            //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+                return RecurCallResult;
+            }
+
+            //Check token from expresion
+            if (CurrentToken->type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
+
+            //<stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
@@ -821,10 +935,11 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
 
         //IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL <stats>
         case KW_if:
-            //TODO
+
             SolveProblems = ToCheck;
             SolveProblems.InIf = true; //Set InIf to true so token ELSE is SUCCESS
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
+
             //Call function that will check whole structure IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
             RecurCallResult = IfStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
@@ -848,6 +963,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems = ToCheck;
             SolveProblems.InIf = false; //Set InIf to false so token ELSE that come before LOOP won`t be evaluated as SUCCESS
             SolveProblems.InWhile = true; //Set InWhile to true so LOOP is success
+
             //Call function to result while..
             RecurCallResult = WhileStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
@@ -899,10 +1015,17 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
 
     //EXPRESION
     //TODO
-    //Malo by vratit EOL takze tieto riadky pravdepodobne vymazat
-    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-        return ScannerInt;
+    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+        return RecurCallResult;
     }
+
+    //Malo by vratit EOL takze tieto riadky pravdepodobne vymazat
+    /*if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+        return ScannerInt;
+    }*/
+
+    //Check token from expresion
     if (CurrentToken->type != TOK_endOfLine){
         return SYN_ERROR;
     }
@@ -926,12 +1049,18 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     int RecurCallResult = -1;
     //<condition>
     //TODO predat riadenie precedencnej
-    //Vrati mi zrejme THEN - treba to skontrolovat
 
-    //THEN bude inak..
-    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-        return ScannerInt;
+    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+        return RecurCallResult;
     }
+
+    //Check token from expresion
+    if (CurrentToken->type != TOK_endOfLine){
+        return SYN_ERROR;
+    }
+
+    //Check then
     if (CurrentToken->type != KW_then){
         return SYN_ERROR;
     }
@@ -982,6 +1111,174 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
         return SYN_ERROR;
     }
 
+    return SUCCESS;
+}
+
+/**
+  * @brief: Function to check Function CalledFunction
+  * Check arguments, types and conversions
+  * @param CurrentToken is pointer to the structure where is current loaded token
+  * @param CalledFunction is pointer to function in Hash Table, function that is called
+  **/
+int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction){
+    //Expect '('
+    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+        return ScannerInt;
+    }
+    if (CurrentToken->type != TOK_lParenth){
+        return SYN_ERROR;
+    }
+
+    //Called function has 0 params
+    if (CalledFunction->params == NULL){
+
+        //Token must be )
+        if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+            return ScannerInt;
+        }
+        if (CurrentToken->type != TOK_rParenth){
+            fprintf(stderr, "Funkcia bola volana s viac argumentamy ako ich ma\n");
+            return SEM_ERROR_COMP;
+        }
+
+    }else{
+        int pNumber = 1; //To Check if we finished with right amount of parameters
+        st_element_t *param = CalledFunction->params->first;
+        st_element_t *IDparameter;
+        //Check paramaters
+        while(param != NULL){
+            //Get token
+            if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+                return ScannerInt;
+            }
+            //Choose what type is parameter.. Constant or variable
+            switch(CurrentToken->type){
+
+                //If we get ')' -> sem. error, function has more arguments
+                case TOK_rParenth:
+                    fprintf(stderr, "Funkcia bola volana s menej argumentamy ako ma jej definicia\n");
+                    return SEM_ERROR_COMP;
+
+                //First argument is ID
+                case TOK_identifier:
+                    //Check if ID was defined
+                    if ((IDparameter = st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal)) == NULL){
+                        fprintf(stderr, "Funkcia %s volana s neexistujucim parametrom: %s\n", CalledFunction->key.str, CurrentToken->value.stringVal->str);
+                        return SEM_ERROR_FUNC;
+                    }
+
+                    //Check if types of parameter and given variable are same
+                    if(param->el_type != IDparameter->el_type){
+
+                        //If not, check if neither of parameter or variable is string -> string is only compatibile with string
+                        if (IDparameter->el_type == st_string || param->el_type == st_string){
+                            return SEM_ERROR_COMP;
+                        }
+
+                        //If given variable is decimal -> parameter in funct is integer
+                        if (IDparameter->el_type == st_decimal){
+                            //TODO volanie prislusnej...
+                            fprintf(stderr, "Prevadzam ID z float na int\n");
+                        }
+
+                        //If given variable is int -> parameter is float
+                        if (IDparameter->el_type == st_integer){
+                            //TODO stuff...
+                            fprintf(stderr, "Prevadzam ID z int na float\n");
+                        }
+                    }
+
+                    //TODO Presunut z jedneho framu do druheho
+
+                    break;
+
+                //Parameter is represented as constant of type integer
+                case TOK_integer:
+
+                    //If parameter in definition isn`t integer type
+                    if (param->el_type != st_integer){
+
+                        //If parameter in definition is type string
+                        if (param->el_type == st_string){
+                            fprintf(stderr, "Parameter bol typu string ale dostal som konstantu int\n");
+                            return SEM_ERROR_COMP;
+                        }
+
+                        //If parameter in definition is type of double, do conversion
+                        if (param->el_type == st_decimal){
+                            fprintf(stderr, "Prevadzam konstantu INT na DOUBLE\n");
+                            //TODO stuff
+                        }
+
+                    }
+
+                    //TODO Presunut z jedneho farmu do druheho
+                    break;
+
+                //Parameter is represented as constant of type float
+                case TOK_decimal:
+
+                    //If parameter definition isn`t float type
+                    if (param->el_type != st_decimal){
+
+                        //If parameter in definition is type string
+                        if (param->el_type == st_string){
+                            fprintf(stderr, "Parameter bol typu string ale dostal som float\n");
+                            return SEM_ERROR_COMP;
+                        }
+
+                        //If parameter in definition is type int, do conversion
+                        if (param->el_type == st_integer){
+                            fprintf(stderr, "Prevadzam konstantu float na int\n");
+                            //TODO stuff
+                        }
+                    }
+
+                    //TODO Frame
+                    break;
+
+                //Parameter is represented as constant of type string
+                case TOK_string:
+
+                    //If parameter definition isn`t string type
+                    if (param->el_type != st_string){
+                        return SEM_ERROR_COMP;
+                    }
+
+                    break;
+
+                default:
+                    return SYN_ERROR;
+
+            }
+
+            if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+                return ScannerInt;
+            }
+            //If we are checking last parameter expect token ')'
+            if (pNumber == CalledFunction->params->params_n){
+                if (CurrentToken->type != TOK_rParenth){
+                    fprintf(stderr, "Cakal som zatvorku, neprisla\n");
+                    return SEM_ERROR_COMP;
+                }
+            //otherwise expect token ','
+            }else{
+                if (CurrentToken->type != TOK_comma){
+                    fprintf(stderr, "Cakal som ciarku, neprisla\n");
+                    return SEM_ERROR_COMP;
+                }
+            }
+            param = param->next_param;
+            pNumber++;
+        }
+    }
+    //EOL
+    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+        return ScannerInt;
+    }
+    if (CurrentToken->type != TOK_endOfLine){
+        return SYN_ERROR;
+    }
     return SUCCESS;
 }
 

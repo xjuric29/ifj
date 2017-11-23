@@ -16,6 +16,12 @@ struct check{
     bool InElse; //If comes token Else set to True
 };
 
+
+#define EXPRESION_CONTEXT_ARIGH 1
+#define EXPRESION_CONTEXT_LOGIC 2
+#define EXPRESION_CONTEXT_PRINT 3
+#define EXPRESION_CONTEXT_RETURN 4
+
 int parse();
 
 
@@ -81,5 +87,13 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
   * @return Type of error or SUCCESS
   */
 int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable);
+
+/**
+  * @brief: Function to check Function CalledFunction
+  * Check arguments, types and conversions
+  * @param CurrentToken is pointer to the structure where is current loaded token
+  * @param CalledFunction is pointer to function in Hash Table, function that is called
+  **/
+int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction);
 
 #endif

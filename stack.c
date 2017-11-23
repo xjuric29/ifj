@@ -123,6 +123,8 @@ void stackInfo(myStack_t *stack)
 
 int stackGetTerminalIndex(myStack_t *stack)
 {
+	char terminals[TERMINAL_COUNT] = "+-\\*/()i$";
+	
         for(int i = stack->top; i >= 0; i--)    // Start searching from top of the stack
         {
                 for(int x = 0; x < TERMINAL_COUNT; x++) // Compare with every possible terminal

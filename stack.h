@@ -37,8 +37,6 @@ typedef enum
         ERR_STACK_TERM
 }	stackErrorCodes_t; 
 
-char terminals[TERMINAL_COUNT] = "+-\\*/()i$";
-
 //	--- Strucutres ---
 typedef struct {
 	char arr[STACK_MAX];

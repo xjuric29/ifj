@@ -6,7 +6,7 @@
  */
  
 // --- TESTING ---
-#define EXPR_TEST       // Simulate scanner and generate postfix
+//#define EXPR_TEST       // Simulate scanner and generate postfix
 //#define DEBUG   // Print stack, operations and table indexes
 
 #ifdef EXPR_TEST
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
 // ========== CORE FUNCTIONS ==========
 
-int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_name)
+int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *variable)
 {
         // --- Check arguments ---
         /*

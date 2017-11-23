@@ -23,13 +23,15 @@
 #include <stdlib.h>     // For postfix debug
 
 // Module dependency
-#include "stack.c"
-#include "symtab.c"
+#include "stack.h"
+#include "str.h"
+#include "scanner.h"
+#include "symtab.h"
+/*
 #ifndef EXPR_TEST
-#include "str.c"
-#include "scanner.c"
-#endif
 
+#endif
+*/
 
 
 //	--- Constants ---
@@ -105,7 +107,7 @@ typedef enum
  * @param *parserToken	Pointer to token used for communicating with parser
  * @return (@todo)
  */
-int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_name);
+int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
 
 
 /**
