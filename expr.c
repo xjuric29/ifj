@@ -154,6 +154,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	token_t loadedToken;
 	loadedToken = *parserToken;	// Value for first run of loading cycle
 
+	DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
 
 	// --- Loading tokens ---
 	do
@@ -222,6 +223,8 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 int expr_algorithm(myStack_t *stack, token_t token)
 {
+	static token_t savedToken;	// Save token if it had some tokenValue_t (identifier/integer/decimal/string)
+	
         // Check if algortihm is finished
         if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
                 return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
@@ -247,6 +250,7 @@ int expr_algorithm(myStack_t *stack, token_t token)
                 case TOK_integer:
                 case TOK_decimal:
                         type = TERM_id;	// Identifier terminal = 'i'
+                        savedToken = token;	// Save token because it has  
                         // All these tokens are going to be represented by 'i' @todo Is this good method?
                 break;
                 
@@ -290,11 +294,11 @@ int expr_algorithm(myStack_t *stack, token_t token)
 		case ACTION_reduce:
                 {
 			int success;    // Return value of reducing (= searching for rule)
-                        success = expr_reduce(stack, token);
+                        success = expr_reduce(stack, savedToken);
                         
                         if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
                                 return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
-                                
+                             
                         // Otherwise continue with algorithm
                         return expr_algorithm(stack, token);       // Use recursion (don't ask why, that's just the way it should be)
 		}
@@ -506,9 +510,12 @@ int expr_isFirstValid(token_t firstToken)
 {
         switch(firstToken.type) // Check token type
         {      
-                // Legal terminals to stand as first
+        // Legal terminals to stand as first
 		case TOK_lParenth:
 		case TOK_identifier:
+		case TOK_integer:
+		case TOK_decimal:
+		//case TOK_string: @todo string
                         return EXPR_TRUE;
                         
                 // Other terminals
@@ -561,6 +568,7 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
                                         break;
                                 default:
                                         expr_error("expr_generateInstruction: Stack is 'i' but token.type is strange");
+                                        // @todo This should end module
                                         return;
                         }
                 }
