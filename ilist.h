@@ -5,8 +5,8 @@
 #include "scanner.h"
 #include "str.h"
 
-#define FUNC -2
-#define SCOPE -1
+#define FUNC -2 // + createframe
+#define SCOPE -1 // + createframe pushframe
 
 #define LABEL 0
 #define DEFVAR_TF 1
@@ -53,6 +53,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3);
 
 int instr_init(); //call from main
 
-void print_built_int(); //call from main
+void print_all(); //call from main
+
+void inst_free();
 
 #endif

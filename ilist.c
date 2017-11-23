@@ -8,34 +8,57 @@
 
 void print_built_in();
 
-int main()
-{
-	instr_init();
-	token_t token;
-	string label;
-	strInit(&label);
-	token.value.stringVal = &label;
-	char *t1 = "SCOPE";
-	for(int i = 0; t1[i] != '\0'; i++)
-		strAddChar(&label, t1[i]);
-	add_instruction(LABEL, &token, NULL, NULL);
-	
-	strClear(&label);
-	t1 = "i";
-	for(int i = 0; t1[i] != '\0'; i++)
-		strAddChar(&label, t1[i]);
-	add_instruction(DEFVAR_TF, &token, NULL, NULL);
-	
-	print_built_in();
-	printf("%s", Instr->instrList[0]);
-	
-	printf("%s", Instr->instrList[1]);
-
-	return 0;
-}
+//int main()
+//{
+//	instr_init();
+//	token_t token;
+//	string label;
+//	strInit(&label);
+//	token.value.stringVal = &label;
+//	char *t1 = "SCOPE";
+//	for(int i = 0; t1[i] != '\0'; i++)
+//		strAddChar(&label, t1[i]);
+//	add_instruction(LABEL, &token, NULL, NULL);
+//	
+//	strClear(&label);
+//	t1 = "i";
+//	for(int i = 0; t1[i] != '\0'; i++)
+//		strAddChar(&label, t1[i]);
+//	add_instruction(DEFVAR_TF, &token, NULL, NULL);
+//	
+//	add_instruction(SCOPE, NULL, NULL, NULL);
+//	add_instruction(FUNC, &token, NULL, NULL);
+//	
+//	print_all();
+//	//printf("%s\n", Instr->instrList[7]);
+//	inst_free();
+//	
+//	strFree(&label);
+//
+//	return 0;
+//}
 
 
 struct I_output *Instr = NULL;
+
+void inst_free()
+{	
+	for (unsigned i = 0; i < Instr->alloc_lines; i++)
+		free(Instr->instrList[i]);
+
+	free(Instr);
+
+
+}
+
+void print_all()
+{
+	print_built_in();
+	
+	for (unsigned i = 0; i < Instr->used_lines; i++)
+		printf("%s\n", Instr->instrList[i]);
+	
+}
 
 int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 {
@@ -45,9 +68,11 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 	static int inst_else = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
+	static int test = 0;	
+
 	char c[100];	
 
-	if(Instr->alloc_lines == Instr->used_lines)
+	if(Instr->alloc_lines == (Instr->used_lines + 10))
 	{
 		Instr = realloc(Instr, sizeof(struct I_output) + Instr->alloc_lines*2*sizeof(char*));
 		if(Instr == NULL)
@@ -156,9 +181,29 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(EQS):
 			strcpy(INST, "EQS\n");
 			break;
+	
+		case(READ):
+			strcpy(INST, "READ LF@");
+			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, "\n");
+			break;
 
+		case(FUNC):
+			strcpy(INST, "LABEL ");
+			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, "\n");
+			Instr->used_lines++;
+			add_instruction(PUSHFRAME, NULL, NULL, NULL);
+			Instr->used_lines--;
+			break;
 
-
+		case(SCOPE):
+			strcpy(INST, "LABEL SCOPE");
+			Instr->used_lines++;
+			add_instruction(CREATEFRAME, NULL, NULL, NULL);
+			add_instruction(PUSHFRAME, NULL, NULL, NULL);
+			Instr->used_lines--;
+			break;
 
 	
 		// TODO
@@ -172,12 +217,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 int instr_init()
 {
-	Instr = malloc(sizeof(struct I_output) + INSTSIZE*sizeof(char*));
+	Instr = malloc(sizeof(struct I_output) + INSTNUMBER*sizeof(char*));
 	if(Instr == NULL)
 		return INTERNAL_ERROR;
 	Instr->used_lines = 0;
 	
-	for(unsigned i = 0; i < INSTSIZE; i++)
+	for(unsigned i = 0; i < INSTNUMBER; i++)
 	{
 		Instr->instrList[i] = (char*)malloc(INSTSIZE*sizeof(char));
 		if(Instr->instrList[i] == NULL)
@@ -207,7 +252,7 @@ void print_built_in()
 
     /**** SubStr ****/
     printf("LABEL SubStr\npushframe\n");
-    printf("defvar LF@%%retval\n");
+	printf("defvar LF@%%retval\n");
     printf("defvar LF@%%tmp\n");
     printf("move LF@%%tmp string@\n");
     printf("move LF@%%retval string@\n");

@@ -1,8 +1,10 @@
-CFLAGS=-std=gnu99 -Wall -Wextra -Werror
+CFLAGS=-std=c99
 #CFLAGS=-std=gnu99 -Wall
 
-compiler: main.o scanner.o str.o
-	gcc main.o scanner.o str.o -o compiler.out
+all: compiler
+
+compiler: main.o scanner.o str.o parser.o ilist.o symtab.o
+	gcc main.o scanner.o str.o parser.o ilist.o symtab.o -o compiler
 
 scanner.o: scanner.c
 	gcc ${CFLAGS} scanner.c -c
@@ -10,8 +12,18 @@ scanner.o: scanner.c
 str.o: str.c
 	gcc ${CFLAGS} str.c -c
 
-main.o: main.c scanner.h str.h
-	gcc ${CFLAGS} main.c scanner.h str.h -c
+parser.o: parser.c
+	gcc ${CFLAGS} parser.c -c
+
+ilist.o: ilist.c
+	gcc ${CFLAGS} ilist.c -c
+
+symtab.o: symtab.c
+	gcc ${CFLAGS} symtab.c -c
+
+
+main.o: main.c
+	gcc ${CFLAGS} main.c -c
 
 clean:
 	rm -f *.o *.out *.gch
