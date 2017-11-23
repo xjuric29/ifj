@@ -9,7 +9,7 @@
 #include "scanner.h"
 #include "str.h"
 #include "symtab.h"
-//#include "expr.h"
+#include "expr.h"
 
 
 
@@ -782,12 +782,24 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             switch (CurrentToken->type) {
                 case TOK_endOfLine:
                     //<stats>
+                    //TODO premennu inicializovat na nulu alebo prazdny string
+
                     return Stats(CurrentToken, ToCheck, GlobalTable);
                 //EQUAL
                 case TOK_equal:
                     //TODO predat riadenie precedencnej analyze
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
+
+                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                        return RecurCallResult;
+                    }
+
+                    //Check token from expresion
+                    if (CurrentToken->type != TOK_endOfLine){
+                        return SYN_ERROR;
+                    }
 
                     return Stats(CurrentToken, ToCheck, GlobalTable);
 
@@ -831,6 +843,15 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                         }
                         fprintf(stderr, "Spracovava expresion\n");
                         //TODO Call expresion
+                        //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                        if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                            return RecurCallResult;
+                        }
+
+                        //Check token from expresion
+                        if (CurrentToken->type != TOK_endOfLine){
+                            return SYN_ERROR;
+                        }
 
                     }else{
                         //Test if function vas declared or defined -> just because of recurcive call of function without declaration
@@ -838,11 +859,11 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                             fprintf(stderr, "Rekurzivne volanie funkcie ktora nebola deklarovana\n");
                             return SEM_ERROR_FUNC;
                         }
-                    }
 
-                    //Function was found check params
-                    if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction)) != SUCCESS){
-                        return RecurCallResult;
+                        //Function was found check params
+                        if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction)) != SUCCESS){
+                            return RecurCallResult;
+                        }
                     }
 
                     break;
@@ -857,8 +878,16 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
 
                 default:
                     //TODO Call expresion
+                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                        return RecurCallResult;
+                    }
 
-                break;
+                    //Check token from expresion
+                    if (CurrentToken->type != TOK_endOfLine){
+                        return SYN_ERROR;
+                    }
+                    break;
 
             }
 
@@ -877,11 +906,19 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
 
-            //<expresion>
-            //TODO predat riadenie precedencnej analyze
-            //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
-            //takze to treba ceknut
+            //TODO Kde vyriesit kontrolu ci vraciame spravny typ akeho je typu funkcia
 
+            //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+                return RecurCallResult;
+            }
+
+            //Check token from expresion
+            if (CurrentToken->type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
+
+            //<stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
@@ -978,10 +1015,17 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
 
     //EXPRESION
     //TODO
-    //Malo by vratit EOL takze tieto riadky pravdepodobne vymazat
-    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-        return ScannerInt;
+    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+        return RecurCallResult;
     }
+
+    //Malo by vratit EOL takze tieto riadky pravdepodobne vymazat
+    /*if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+        return ScannerInt;
+    }*/
+
+    //Check token from expresion
     if (CurrentToken->type != TOK_endOfLine){
         return SYN_ERROR;
     }
@@ -1005,12 +1049,18 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     int RecurCallResult = -1;
     //<condition>
     //TODO predat riadenie precedencnej
-    //Vrati mi zrejme THEN - treba to skontrolovat
 
-    //THEN bude inak..
-    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-        return ScannerInt;
+    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+        return RecurCallResult;
     }
+
+    //Check token from expresion
+    if (CurrentToken->type != TOK_endOfLine){
+        return SYN_ERROR;
+    }
+
+    //Check then
     if (CurrentToken->type != KW_then){
         return SYN_ERROR;
     }
