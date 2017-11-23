@@ -74,7 +74,7 @@ int parse(){
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
     //Testy *********/
-    st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
+    /*st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
     if (FF->params != NULL){
         st_element_t *Param = FF->params->first;
         int i = 0;
@@ -792,7 +792,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                     //takze to treba ceknut
 
                     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                         return RecurCallResult;
                     }
 
@@ -841,10 +841,10 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                             fprintf(stderr, "Prva premenna je hned nedefinovana\n");
                             return SEM_ERROR_FUNC;
                         }
-                        fprintf(stderr, "Spracovava expresion\n");
+                        //fprintf(stderr, "Spracovava expresion\n");
                         //TODO Call expresion
                         //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                        if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                        if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                             return RecurCallResult;
                         }
 
@@ -879,7 +879,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 default:
                     //TODO Call expresion
                     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable) != SUCCESS){
+                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                         return RecurCallResult;
                     }
 
@@ -909,7 +909,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //TODO Kde vyriesit kontrolu ci vraciame spravny typ akeho je typu funkcia
 
             //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
                 return RecurCallResult;
             }
 
@@ -1016,7 +1016,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     //EXPRESION
     //TODO
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
     }
 
@@ -1051,7 +1051,7 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     //TODO predat riadenie precedencnej
 
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL) != SUCCESS){
+    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
     }
 
