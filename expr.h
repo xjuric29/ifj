@@ -24,12 +24,14 @@
 
 // Module dependency
 #include "stack.h"
-#include "symtab.h"
-#ifndef EXPR_TEST
 #include "str.h"
 #include "scanner.h"
-#endif
+#include "symtab.h"
+/*
+#ifndef EXPR_TEST
 
+#endif
+*/
 
 
 //	--- Constants ---
@@ -105,7 +107,7 @@ typedef enum
  * @param *parserToken	Pointer to token used for communicating with parser
  * @return (@todo)
  */
-int expr_main(token_t *parserToken, st_globalTable_t *st_global, string *func_name);
+int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
 
 
 /**
