@@ -24,7 +24,7 @@ extern int expectedRetVal;
 
 
 
-
+int algotihmFinished = EXPR_FALSE;       // Used static because I was lost in recursion
 
 /**
  * @brief Precedental table determinating next action.
@@ -121,8 +121,10 @@ int main(int argc, char *argv[])
 
 int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *variable)
 {
+	DEBUG_PRINT("--- Expression module start ---\n");
+	algotihmFinished = EXPR_FALSE;
+	
         // --- Check arguments ---
-        /*
         if(parserToken == NULL)
         {
                 expr_error("expr_main: NULL pointer to parserToken");
@@ -137,7 +139,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
         {
                 expr_error("expr_main: NULL pointer to func_name");
                 return EXPR_RETURN_ERROR_INTERNAL;
-        }*/
+        }
         
         
         // --- Check first token type ---
@@ -154,17 +156,21 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	token_t loadedToken;
 	loadedToken = *parserToken;	// Value for first run of loading cycle
 
-	DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
-
 	// --- Loading tokens ---
 	do
 	{
+		DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
+		
+		
                 // --- Check if variable exists ---
-                /*
                 if(loadedToken.type == TOK_identifier)  // If token is variable
-                        if(st_find_element(st_global, func_name, loadedToken.type.stringVal) == NULL)   // Haven't found it in the table
+                        if(st_find_element(st_global, func_name, loadedToken.value.stringVal) == NULL)   // Haven't found it in the table
+                        {
+				expr_error("expr_main: Tried to work with nonexisting variable");
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
                                 return EXPR_RETURN_ERROR_SEM;   // Return semantics error
-                */
+                	}
+                	
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
@@ -181,8 +187,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		{
                         // --- Check for error ---
                         if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
+                        {
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
                                 return retVal;  // End module and report error
-                                
+                        }       
+                        
+                        //DEBUG_PRINT("[DBG] retVal = %d\n", retVal);
                                 
                         // --- Load next token ---
                         #ifndef EXPR_TEST
@@ -211,13 +221,18 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 
                 // --- Check for error ---
                 if(retVal != EXPR_RETURN_SUCC)
+                {
+			DEBUG_PRINT("--- Expression module end (error) ---\n");
                         return retVal;
+		}
         }
         
        
         // ===== POSTFIX DEBUG =====
         expr_finish();
 
+	DEBUG_PRINT("--- Expression module end (success)---\n");
+	
         return EXPR_RETURN_SUCC;        // Return success
 }
 
@@ -492,8 +507,6 @@ int expr_searchRule(string handle)
 
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
 {
-        static int algotihmFinished = EXPR_FALSE;       // Used static because I was lost in recursion
-        
         if(algotihmFinished == EXPR_TRUE)       // If already finished
                 return EXPR_TRUE;
         

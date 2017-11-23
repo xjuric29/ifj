@@ -1,4 +1,4 @@
-'Add two int variables
+'Add integer var to and another integer var with no value (=0)
 
 Scope
     Dim int1 As Integer
@@ -6,6 +6,5 @@ Scope
     Dim res As Integer
 
     int1 = 1
-    int2 = 2
     res = int1 + int2
 End Scope

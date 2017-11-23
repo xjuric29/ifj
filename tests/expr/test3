@@ -1,11 +1,8 @@
-'Add two int variables
+'ERROR: Try to add nonexisting variable
 
 Scope
     Dim int1 As Integer
-    Dim int2 As Integer
     Dim res As Integer
 
-    int1 = 1
-    int2 = 2
     res = int1 + int2
 End Scope
