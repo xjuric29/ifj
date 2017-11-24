@@ -453,7 +453,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					break;
 				
 				case(con_WHILE):	
-					sprintf(c, "%d", inst_loop);
+					sprintf(c, "%d", inst_while - inst_loop);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
 					break;
