@@ -876,6 +876,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return RecurCallResult;
             }
 
+            //Return 
+            add_instruction(RETURN, NULL, NULL, NULL);
+
             //Check token from expresion
             if (CurrentToken->type != TOK_endOfLine){
                 return SYN_ERROR;
