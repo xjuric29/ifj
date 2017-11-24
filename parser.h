@@ -3,6 +3,7 @@
 
 #include "scanner.h"
 #include "symtab.h"
+#include "builtin.h"
 
 /**Struct to check if we are inside Scope or While or If
   * If we are entering If block, set InIf = true.. If inside If block comes While.. we Set While = True
@@ -21,6 +22,7 @@ struct check{
 #define EXPRESION_CONTEXT_LOGIC 2
 #define EXPRESION_CONTEXT_PRINT 3
 #define EXPRESION_CONTEXT_RETURN 4
+
 
 int parse();
 

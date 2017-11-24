@@ -1,0 +1,8 @@
+'ERROR: Try to add nonexisting variable
+
+Scope
+    Dim int1 As Integer
+    Dim res As Integer
+
+    res = int1 + int2
+End Scope

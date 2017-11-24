@@ -4,8 +4,10 @@
 #include "scanner.h"
 
 
+
 int main ()
 {
+
 	int err;
 	err = instr_init();
 	if(err == INTERNAL_ERROR)
@@ -14,7 +16,7 @@ int main ()
 	if(err != SUCCESS)
 		goto end;
 	print_all();
-	
+
 	end:
 	inst_free();
 	return err;
