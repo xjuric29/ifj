@@ -264,7 +264,7 @@ int expr_algorithm(myStack_t *stack, token_t token, int context)
 		// All these tokens are going to be represented by 'i' @todo Is this good method?
 			break;
 		case TOK_string:
-			expr_error("expr_algorithm: @todo Processing string")
+			expr_error("expr_algorithm: @todo Processing string");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return EXPR_RETURN_ERROR_INTERNAL;
 			break;
@@ -605,7 +605,7 @@ int expr_generateResult(int context, st_element_t *variable)
 			add_instruction(POPS, NULL, &variable->key, NULL);
 			break;
 		case EXPRESION_CONTEXT_LOGIC:
-			add_instruction(JUMP, NULL, NULL, NULL);
+			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
