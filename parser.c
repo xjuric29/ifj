@@ -1030,10 +1030,10 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
         return RecurCallResult;
     }
 
-    //Check token from expresion
+    /*//Check token from expresion
     if (CurrentToken->type != TOK_endOfLine){
         return SYN_ERROR;
-    }
+    }*/
 
     //Check then
     if (CurrentToken->type != KW_then){
@@ -1079,6 +1079,9 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     if (CurrentToken->type != KW_if){
         return SYN_ERROR;
     }
+
+    //ENDIF
+    add_instruction(ENDIF, NULL, NULL, NULL);
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
