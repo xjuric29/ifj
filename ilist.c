@@ -381,7 +381,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(WHILE):
 			context = con_WHILE;
-			inst_while += 1;
+			inst_while++;
 			strcpy(INST, "LABEL ");
 			sprintf(c, "%d", inst_while);
 			strcat(INST, "$$");
@@ -410,6 +410,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(IF):
 			context = con_IF;
 			inst_else++;
+			printf("*********************** IF CALL\n");
 			return SUCCESS;
 		
 		case(ELSE):
@@ -418,6 +419,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", inst_else - inst_endif);
+			printf("**************inst_else %d\n", inst_else);
 			strcat(INST, c);
 			strcat(INST, "$$ENDIF\n");			
 			Instr->used_lines++;	
@@ -439,7 +441,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFEQS):
-			strcpy(INST, "PUSHS bool@false");
+			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
@@ -464,7 +466,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFENQS):
-			strcpy(INST, "PUSHS bool@false");
+			strcpy(INST, "PUSHS bool@false\n");
+			Instr->used_lines++;
 			strcpy(INST, "JUMPIFENQS ");
 			strcat(INST, "$$");
 			switch(context)
