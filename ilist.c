@@ -439,6 +439,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFEQS):
+			strcpy(INST, "PUSHS bool@false");
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
 			switch(context)
@@ -462,6 +463,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFENQS):
+			strcpy(INST, "PUSHS bool@false");
 			strcpy(INST, "JUMPIFENQS ");
 			strcat(INST, "$$");
 			switch(context)
