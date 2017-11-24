@@ -1,4 +1,5 @@
 //jednoducha knihovna pro praci s nekonecne dlouhymi retezci
+//ZOBRANE Z JEDNODUCHEHO INTERPRETA
 #include <string.h>
 #include <malloc.h>
 #include "str.h"
@@ -46,6 +47,20 @@ int strAddChar(string *s1, char c)
    s1->length++;
    s1->str[s1->length] = '\0';
    return STR_SUCCESS;
+}
+
+int strCopyConst(string *s, char *c){
+    //strClear(s);
+    int newLength = strlen(c);
+    if (newLength >= s->allocSize)
+    {
+        if ((s->str = (char*) realloc(s->str, newLength + 1)) == NULL)
+           return STR_ERROR;
+        s->allocSize = newLength + 1;
+    }
+    strcpy(s->str, c);
+    s->length = newLength;
+    return STR_SUCCESS;
 }
 
 int strCopyString(string *s1, string *s2)
