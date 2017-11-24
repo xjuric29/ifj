@@ -409,7 +409,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(IF):
 			context = con_IF;
-			inst_else += 1;
+			inst_else++;
 			return SUCCESS;
 		
 		case(ELSE):
@@ -440,6 +440,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(JUMPIFEQS):
 			strcpy(INST, "PUSHS bool@false");
+			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
 			switch(context)
