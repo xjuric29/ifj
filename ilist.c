@@ -308,7 +308,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				//	strcat(INST, c);
 					break;
 
-				case KW_decimal:
+				case KW_double:
 					strcat(INST, "float@0.0");
 				//	sprintf(c, "%g", op1->value.decimal);
 				//	strcat(INST, c);
