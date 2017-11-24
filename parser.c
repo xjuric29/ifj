@@ -66,10 +66,14 @@ int parse(){
     strInit(&FunctionID);
     //Global table of functions
     st_globalTable_t *GlobalTable = st_global_init(50);
+
+    if (addBuiltTable(GlobalTable) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
+
     //Structure to check if we are inside Scope or While or If
     struct check ToCheck;
     ToCheck.InScope = false; ToCheck.InWhile = false; ToCheck.InIf = false; ToCheck.InElse = false;
-
     //Start recursive descent
     Result = program(CurrentToken, ToCheck, GlobalTable);
 

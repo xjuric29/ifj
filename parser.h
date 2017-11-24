@@ -3,6 +3,7 @@
 
 #include "scanner.h"
 #include "symtab.h"
+#include "builtin.h"
 
 /**Struct to check if we are inside Scope or While or If
   * If we are entering If block, set InIf = true.. If inside If block comes While.. we Set While = True
