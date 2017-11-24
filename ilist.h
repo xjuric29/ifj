@@ -40,6 +40,9 @@
 #define IF 29
 #define ELSE 30
 #define ENDIF 31
+#define RETVAL_OUT 32
+#define RETVAL_IN 33
+#define MOVE 34
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
