@@ -303,19 +303,19 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			switch(op1->type)
 			{
 				case KW_integer:
-					strcat(INST, "int@0");
+					strcat(INST, " int@0");
 				//	sprintf(c, "%d", op1->value.integer);
 				//	strcat(INST, c);
 					break;
 
 				case KW_double:
-					strcat(INST, "float@0.0");
+					strcat(INST, " float@0.0");
 				//	sprintf(c, "%g", op1->value.decimal);
 				//	strcat(INST, c);
 					break;
 
 				case KW_string:
-					strcat(INST, "string@");
+					strcat(INST, " string@");
 					//sprintf(c, "%d", op1->value.stringVal); //TODO
 					//strcat(INST, c);
 					break;
