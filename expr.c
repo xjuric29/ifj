@@ -6,16 +6,7 @@
  */
  
 // --- TESTING ---
-//#define EXPR_TEST       // Simulate scanner and generate postfix
 //#define DEBUG   // Print stack, operations and table indexes
-
-#ifdef EXPR_TEST
-#include "tests/expr/expr-test.c"
-int testNum;
-extern char input[EXPR_TESTSTR_LENGTH];
-extern char expected[EXPR_TESTSTR_LENGTH];
-extern int expectedRetVal;
-#endif
 
 
 // Header file
@@ -82,48 +73,6 @@ char *rule[RULES_COUNT] =
 	"E>E",
 	"E>=E"
 };
-
-
-
-// ========== DEBUG ==========
-#ifdef EXPR_TEST
-myStack_t dbg_postfix;     // POSTFIX DEBUG
-extern token_t firstTestToken;
-
-
-int main(int argc, char *argv[])
-{
-        if(argc != 2)
-        {
-                expr_error("main: Test number not specified");
-                return EXPR_FALSE;
-        }
-
-        testNum = strtol(argv[1], NULL, 10);
-        TEST_generateInputStr(testNum);
-
-	token_t parserToken;
-        parserToken = TEST_getFirstToken();
-        
-        stackInit(&dbg_postfix);  // POSTFIX DEBUG
-
-        string function;
-        strInit(&function);
-        strAddChar(&function, 'T');
-        strAddChar(&function, 'e');
-        strAddChar(&function, 's');
-        strAddChar(&function, 't');
-        
-	
-        int retVal;
-	retVal = expr_main(&parserToken, NULL, &function);
-        
-        strFree(&function);
-        
-	expr_testFinish_retVal(retVal);
-        return retVal;
-}
-#endif
 
 
 
@@ -218,11 +167,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                         //DEBUG_PRINT("[DBG] retVal = %d\n", retVal);
                                 
                         // --- Load next token ---
-                        #ifndef EXPR_TEST
                         getToken(&loadedToken);
-                        #else
-                        TEST_getToken(&loadedToken);
-                        #endif
                 }
 		
 	}
@@ -250,12 +195,8 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
         }
         
        
-        // ===== POSTFIX DEBUG =====
-        expr_finish();
-
-	DEBUG_PRINT("--- Expression module end (success)---\n");
-	
-        return EXPR_RETURN_SUCC;        // Return success
+	// --- Generate result instuction ---
+        return expr_generateResult(context, variable);	// Or return error   
 }
 
 int expr_algorithm(myStack_t *stack, token_t token, int context)
@@ -321,7 +262,12 @@ int expr_algorithm(myStack_t *stack, token_t token, int context)
 			type = TERM_id;	// Identifier terminal = 'i'
 			savedToken = token;	// Save token because it has  
 		// All these tokens are going to be represented by 'i' @todo Is this good method?
-		break;
+			break;
+		case TOK_string:
+			expr_error("expr_algorithm: @todo Processing string")
+			DEBUG_PRINT("--- Expression module end (error) ---\n");
+			return EXPR_RETURN_ERROR_INTERNAL;
+			break;
                 
                 
                 // Loaded token DOESN'T belong to the expression
@@ -595,15 +541,6 @@ int expr_isFirstValid(token_t firstToken)
 
 void expr_generateInstruction(char terminal, token_t token) // @todo
 {
-        
-
-#ifdef EXPR_TEST       
-        if(terminal != ')')     // Bracket doesn't produce any instruction
-        {
-                stackPush(&dbg_postfix, terminal);
-                //stackPush(&dbg_postfix, ' ');
-        }
-#else
         switch(terminal)
         {
                 // Operators
@@ -657,8 +594,6 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
 					//printf("GTS\n");
 					break;
         }
-
-#endif
 }
 
 // ========== OTHER FUNCTIONS ==========
@@ -666,28 +601,40 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
 void expr_error(char *msg)
 {
 	fprintf(stderr, "[ERROR] %s\n", msg);
-        expr_finish();  // Postfix debug
+//        expr_finish();  // Postfix debug
 //        exit(42);
 	// @todo This function should end whole module and return err value to parser
 }
 
-void expr_finish()
+int expr_generateResult(int context, st_element_t *variable)
 {
-#ifdef EXPR_TEST
-        // ===== Postfix debug =====
-        stackPush(&dbg_postfix, '\0');
-        printf("===TEST #%d===\n",testNum);
-        printf("%s [Input]\n",input);
-        printf("%s [Output]\n",&(dbg_postfix.arr));
-        printf("%s [Expected]\n",expected);
-
-#endif
-}
-
-void expr_testFinish_retVal(int retVal)
-{
-#ifdef EXPR_TEST
-        // ===== Postfix debug =====
-        printf("RetVal=%d [Expected=%d]\n",retVal,expectedRetVal);       
-#endif
+	switch(context)
+	{
+		case EXPRESION_CONTEXT_ARIGH:
+			if(variable == NULL)
+			{
+				expr_error("expr_generateResult: Result variable doesn't exist... Strange :O");
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				return(EXPR_RETURN_ERROR_INTERNAL);
+			}
+			// @todo check types
+			printf("POPS %s\n",strGetStr(&(variable->key)));
+			break;
+		case EXPRESION_CONTEXT_LOGIC:
+			printf("JUMPS\n");
+			break;
+		case EXPRESION_CONTEXT_PRINT:
+			// @todo
+			expr_error("expr_generateResult: Not done for EXPRESION_CONTEXT_PRINT");
+			DEBUG_PRINT("--- Expression module end (error) ---\n");
+			return(EXPR_RETURN_ERROR_INTERNAL);
+			break;
+		case EXPRESION_CONTEXT_RETURN:
+			// @todo check types
+			printf("RETVAL_POP\n");	// No operator, inst modul has some internal variable
+			break;
+	}
+	
+	DEBUG_PRINT("--- Expression module end (success)---\n");
+	return EXPR_RETURN_SUCC;
 }
