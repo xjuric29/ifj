@@ -64,11 +64,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 {
 	
 	
-	static int inst_if = 0;
+	static int inst_endif = 0;
 	static int inst_else = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
 	static int test = 0;	
+	static I_context context = con_NONE;
 
 	char c[100];	
 
@@ -204,6 +205,139 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			add_instruction(PUSHFRAME, NULL, NULL, NULL);
 			Instr->used_lines--;
 			break;
+		
+		case(MOVE_LF_LF):
+			strcpy(INST, "MOVE LF@");
+			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, " LF@");
+			strcat(INST, op2->str);
+			strcat(INST, "\n");
+			break;
+		
+		case(MOVE_TF_LF):
+			strcpy(INST, "MOVE TF@");
+			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, " LF@");
+			strcat(INST, op2->str);
+			strcat(INST, "\n");
+			break;
+
+		case(MOVE_LF_TF):
+			strcpy(INST, "MOVE LF@");
+			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, " TF@");
+			strcat(INST, op2->str);
+			strcat(INST, "\n");
+			break;
+
+		case(WHILE):
+			context = con_WHILE;
+			inst_while += 1;
+			strcpy(INST, "LABEL ");
+			sprintf(c, "%d", inst_while);
+			strcat(INST, "$$");
+			strcat(INST, c);
+			strcat(INST, "$$WHILE\n");
+			break;
+
+		case(LOOP):
+			context = con_NONE;
+			
+			strcpy(INST, "JUMP ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", inst_while);
+			strcat(INST, c);
+			strcat(INST, "$$WHILE\n");
+			Instr->used_lines++;
+			
+			strcpy(INST, "LABEL ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", inst_while - inst_loop);
+			strcat(INST, c);
+			strcat(INST, "$$LOOP\n");
+			inst_loop += 1;
+			break;
+
+		case(IF):
+			context = con_IF;
+			inst_else += 1;
+			return SUCCESS;
+		
+		case(ELSE):
+			context = con_NONE;
+			
+			strcpy(INST, "JUMP ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", inst_else - inst_endif);
+			strcat(INST, c);
+			strcat(INST, "$$ENDIF\n");			
+			Instr->used_lines++;	
+	
+			strcpy(INST, "LABEL ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", inst_else - inst_endif);
+			strcat(INST, c);
+			strcat(INST, "$$ELSE\n");
+			break;
+
+		case(ENDIF):
+			inst_endif++;
+			strcpy(INST, "LABEL ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", inst_endif);
+			strcat(INST, c);
+			strcat(INST, "$$ENDIF\n");
+			break;
+
+		case(JUMPIFEQS):
+			strcpy(INST, "JUMPIFEQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_else);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+				
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_loop);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+				
+				default:
+					return INTERNAL_ERROR;
+				
+			}
+			break;
+
+		case(JUMPIFENQS):
+			strcpy(INST, "JUMPIFENQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_else);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_loop);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			break;
+
+		default:
+			return INTERNAL_ERROR;
+
+
 
 	
 		// TODO
@@ -212,7 +346,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 	Instr->used_lines++;
 
 
-	return 0;	
+	return SUCCESS;	
 }
 
 int instr_init()
