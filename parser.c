@@ -876,7 +876,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return RecurCallResult;
             }
 
-            //Return 
+            //Return
             add_instruction(RETURN, NULL, NULL, NULL);
 
             //Check token from expresion
@@ -1411,7 +1411,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
 }
 
 
-
+/*
 int main(){
     instr_init();
     int ret = parse();
@@ -1419,4 +1419,4 @@ int main(){
     inst_free();
 
     printf("return %d\n", ret);
-}
+}*/
