@@ -1,0 +1,7 @@
+'Add two decimal values
+
+Scope
+    Dim dec As double
+
+    dec = 5.3 + 10.1
+End Scope
