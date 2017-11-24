@@ -559,7 +559,7 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
                         break;
                         
                 case 'i':     // We have to find out value
-			add_instruction(PUSHS, token, NULL, NULL);
+			add_instruction(PUSHS, &token, NULL, NULL);
                         break;
 
                 // Logic operators
@@ -602,10 +602,10 @@ int expr_generateResult(int context, st_element_t *variable)
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
 			// @todo check types
-			add_instruction(POPS, NULL, strGetStr(&(variable->key), NULL);
+			add_instruction(POPS, NULL, &variable->key, NULL);
 			break;
 		case EXPRESION_CONTEXT_LOGIC:
-			add_instruction(JUMPS, NULL, NULL, NULL);
+			add_instruction(JUMP, NULL, NULL, NULL);
 			break;
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
@@ -615,7 +615,6 @@ int expr_generateResult(int context, st_element_t *variable)
 			break;
 		case EXPRESION_CONTEXT_RETURN:
 			// @todo check types
-			strGetStr(&(variable->key)
 			add_instruction(RETVAL_POP, NULL, NULL, NULL);
 			break;
 	}

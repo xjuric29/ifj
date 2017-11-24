@@ -28,11 +28,7 @@
 #include "scanner.h"
 #include "symtab.h"
 #include "parser.h"
-/*
-#ifndef EXPR_TEST
-
-#endif
-*/
+#include "ilist.h"
 
 
 //	--- Constants ---
