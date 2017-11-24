@@ -545,54 +545,38 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
         {
                 // Operators
                 case '+':
-                        printf("ADDS\n");
+			add_instruction(ADDS, NULL, NULL, NULL);
                         break;
                 case '-':
-                        printf("SUBS\n");
+                        add_instruction(SUBS, NULL, NULL, NULL);
                         break ;               
                 case '*':
-                        printf("MULS\n");
+                        add_instruction(MULS, NULL, NULL, NULL);
                         break;
                 case '/':
                 case '\\':
-                        printf("DIVS\n");
+                        add_instruction(DIVS, NULL, NULL, NULL);
                         break;
                         
                 case 'i':     // We have to find out value
-                {
-                        switch(token.type)
-                        {
-                                case TOK_identifier:
-                                        printf("PUSHS LF@%s\n", strGetStr(token.value.stringVal));
-                                        break;
-                                case TOK_integer:
-                                        printf("PUSHS %d\n", token.value.integer);
-                                        break;
-                                case TOK_decimal:
-                                        printf("PUSHS %f\n", token.value.decimal);
-                                        break;
-                                default:
-                                        expr_error("expr_generateInstruction: Stack is 'i' but token.type is strange");
-                                        // @todo This should end module
-                                        return;
-                        }
+			add_instruction(PUSHS, token, NULL, NULL);
                         break;
-                }
+
                 // Logic operators
                 case TERM_equal:
-					printf("EQS\n");
-					break;
+			add_instruction(EQS, NULL, NULL, NULL);
+			break;
                 case TERM_notEqual:
                 case TERM_less:
-					printf("LTS\n");
-					break;
+			add_instruction(LTS, NULL, NULL, NULL);
+			break;
                 case TERM_lessEqual:
+			break;
                 case TERM_greater:
-					printf("GTS\n");
-					break;
+			add_instruction(GTS, NULL, NULL, NULL);
+			break;
                 case TERM_greaterEqual:
-					//printf("GTS\n");
-					break;
+			break;
         }
 }
 
@@ -618,10 +602,10 @@ int expr_generateResult(int context, st_element_t *variable)
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
 			// @todo check types
-			printf("POPS %s\n",strGetStr(&(variable->key)));
+			add_instruction(POPS, NULL, strGetStr(&(variable->key), NULL);
 			break;
 		case EXPRESION_CONTEXT_LOGIC:
-			printf("JUMPS\n");
+			add_instruction(JUMPS, NULL, NULL, NULL);
 			break;
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
@@ -631,7 +615,8 @@ int expr_generateResult(int context, st_element_t *variable)
 			break;
 		case EXPRESION_CONTEXT_RETURN:
 			// @todo check types
-			printf("RETVAL_POP\n");	// No operator, inst modul has some internal variable
+			strGetStr(&(variable->key)
+			add_instruction(RETVAL_POP, NULL, NULL, NULL);
 			break;
 	}
 	
