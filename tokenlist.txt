@@ -58,4 +58,5 @@ TOK_endOfLine,		/// "\n"
 TOK_endOfFile
 
 Pro rychlej prevod enum hodnoty na typ tokenu
+radek = enum+1
 Enum hodnota = radek-1

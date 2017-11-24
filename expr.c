@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
 int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *variable)
 {
 	DEBUG_PRINT("--- Expression module start ---\n");
+	DEBUG_PRINT("Context: %d\n", context);
 	algotihmFinished = EXPR_FALSE;
 	
         // --- Check arguments ---
@@ -153,12 +154,6 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 return EXPR_RETURN_ERROR_INTERNAL;
         }
         
-        DEBUG_PRINT("[DBG] First token with type %d\n", parserToken->type);
-        
-        // --- Check first token type ---
-        if(expr_isFirstValid(*parserToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
-                return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
-        
         
 	// --- Initializing stack and default values ---
 	myStack_t stack;	// Create stack
@@ -166,11 +161,26 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
         
 	int continueLoading = 1;	// Determines if this module should read next token
 	
-	token_t loadedToken;
-	loadedToken = *parserToken;	// Value for first run of loading cycle
-
+	
+	// --- Loading first token ---
+	token_t loadedToken;	// Loaded token for this iterration of cycle
+	loadedToken = *parserToken;	// It has no purpose, it's just to be more read friendly
+	
+	if(context != EXPRESION_CONTEXT_ARIGH)	// If context is arithmetic, first token is already loaded by parser
+	{
+		// Load token from scanner
+		getToken(&loadedToken);
+	}
+	DEBUG_PRINT("[DBG] First token with type %d\n", loadedToken.type);
+	
+	
+	// --- Check first token type ---
+        if(expr_isFirstValid(loadedToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
+                return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
+	
+	
 	// --- Loading tokens ---
-	do
+	while(continueLoading)
 	{
 		DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
 		
@@ -216,7 +226,6 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 }
 		
 	}
-	while(continueLoading);
         
         
         // --- Finish the algorith ---
@@ -630,6 +639,7 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
                                         // @todo This should end module
                                         return;
                         }
+                        break;
                 }
                 // Logic operators
                 case TERM_equal:
