@@ -302,21 +302,31 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, op2->str);
 			switch(op1->type)
 			{
-				case TOK_integer:
-					strcat(INST, "int@");
-					sprintf(c, "%d", op1->value.integer);
-					strcat(INST, c);
+				case KW_integer:
+					strcat(INST, " int@0");
+				//	sprintf(c, "%d", op1->value.integer);
+				//	strcat(INST, c);
 					break;
 
-				case TOK_decimal:
-					strcat(INST, "float@");
-					sprintf(c, "%g", op1->value.decimal);
-					strcat(INST, c);
+				case KW_double:
+					strcat(INST, " float@0.0");
+				//	sprintf(c, "%g", op1->value.decimal);
+				//	strcat(INST, c);
 					break;
+
+				case KW_string:
+					strcat(INST, " string@");
+					//sprintf(c, "%d", op1->value.stringVal); //TODO
+					//strcat(INST, c);
+					break;
+
+				default:
+					return INTERNAL_ERROR;
 
 			}
 			strcat(INST, "\n");
 			break;
+
 	
 
 		case(RETVAL_IN):
@@ -429,6 +439,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFEQS):
+			strcpy(INST, "PUSHS bool@false");
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
 			switch(context)
@@ -452,6 +463,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(JUMPIFENQS):
+			strcpy(INST, "PUSHS bool@false");
 			strcpy(INST, "JUMPIFENQS ");
 			strcat(INST, "$$");
 			switch(context)
