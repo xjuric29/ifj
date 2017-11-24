@@ -212,6 +212,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             return SUCCESS;
         //None of SCOPE, FUNCTION, DEFINE, EOF
         default:
+            printf("%s\n", CurrentToken->value.stringVal->str);
             return SYN_ERROR;
     }
 }
