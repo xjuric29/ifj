@@ -159,6 +159,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, "\n");
 			break;
 
+		case(RETVAL_POP):
+			strcpy(INST, "POPS LF@%retval\n"); 
+			break;
+
 		case(ADDS):
 			strcpy(INST, "ADDS\n");
 			break;

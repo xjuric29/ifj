@@ -43,6 +43,7 @@
 #define RETVAL_OUT 32
 #define RETVAL_IN 33
 #define MOVE 34
+#define RETVAL_POP 35
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
