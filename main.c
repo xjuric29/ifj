@@ -7,6 +7,7 @@ int main ()
     string a;
     strInit(&a);
     int retCode;
+    loadedToken.type = 0;
     loadedToken.value.stringVal = &a; //dobre
 
     while (loadedToken.type != TOK_endOfFile) {
