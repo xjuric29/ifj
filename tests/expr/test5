@@ -1,0 +1,9 @@
+'Add two decimal variables
+
+Scope
+    Dim dec1 As double
+    Dim dec2 As double
+    Dim res As double
+
+    res = dec1 + dec2
+End Scope

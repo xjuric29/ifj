@@ -1,0 +1,9 @@
+'Add decimal value and decimal variables
+
+Scope
+    Dim dec As double
+    Dim res As double
+
+    dec = 2.3
+    res = dec + 6.9
+End Scope
