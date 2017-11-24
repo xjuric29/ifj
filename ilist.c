@@ -118,6 +118,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(RETURN):
+			strcpy(INST, "POPFRAME\n");
+			Instr->used_lines++;
 			strcpy(INST, "RETURN \n");
 			break;
 
@@ -153,7 +155,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(POPS):
 			strcpy(INST, "POPS LF@");
-			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
 
@@ -197,6 +199,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, "\n");
 			Instr->used_lines++;
 			add_instruction(PUSHFRAME, NULL, NULL, NULL);
+			strcpy(INST, "DEFVAR LF@%%retval\n");
 			Instr->used_lines--;
 			break;
 
@@ -289,6 +292,78 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 			strcat(INST, "\n");
 			break;
+
+		case(MOVE):
+			strcpy(INST, "MOVE LF@");
+			strcat(INST, op2->str);
+			switch(op1->type)
+			{
+				case TOK_integer:
+					strcat(INST, "int@");
+					sprintf(c, "%d", op1->value.integer);
+					strcat(INST, c);
+					break;
+
+				case TOK_decimal:
+					strcat(INST, "float@");
+					sprintf(c, "%g", op1->value.decimal);
+					strcat(INST, c);
+					break;
+
+			}
+			strcat(INST, "\n");
+			break;
+	
+
+		case(RETVAL_IN):
+			strcpy(INST, "MOVE LF@%retval LF@");
+			switch(op1->type)
+			{
+				case TOK_identifier:
+					strcat(INST, op1->value.stringVal->str);
+					break;
+				
+				case TOK_integer:
+					sprintf(c, "%d", op1->value.integer);
+					strcat(INST, c);
+					break;
+
+				case TOK_decimal:
+					sprintf(c, "%g", op1->value.decimal);
+					strcat(INST, c);
+					break;
+				
+				default:
+					return INTERNAL_ERROR;
+			}
+			strcat(INST, "\n");
+			break;
+
+		case(RETVAL_OUT):
+			strcpy(INST, "MOVE LF@");
+			switch(op1->type)
+			{
+				case TOK_identifier:
+					strcat(INST, op1->value.stringVal->str);
+					break;
+				
+				case TOK_integer:
+					sprintf(c, "%d", op1->value.integer);
+					strcat(INST, c);
+					break;
+
+				case TOK_decimal:
+					sprintf(c, "%g", op1->value.decimal);
+					strcat(INST, c);
+					break;
+				
+				default:
+					return INTERNAL_ERROR;
+			}
+			strcat(INST, " TF@%retval\n");
+			break;
+
+
 
 		case(WHILE):
 			context = con_WHILE;
@@ -393,6 +468,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					return INTERNAL_ERROR;
 			}
 			break;
+				
 
 		default:
 			return INTERNAL_ERROR;
