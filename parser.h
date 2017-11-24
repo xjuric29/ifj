@@ -94,6 +94,15 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @param CalledFunction is pointer to function in Hash Table, function that is called
   **/
-int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction);
+int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction, st_element_t *Variable);
+
+/**@brief Function to resolve assignment:
+  * if we need to pass <expresion> to expr.c or if it`s function call
+  * @param CurrentToken is current loaded token
+  * @param GlobalTable is global table of functions
+  * @oaram variable is pointer to element in local hashTable, its variable we are assigning
+  * @return SUCCESS or type of error
+  */
+int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_element_t *Variable);
 
 #endif

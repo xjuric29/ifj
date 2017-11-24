@@ -673,7 +673,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
     int RecurCallResult = -1;
     st_element_t *Variable; //To save pointer on variable in hashTable
     struct check SolveProblems; //struct to solve problem with conflicts in while and if blocks
-    st_localTable_t *CalledFunction; //Pointer to hash table, for work with function Call
+    //st_localTable_t *CalledFunction; //Pointer to hash table, for work with function Call
 
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -791,14 +791,14 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                     //Zrejme bude vracat aj posledny nacitany token ktorym by mal byt EOL
                     //takze to treba ceknut
 
-                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
-                        return RecurCallResult;
+                    //Get token and resolve if pass to expr or deal with function call
+                    if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
+                        return ScannerInt;
                     }
 
-                    //Check token from expresion
-                    if (CurrentToken->type != TOK_endOfLine){
-                        return SYN_ERROR;
+                    //Call function which choose between function call and expresion
+                    if ((RecurCallResult = ResAssignInParser(CurrentToken, GlobalTable, Variable)) != SUCCESS){
+                        return RecurCallResult;
                     }
 
                     return Stats(CurrentToken, ToCheck, GlobalTable);
@@ -829,66 +829,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return ScannerInt;
             }
 
-            //Check for Builtin Function
-            switch (CurrentToken->type){
-
-                //If we get ID we need to check if it`s function call or just expresion
-                case TOK_identifier:
-                    //Check if it`s function call
-                    if ((CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal)) == NULL){
-                        //If we don`t find function, check if we find variable in current function
-                        if (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal) == NULL){
-                            fprintf(stderr, "Prva premenna je hned nedefinovana\n");
-                            return SEM_ERROR_FUNC;
-                        }
-                        //fprintf(stderr, "Spracovava expresion\n");
-                        //TODO Call expresion
-                        //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                        if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
-                            return RecurCallResult;
-                        }
-
-                        //Check token from expresion
-                        if (CurrentToken->type != TOK_endOfLine){
-                            return SYN_ERROR;
-                        }
-
-                    }else{
-                        //Test if function vas declared or defined -> just because of recurcive call of function without declaration
-                        if ((CalledFunction->declared || CalledFunction->defined) == false){
-                            fprintf(stderr, "Rekurzivne volanie funkcie ktora nebola deklarovana\n");
-                            return SEM_ERROR_FUNC;
-                        }
-
-                        //Function was found check params
-                        if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction)) != SUCCESS){
-                            return RecurCallResult;
-                        }
-                    }
-
-                    break;
-
-                //Case built in functions
-                case KW_length:
-                case KW_subStr:
-                case KW_asc:
-                case KW_chr:
-                    //TODO buildin
-                    break;
-
-                default:
-                    //TODO Call expresion
-                    //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
-                        return RecurCallResult;
-                    }
-
-                    //Check token from expresion
-                    if (CurrentToken->type != TOK_endOfLine){
-                        return SYN_ERROR;
-                    }
-                    break;
-
+            //Call function which choose between function call and expresion
+            if ((RecurCallResult = ResAssignInParser(CurrentToken, GlobalTable, Variable)) != SUCCESS){
+                return RecurCallResult;
             }
 
             //TODO Kedy predat riadenie precedencnej analyze?
@@ -972,7 +915,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //TODO nejake navestia...
 
             //Check EOL
-            if (ScannerInt = getToken(CurrentToken) != SUCCESS){
+            if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
             if (CurrentToken->type != TOK_endOfLine){
@@ -1117,10 +1060,12 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
 /**
   * @brief: Function to check Function CalledFunction
   * Check arguments, types and conversions
+  * ID (<params>) EOL
   * @param CurrentToken is pointer to the structure where is current loaded token
   * @param CalledFunction is pointer to function in Hash Table, function that is called
+  * @oaram variable is pointer to element in local hashTable, its variable we are assigning in, here to check data type
   **/
-int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction){
+int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_localTable_t *CalledFunction, st_element_t *Variable){
     //Expect '('
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -1272,6 +1217,30 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
             pNumber++;
         }
     }
+
+    //Test of return type of function and type of Variable we are assigning in
+    if (Variable->el_type != CalledFunction->func_type){
+        //If one is string -> no conversions
+        if (Variable->el_type == st_string || CalledFunction->func_type == st_string){
+            fprintf(stderr, "Len jedna z dvojice funkcia/premenna do ktorej sa funkcia priraduje, ma typ string\n");
+            return SEM_ERROR_COMP;
+        }
+
+        //If Variable is int -> function is double
+        if (Variable->el_type == st_integer){
+            fprintf(stderr, "Navratovy typ funkce dobule prevadzam na int\n");
+            //TODO konverzia
+        }
+
+        if (Variable->el_type == st_decimal){
+            fprintf(stderr, "Navratov typ funkce int prevadzam na float\n");
+            //TODO konverzia
+        }
+
+    }else{
+        //TODO len prirad
+    }
+
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -1281,6 +1250,144 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
     }
     return SUCCESS;
 }
+
+
+/**@brief Function to resolve assignment:
+  * if we need to pass <expresion> to expr.c or if it`s function call
+  * @param CurrentToken is current loaded token
+  * @param GlobalTable is global table of functions
+  * @oaram variable is pointer to element in local hashTable, its variable we are assigning
+  * @return SUCCESS or type of error
+  */
+int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_element_t *Variable){
+    int RecurCallResult = -1;
+    st_localTable_t *CalledFunction;
+    //string BuiltinFuncName;
+
+    //Check for Builtin Function
+    switch (CurrentToken->type){
+
+        //If we get ID we need to check if it`s function call or just expresion
+        case TOK_identifier:
+            //Check if it`s function call
+            if ((CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal)) == NULL){
+                //If we don`t find function, check if we find variable in current function
+                if (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal) == NULL){
+                    fprintf(stderr, "Prva premenna je hned nedefinovana\n");
+                    return SEM_ERROR_FUNC;
+                }
+                //fprintf(stderr, "Spracovava expresion\n");
+
+                //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+                if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                    return RecurCallResult;
+                }
+
+                //Check token from expresion
+                if (CurrentToken->type != TOK_endOfLine){
+                    return SYN_ERROR;
+                }
+
+            }else{
+                //Test if function vas declared or defined -> just because of recurcive call of function without declaration
+                if ((CalledFunction->declared || CalledFunction->defined) == false){
+                    fprintf(stderr, "Rekurzivne volanie funkcie ktora nebola deklarovana\n");
+                    return SEM_ERROR_FUNC;
+                }
+
+                //Function was found check params, it checks also EOL
+                if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction, Variable)) != SUCCESS){
+                    return RecurCallResult;
+                }
+
+                //TODO Skontrolovat navratovy typ mozem to urobit vo FuncCallCheck?
+            }
+
+            break;
+
+        //Case built in functions
+        case KW_length:
+
+            //Save name to Token
+            if (strCopyConst(CurrentToken->value.stringVal, "length")){
+                return INTERNAL_ERROR;
+            }
+
+            //Find function in HashTable, no need to controle, because builtin function is in hashTable
+            CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
+
+            //Check params and return type, it checks also EOL
+            if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction, Variable)) != SUCCESS){
+                return RecurCallResult;
+            }
+            break;
+
+        case KW_subStr:
+
+            //Save name to Token
+            if (strCopyConst(CurrentToken->value.stringVal, "substr")){
+                return INTERNAL_ERROR;
+            }
+
+            //Find function in HashTable, no need to controle, because builtin function is in hashTable
+            CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
+
+            //Check params and return type, it checks also EOL
+            if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction, Variable)) != SUCCESS){
+                return RecurCallResult;
+            }
+            break;
+
+        case KW_asc:
+
+            //Save name to Token
+            if (strCopyConst(CurrentToken->value.stringVal, "asc")){
+                return INTERNAL_ERROR;
+            }
+
+            //Find function in HashTable, no need to controle, because builtin function is in hashTable
+            CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
+
+            //Check params and return type, it checks also EOL
+            if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction, Variable)) != SUCCESS){
+                return RecurCallResult;
+            }
+            break;
+
+        case KW_chr:
+
+            //Save name to Token
+            if (strCopyConst(CurrentToken->value.stringVal, "chr")){
+                return INTERNAL_ERROR;
+            }
+
+            //Find function in HashTable, no need to controle, because builtin function is in hashTable
+            CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
+
+            //Check params and return type, it checks also EOL
+            if ((RecurCallResult = FuncCallCheck(CurrentToken, GlobalTable, CalledFunction, Variable)) != SUCCESS){
+                return RecurCallResult;
+            }
+
+            break;
+
+        default:
+            //TODO Call expresion
+            //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
+            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                return RecurCallResult;
+            }
+
+            //Check token from expresion
+            if (CurrentToken->type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
+            break;
+    }
+    return SUCCESS;
+}
+
+
 
 int main(){
     int ret = parse();
