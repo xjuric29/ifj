@@ -4,7 +4,7 @@
 #include "scanner.h"
 
 
-int main ()
+int main (){
 	int err;
 	err = instr_init();
 	if(err == INTERNAL_ERROR)
@@ -13,7 +13,7 @@ int main ()
 
 	print_all();
 	inst_free();
-	
+
 	end:
 	return err;
 }
