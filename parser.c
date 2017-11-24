@@ -10,6 +10,7 @@
 #include "str.h"
 #include "symtab.h"
 #include "expr.h"
+#include "ilist.h"
 
 
 
@@ -169,7 +170,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             }
 
             //Scope in HashTable represented as #Scope
-            char *name = "#Scope";
+            char *name = "Scope";
             strClear(&FunctionID);
             for(int i = 0; name[i] != '\0'; i++){
                 if(strAddChar(&FunctionID, name[i])){
@@ -180,6 +181,12 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             if (st_add_func(GlobalTable, &FunctionID) == NULL){
                 return INTERNAL_ERROR;
             }
+
+            //Copy Scope to token so 'add_instruction can read it'
+            //strCopyString(CurrentToken->value.stringVal, &FunctionID);
+            //Create label Scope
+            add_instruction(SCOPE, NULL, NULL, NULL);
+
             // <scope-body>
             ToCheck.InScope = true; //Set that we are entering scope.. return in scope is error
             RecurCallResult = Stats(CurrentToken, ToCheck, GlobalTable);
@@ -212,7 +219,6 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             return SUCCESS;
         //None of SCOPE, FUNCTION, DEFINE, EOF
         default:
-            printf("%s\n", CurrentToken->value.stringVal->str);
             return SYN_ERROR;
     }
 }
@@ -350,13 +356,13 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                 }
                 //Check if ID of first argument is equal to first argument in declaration if not, we need to save new ID
                 if (strCmpString(CurrentToken->value.stringVal, &Function->params->first->key)){
-                    printf("%s\n", Function->params->first->key.str);
+                    //printf("%s\n", Function->params->first->key.str);
                     if (strCopyString(&Function->params->first->key, CurrentToken->value.stringVal)){
                         return INTERNAL_ERROR;
                     }
                 }
-                printf("%s\n", Function->params->first->key.str);
-                printf("-----------------\n");
+                //printf("%s\n", Function->params->first->key.str);
+                //printf("-----------------\n");
 
             }else{ //We are executing declaration, or definition of function that wasn`t declared..
 
@@ -475,13 +481,13 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 
                 //Check if ID of argument is equal to argument in declaration, if not we need to save new ID
                 if (strCmpString(&Parameter->key, CurrentToken->value.stringVal)){
-                    printf("%s\n", Parameter->key.str);
+                    //printf("%s\n", Parameter->key.str);
                     if (strCopyString(&Parameter->key, CurrentToken->value.stringVal)){
                         return INTERNAL_ERROR;
                     }
                 }
-                printf("%s\n", Parameter->key.str);
-                printf("-----------------\n");
+                //printf("%s\n", Parameter->key.str);
+                //printf("-----------------\n");
 
                 //TODO Vymysliet kontrolu ak sme v definicii a bola deklarovana..
                 //Save element to Local Table of function.. Save it as parameter
@@ -570,7 +576,6 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     if (CurrentToken->type != TOK_identifier){
         return SYN_ERROR;
     }
-    //TODO vlozit tam kde treba..
 
     //Store ID to GlobalVariable FunctionID
     if (strCopyString(&FunctionID, (CurrentToken->value.stringVal)) == STR_ERROR){
@@ -588,6 +593,9 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         fprintf(stderr,"Redefinicia\n");
         return SEM_ERROR_FUNC;
     }
+
+    //Create label with Function name
+    add_instruction(FUNC, CurrentToken, NULL, NULL);
 
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -634,6 +642,8 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         default:
             return SYN_ERROR;
     }
+
+    //TODO move do returnvall prazdny string alebo 0 alebo 0.0
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -718,6 +728,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SEM_ERROR_FUNC;
             }
 
+            //Generate instruction for read
+            add_instruction(READ, CurrentToken, NULL, NULL);
+
             //EOL
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
@@ -725,7 +738,6 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             if (CurrentToken->type != TOK_endOfLine){
                 return SYN_ERROR;
             }
-            //TODO Kontrola ci ID existuje a ine veci..
 
             //<stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
@@ -755,6 +767,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             if ((Variable = st_add_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal, 'V')) == NULL){
                 return INTERNAL_ERROR;
             }
+
+            //Create variable
+            add_instruction(DEFVAR_LF, CurrentToken, NULL, NULL);
 
             //AS
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -1395,6 +1410,10 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
 
 
 int main(){
+    instr_init();
     int ret = parse();
+    print_all();
+    inst_free();
+
     printf("return %d\n", ret);
 }
