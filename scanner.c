@@ -190,6 +190,7 @@ int getNumber (token_t *loadedToken, char *curChar)
     {
         if (sscanf(strGetStr(&id), "%lf", &loadedToken->value.decimal) != 1) return 99;
     }
+    strFree(&id);
     return 0;
 }
 
