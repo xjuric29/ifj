@@ -318,10 +318,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, "string@");
 					//sprintf(c, "%d", op1->value.stringVal); //TODO
 					//strcat(INST, c);
-					break
+					break;
 
-				case default:
-					return INTERNAL_ERROR:
+				default:
+					return INTERNAL_ERROR;
 
 			}
 			strcat(INST, "\n");
