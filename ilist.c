@@ -410,7 +410,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(IF):
 			context = con_IF;
 			inst_else++;
-			printf("*********************** IF CALL\n");
+			inst_endif++;
 			return SUCCESS;
 		
 		case(ELSE):
@@ -419,7 +419,6 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", inst_else - inst_endif);
-			printf("**************inst_else %d\n", inst_else);
 			strcat(INST, c);
 			strcat(INST, "$$ENDIF\n");			
 			Instr->used_lines++;	
@@ -432,12 +431,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(ENDIF):
-			inst_endif++;
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", inst_endif);
 			strcat(INST, c);
 			strcat(INST, "$$ENDIF\n");
+			inst_endif--;
 			break;
 
 		case(JUMPIFEQS):
@@ -454,7 +453,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					break;
 				
 				case(con_WHILE):	
-					sprintf(c, "%d", inst_loop);
+					sprintf(c, "%d", inst_while - inst_loop);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
 					break;
