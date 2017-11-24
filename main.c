@@ -5,7 +5,6 @@
 
 
 int main ()
-{
 	int err;
 	err = instr_init();
 	if(err == INTERNAL_ERROR)
