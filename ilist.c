@@ -155,7 +155,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(POPS):
 			strcpy(INST, "POPS LF@");
-			strcat(INST, op1->value.stringVal->str);
+			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
 
