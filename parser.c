@@ -915,6 +915,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return RecurCallResult;
             }
 
+            //IF
+            add_instruction(IF, NULL, NULL, NULL);
+
             //last <stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
@@ -982,6 +985,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
         return SYN_ERROR;
     }
 
+    add_instruction(WHILE, NULL, NULL, NULL);
     //EXPRESION
     //TODO
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
@@ -1003,6 +1007,8 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
+
+    add_instruction(LOOP, NULL, NULL, NULL);
     //TODO treba navestia testovat uz tu alebo az ked odtialto vystupim?
     //Ak nie tu staci return Stats...
     return RecurCallResult;
@@ -1046,6 +1052,8 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     if (RecurCallResult != SUCCESS){
         return RecurCallResult;
     }
+
+    add_instruction(ELSE, NULL, NULL, NULL);
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
