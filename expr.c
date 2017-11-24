@@ -32,23 +32,29 @@ int algotihmFinished = EXPR_FALSE;       // Used static because I was lost in re
  * ">" = reduce
  * "=" = special shift for brackets
  * "#" = error
- * rows = character on top of the stack
- * cols = token loaded on input
+ * rows = STACK - character on top of the stack
+ * cols = INPUT - token loaded on input
  * @todo Expand for more values (Now using only 6 from example in lecture)
  * @todo Should be in header, source file or in function?
  */
 char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 {  
-//  +    -    \    *    /    (    )    i    $   
-  {'>', '>', '<', '<', '<', '<', '>', '<', '>'},	// +
-  {'>', '>', '<', '<', '<', '<', '>', '<', '>'},        // -
-  {'>', '>', '>', '<', '<', '<', '>', '<', '>'},        // \    // The space after '\' is important
-  {'>', '>', '>', '>', '>', '<', '>', '<', '>'},	// *
-  {'>', '>', '>', '>', '>', '<', '>', '<', '>'},        // /
-  {'<', '<', '<', '<', '<', '<', '=', '<', '#'},	// (
-  {'>', '>', '>', '>', '>', '#', '>', '#', '>'},	// )
-  {'>', '>', '>', '>', '>', '#', '>', '#', '>'},	// i
-  {'<', '<', '<', '<', '<', '<', '#', '<', '#'}         // $
+//  +    -    \    *    /    (    )    i    $    =   <>    <   <=    >   >=
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#'},	// +
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#'},  // -
+  {'>', '>', '>', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#'},  // \    // The space after '\' is important
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#'},	// *
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#'},  // /
+  {'<', '<', '<', '<', '<', '<', '=', '<', '#', '#', '#', '#', '#', '#', '#'},	// (
+  {'>', '>', '>', '>', '>', '#', '>', '#', '>', '#', '#', '#', '#', '#', '#'},	// )
+  {'>', '>', '>', '>', '>', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>'},	// i
+  {'<', '<', '<', '<', '<', '<', '#', '<', '#', '<', '<', '<', '<', '<', '<'},  // $
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'},  // = 
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'},  // <>
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'},  // <
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'},  // <=
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'},  // >
+  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'}   // >=
 };
 
 /**
@@ -63,12 +69,18 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 char *rule[RULES_COUNT] =
 {
 	"E+E",
-        "E-E",
-        "E\\E",
+	"E-E",
+	"E\\E",
 	"E*E",
-        "E/E",
+	"E/E",
 	"(E)",
-	"i"
+	"i",
+	"E=E",
+	"E<>E",
+	"E<E",
+	"E<=E",
+	"E>E",
+	"E>=E"
 };
 
 
@@ -141,6 +153,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 return EXPR_RETURN_ERROR_INTERNAL;
         }
         
+        DEBUG_PRINT("[DBG] First token with type %d\n", parserToken->type);
         
         // --- Check first token type ---
         if(expr_isFirstValid(*parserToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
@@ -174,7 +187,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, loadedToken);	// Use algorith on the loaded token
+		retVal = expr_algorithm(&stack, loadedToken, context);	// Use algorith on the loaded token
 		
 		 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // TERM_endingToken = Found token that doesn't belong to expression anymore
@@ -216,7 +229,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 
                 // --- Continue with the algorithm ---
                 int retVal;     // Return value of the algorithm
-                retVal = expr_algorithm(&stack, noMoreTokens);  
+                retVal = expr_algorithm(&stack, noMoreTokens, context);  
                 
                 
                 // --- Check for error ---
@@ -236,7 +249,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
         return EXPR_RETURN_SUCC;        // Return success
 }
 
-int expr_algorithm(myStack_t *stack, token_t token)
+int expr_algorithm(myStack_t *stack, token_t token, int context)
 {
 	static token_t savedToken;	// Save token if it had some tokenValue_t (identifier/integer/decimal/string)
 	
@@ -244,47 +257,69 @@ int expr_algorithm(myStack_t *stack, token_t token)
         if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
                 return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
         
-        // Initializing varables
+	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
+	
+	
+	// Check if token is valid for this expression context
+	switch(token.type)  
+	{
+		// Logic operators can't be in arithmetic expression
+		case TOK_equal:
+		case TOK_notEqual:
+		case TOK_less:
+		case TOK_lessEqual:
+		case TOK_greater:
+		case TOK_greaterEqual:
+			if(context == EXPRESION_CONTEXT_ARIGH)	// @todo Maybe also PRINT?
+			{
+				expr_error("expr_algortihm: Logic oprator can't be in arithmetic expression");
+				return EXPR_RETURN_ERROR_SEM;
+			}
+			break;
+		
+		// For gcc to shut the fuck up	
+		default:
+			break;
+	}	
+	
 	
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
 	switch(token.type)  
 	{
-                // Loaded token belong to the expression
+		// Loaded token belong to the expression
 		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'
-                case TOK_minus:	type = TERM_minus;	break;	// Operator terminal '-'
-                case TOK_divInt:	type = TERM_divInt;	break;	// Operator terminal '\'			
+		case TOK_minus:	type = TERM_minus;	break;	// Operator terminal '-'
+		case TOK_divInt:	type = TERM_divInt;	break;	// Operator terminal '\'			
 		case TOK_mul:	type = TERM_mul;	break;	// Operator terminal '*'
-                case TOK_div:	type = TERM_div;	break;	// Operator terminal '/'
+		case TOK_div:	type = TERM_div;	break;	// Operator terminal '/'
 		case TOK_lParenth:	type = TERM_lBrac;	break;	// Left bracket terminlal = '('
 		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right bracket terminal = ')'
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
+        
+        // Loaded logic token
+        case TOK_equal:	type = TERM_equal;	break;			// Operator "="
+		case TOK_notEqual:	type = TERM_notEqual;	break;		// Operator "<>"
+		case TOK_less:	type = TERM_less;	break;			// Operator "<"
+		case TOK_lessEqual:	type = TERM_lessEqual;	break;		// Operator "<="
+		case TOK_greater:	type = TERM_greater;	break;		// Operator ">"
+		case TOK_greaterEqual:	type = TERM_greaterEqual;	break;	// Operator ">="
                 
-                // Loaded token that has some value
-                case TOK_identifier:
-                case TOK_integer:
-                case TOK_decimal:
-                        type = TERM_id;	// Identifier terminal = 'i'
-                        savedToken = token;	// Save token because it has  
-                        // All these tokens are going to be represented by 'i' @todo Is this good method?
-                break;
+		// Loaded token that has some value
+		case TOK_identifier:
+		case TOK_integer:
+		case TOK_decimal:
+			type = TERM_id;	// Identifier terminal = 'i'
+			savedToken = token;	// Save token because it has  
+		// All these tokens are going to be represented by 'i' @todo Is this good method?
+		break;
                 
                 
                 // Loaded token DOESN'T belong to the expression
 		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
 			
 		/* @todo More cases for later
-		case TOK_integer:
-		case TOK_decimal:
 		case TOK_string:
-		
-
-		case TOK_equal:			// Operator "="
-		case TOK_notEqual:		// Operator "<>"
-		case TOK_less:			// Operator "<"
-		case TOK_lessEqual:		// Operator "<="
-		case TOK_greater:		// Operator ">"
-		case TOK_greaterEqual:	// Operator ">="
 		*/
 	}
 	
@@ -315,7 +350,7 @@ int expr_algorithm(myStack_t *stack, token_t token)
                                 return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
                              
                         // Otherwise continue with algorithm
-                        return expr_algorithm(stack, token);       // Use recursion (don't ask why, that's just the way it should be)
+                        return expr_algorithm(stack, token, context);       // Use recursion (don't ask why, that's just the way it should be)
 		}
                 
                 // Operation SPECIAL SHIFT '='
@@ -368,18 +403,23 @@ precTableIndex_t expr_getIndexFromChar(char character)
 	switch(character)	// Return precedent table index depending on character on top of the stack
 	{
 		case '+':	return TERM_plus;
-                case '-':	return TERM_minus;
-                case '\\':	return TERM_divInt;
+		case '-':	return TERM_minus;
+		case '\\':	return TERM_divInt;
 		case '*':	return TERM_mul;
-                case '/':	return TERM_div;
+		case '/':	return TERM_div;
 		case '(':	return TERM_lBrac;
 		case ')':	return TERM_rBrac;
 		case 'i':	return TERM_id;
+				
 		case STACK_ENDCHAR:	return TERM_stackEnd;	// Character '$' (Defined in stack.h)	
-			
+
+		default:	// @todo This is temporary solution for logic operators
+			return character;
+/*			
 		default:	// Invalid character
 			expr_error("expr_getIndexFromChar: Invalid character (dosn't need to be an error if called from stack.c)");
 			return EXPR_ERROR;	// @todo Return values, this is here just because gcc won't stop bitching about it
+*/
 	}
 }
 
@@ -389,18 +429,24 @@ char expr_getCharFromIndex(precTableIndex_t index)
 	switch(index)	// Return precedent table index depending on character on top of the stack
 	{
 		case TERM_plus:	return '+';
-                case TERM_minus:	return '-';
-                case TERM_divInt:	return '\\';
+		case TERM_minus:	return '-';
+		case TERM_divInt:	return '\\';
 		case TERM_mul:	return '*';
-                case TERM_div:	return '/';
+		case TERM_div:	return '/';
 		case TERM_lBrac:	return '(';
 		case TERM_rBrac:	return ')';
 		case TERM_id:	return 'i';
+		
 		case TERM_stackEnd:	return STACK_ENDCHAR;	// Character '$' (Defined in stack.h)	
-			
+
+		default:	// @todo This is temporary solution for logic operators
+			return index;
+
+/*			
 		default:	// Invalid character
 			expr_error("expr_getCharFromIndex: Invalid index");
 			return EXPR_ERROR;	// @todo Return values, this is here just because gcc won't stop bitching about it
+*/
 	}	
 }
 
@@ -585,6 +631,21 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
                                         return;
                         }
                 }
+                // Logic operators
+                case TERM_equal:
+					printf("EQS\n");
+					break;
+                case TERM_notEqual:
+                case TERM_less:
+					printf("LTS\n");
+					break;
+                case TERM_lessEqual:
+                case TERM_greater:
+					printf("GTS\n");
+					break;
+                case TERM_greaterEqual:
+					//printf("GTS\n");
+					break;
         }
 
 #endif

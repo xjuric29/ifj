@@ -124,6 +124,13 @@ void stackInfo(myStack_t *stack)
 int stackGetTerminalIndex(myStack_t *stack)
 {
 	char terminals[TERMINAL_COUNT] = "+-\\*/()i$";
+	// @todo Temporary logic solution
+	terminals[9] = TERM_equal;
+	terminals[10] = TERM_notEqual;
+	terminals[11] = TERM_less;
+	terminals[12] = TERM_lessEqual;
+	terminals[13] = TERM_greater;
+	terminals[14] = TERM_greaterEqual;
 	
         for(int i = stack->top; i >= 0; i--)    // Start searching from top of the stack
         {

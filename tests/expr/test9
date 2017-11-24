@@ -1,0 +1,8 @@
+'ERROR: Trying to compare in variable assignment
+
+Scope
+    Dim res As Integer
+
+    res = 1 < 2
+    
+End Scope

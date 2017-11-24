@@ -27,6 +27,7 @@
 #include "str.h"
 #include "scanner.h"
 #include "symtab.h"
+#include "parser.h"
 /*
 #ifndef EXPR_TEST
 
@@ -36,8 +37,8 @@
 
 //	--- Constants ---
 // Internal values
-#define PREC_TABLE_SIZE 9	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
-#define RULES_COUNT     7	/// Number of all the grammar rules used
+#define PREC_TABLE_SIZE 15	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
+#define RULES_COUNT     13	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true
@@ -48,7 +49,6 @@
 #define EXPR_RETURN_ERROR_SYNTAX        2       // e.g. Missing operator/rule not found
 #define EXPR_RETURN_ERROR_SEM   3       // e.g. Varibale not defined
 #define EXPR_RETURN_ERROR_INTERNAL      99      // e.g. malloc fail
-
 
 
 /**
@@ -70,10 +70,10 @@ typedef enum
 typedef enum
 {
 	TERM_plus,		/// Plus "+" [int+int = int, int+double = double, double+int = double, double+double = double, str+str = str]
-        TERM_minus,	/// Minus "-" [int-int = int, int-double = double, double-int = double, double-double = double]
+	TERM_minus,	/// Minus "-" [int-int = int, int-double = double, double-int = double, double-double = double]
 	TERM_divInt,	/// Integer division "\" [int\int = int]
-        TERM_mul,		/// Multiplication "*" [int*int = int, int*double = double, double*int = double, double*double = double]
-        TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
+	TERM_mul,		/// Multiplication "*" [int*int = int, int*double = double, double*int = double, double*double = double]
+	TERM_div,		/// Division "/" [int/int = double, int/double = double, double/int = double, double/double = double]
 	TERM_lBrac,	/// Left bracket "("
 	TERM_rBrac,	/// Right bracket ")"
 	TERM_id,		/// Identificator	(@todo Not sure)
@@ -84,11 +84,11 @@ typedef enum
 	
 	// Logic operators
 	TERM_equal,	/// Operator "="
-        TERM_notEqual,	/// Operator "<>"
-        TERM_less,		/// Operator "<"
-        TERM_lessEqual,	/// Operator "<="
-        TERM_greater,	/// Operator ">"
-        TERM_greaterEqual	/// Operator ">="
+	TERM_notEqual,	/// Operator "<>"
+	TERM_less,		/// Operator "<"
+	TERM_lessEqual,	/// Operator "<="
+	TERM_greater,	/// Operator ">"
+	TERM_greaterEqual	/// Operator ">="
 }	precTableIndex_t;
 
 
@@ -125,7 +125,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, token_t tokenType);
+int expr_algorithm(myStack_t *stack, token_t tokenType, int context);
 
 
 /**
