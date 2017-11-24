@@ -804,6 +804,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                     //<stats>
                     //TODO premennu inicializovat na nulu alebo prazdny string
 
+                    CurrentToken->type = Variable->el_type;
+                    add_instruction(MOVE, CurrentToken, &Variable->key, NULL);
+
                     return Stats(CurrentToken, ToCheck, GlobalTable);
                 //EQUAL
                 case TOK_equal:
