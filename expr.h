@@ -29,6 +29,7 @@
 #include "symtab.h"
 #include "parser.h"
 #include "ilist.h"
+#include "tokstack.h"
 
 
 //	--- Constants ---

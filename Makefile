@@ -2,8 +2,8 @@ CFLAGS=-std=c99
 
 all: compiler
 
-compiler: main.o scanner.o str.o parser.o ilist.o symtab.o stack.o builtin.o expr.o
-	gcc main.o scanner.o str.o parser.o ilist.o symtab.o stack.o builtin.o expr.o -o compiler
+compiler: main.o scanner.o str.o parser.o ilist.o symtab.o stack.o builtin.o expr.o tokstack.o
+	gcc -Wall -Wextra main.o scanner.o str.o parser.o ilist.o symtab.o stack.o builtin.o expr.o tokstack.o -o compiler
 
 scanner.o: scanner.c
 	gcc ${CFLAGS} scanner.c -c
@@ -31,6 +31,9 @@ builtin.o: builtin.c
 
 main.o: main.c
 	gcc ${CFLAGS} main.c -c
+
+tokstack.o: tokstack.c
+	gcc ${CFLAGS} tokstack.c -c
 
 clean:
 	rm -f *.o *.out *.gch

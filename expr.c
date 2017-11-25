@@ -86,22 +86,22 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	DEBUG_PRINT("Context: %d\n", context);
 	algotihmFinished = EXPR_FALSE;
 	
-        // --- Check arguments ---
-        if(parserToken == NULL)
-        {
-                expr_error("expr_main: NULL pointer to parserToken");
-                return EXPR_RETURN_ERROR_INTERNAL;
-        }
-        if(st_global == NULL)
-        {
-                expr_error("expr_main: NULL pointer to st_global");
-                return EXPR_RETURN_ERROR_INTERNAL;
-        }
-        if(func_name == NULL)
-        {
-                expr_error("expr_main: NULL pointer to func_name");
-                return EXPR_RETURN_ERROR_INTERNAL;
-        }
+	// --- Check arguments ---
+	if(parserToken == NULL)
+	{
+		expr_error("expr_main: NULL pointer to parserToken");
+		return EXPR_RETURN_ERROR_INTERNAL;
+	}
+	if(st_global == NULL)
+	{
+		expr_error("expr_main: NULL pointer to st_global");
+		return EXPR_RETURN_ERROR_INTERNAL;
+	}
+	if(func_name == NULL)
+	{
+		expr_error("expr_main: NULL pointer to func_name");
+		return EXPR_RETURN_ERROR_INTERNAL;
+	}
         
         
 	// --- Initializing stack and default values ---
@@ -125,7 +125,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	
 	// --- Check first token type ---
         if(expr_isFirstValid(loadedToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
-                return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
+			return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error
 	
 	
 	// --- Loading tokens ---
@@ -134,14 +134,14 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
 		
 		
-                // --- Check if variable exists ---
-                if(loadedToken.type == TOK_identifier)  // If token is variable
-                        if(st_find_element(st_global, func_name, loadedToken.value.stringVal) == NULL)   // Haven't found it in the table
-                        {
+		// --- Check if variable exists ---
+		if(loadedToken.type == TOK_identifier)  // If token is variable
+			if(st_find_element(st_global, func_name, loadedToken.value.stringVal) == NULL)   // Haven't found it in the table
+			{
 				expr_error("expr_main: Tried to work with nonexisting variable");
 				DEBUG_PRINT("--- Expression module end (error) ---\n");
-                                return EXPR_RETURN_ERROR_SEM;   // Return semantics error
-                	}
+				return EXPR_RETURN_ERROR_SEM;   // Return semantics error
+			}
                 	
                 		
 		// --- CORE OF THE FUNCTION ---
@@ -155,48 +155,47 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			continueLoading = 0;	// Stop the loading cycle
 			*parserToken = loadedToken;	// Save token for parser to proceed // Don't need this anymore
 		}       
-                else
+		else
 		{
-                        // --- Check for error ---
-                        if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
-                        {
+			// --- Check for error ---
+			if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
+			{
 				DEBUG_PRINT("--- Expression module end (error) ---\n");
-                                return retVal;  // End module and report error
-                        }       
-                        
-                        //DEBUG_PRINT("[DBG] retVal = %d\n", retVal);
-                                
-                        // --- Load next token ---
-                        getToken(&loadedToken);
-                }
-		
+				return retVal;  // End module and report error
+			}       
+
+			//DEBUG_PRINT("[DBG] retVal = %d\n", retVal);
+
+			// --- Load next token ---
+			getToken(&loadedToken);
+		}		
 	}
         
         
-        // --- Finish the algorith ---
-        // (This happens when there are no more tokens to load but algorithm is still not finished)
-        while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)  // Should algorithm continue?        
-        {
-                // --- Token indicating stop of loading ---
-                token_t noMoreTokens;
-                noMoreTokens.type = TOK_endOfFile; // (Not really TOK_endOfFile, see header file at expr_algorithm())
-                
-                // --- Continue with the algorithm ---
-                int retVal;     // Return value of the algorithm
-                retVal = expr_algorithm(&stack, noMoreTokens, context);  
-                
-                
-                // --- Check for error ---
-                if(retVal != EXPR_RETURN_SUCC)
-                {
+	// --- Finish the algorith ---
+	// (This happens when there are no more tokens to load but algorithm is still not finished)
+	while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)  // Should algorithm continue?        
+	{
+		// --- Token indicating stop of loading ---
+		token_t noMoreTokens;
+		noMoreTokens.type = TOK_endOfFile; // (Not really TOK_endOfFile, see header file at expr_algorithm())
+
+		// --- Continue with the algorithm ---
+		int retVal;     // Return value of the algorithm
+		retVal = expr_algorithm(&stack, noMoreTokens, context);  
+
+
+		// --- Check for error ---
+		if(retVal != EXPR_RETURN_SUCC)
+		{
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
-                        return retVal;
+			return retVal;
 		}
-        }
-        
-       
+	}
+
+
 	// --- Generate result instuction ---
-        return expr_generateResult(context, variable);	// Or return error   
+	return expr_generateResult(context, variable);	// Or return error   
 }
 
 int expr_algorithm(myStack_t *stack, token_t token, int context)
@@ -541,43 +540,51 @@ int expr_isFirstValid(token_t firstToken)
 
 void expr_generateInstruction(char terminal, token_t token) // @todo
 {
-        switch(terminal)
-        {
-                // Operators
-                case '+':
-			add_instruction(ADDS, NULL, NULL, NULL);
-                        break;
-                case '-':
-                        add_instruction(SUBS, NULL, NULL, NULL);
-                        break ;               
-                case '*':
-                        add_instruction(MULS, NULL, NULL, NULL);
-                        break;
-                case '/':
-                case '\\':
-                        add_instruction(DIVS, NULL, NULL, NULL);
-                        break;
-                        
-                case 'i':     // We have to find out value
-			add_instruction(PUSHS, &token, NULL, NULL);
-                        break;
+	switch(terminal)
+	{
+	// Operators
+	case '+':
+		add_instruction(ADDS, NULL, NULL, NULL);
+		break;
+	case '-':
+		add_instruction(SUBS, NULL, NULL, NULL);
+		break;               
+	case '*':
+		add_instruction(MULS, NULL, NULL, NULL);
+		break;
+	case '/':
+	case '\\':
+		add_instruction(DIVS, NULL, NULL, NULL);
+		break;
+	
+	// Identifier / integer / decimal
+	case 'i':     // We have to find out value
+		add_instruction(PUSHS, &token, NULL, NULL);
+		break;
 
-                // Logic operators
-                case TERM_equal:
-			add_instruction(EQS, NULL, NULL, NULL);
-			break;
-                case TERM_notEqual:
-                case TERM_less:
-			add_instruction(LTS, NULL, NULL, NULL);
-			break;
-                case TERM_lessEqual:
-			break;
-                case TERM_greater:
-			add_instruction(GTS, NULL, NULL, NULL);
-			break;
-                case TERM_greaterEqual:
-			break;
-        }
+	// Logic operators
+	case TERM_equal:
+		add_instruction(EQS, NULL, NULL, NULL);
+		break;
+	case TERM_notEqual:
+		add_instruction(EQS, NULL, NULL, NULL);
+		add_instruction(NOT, NULL, NULL, NULL);
+		break;
+	case TERM_less:
+		add_instruction(LTS, NULL, NULL, NULL);
+		break;
+	case TERM_lessEqual:
+		expr_error("expr_generateInstruction: @todo TERM_lessEqual not done");
+		// @todo
+		break;
+	case TERM_greater:
+		add_instruction(GTS, NULL, NULL, NULL);
+		break;
+	case TERM_greaterEqual:
+		expr_error("expr_generateInstruction: @todo TERM_greaterEqual not done");
+		// @todo
+		break;
+	}
 }
 
 // ========== OTHER FUNCTIONS ==========
@@ -604,15 +611,18 @@ int expr_generateResult(int context, st_element_t *variable)
 			// @todo check types
 			add_instruction(POPS, NULL, &variable->key, NULL);
 			break;
+			
 		case EXPRESION_CONTEXT_LOGIC:
 			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
+			
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
 			expr_error("expr_generateResult: Not done for EXPRESION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
 			break;
+			
 		case EXPRESION_CONTEXT_RETURN:
 			// @todo check types
 			add_instruction(RETVAL_POP, NULL, NULL, NULL);
