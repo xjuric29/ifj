@@ -207,35 +207,38 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, op1->value.stringVal->str);
 			strcat(INST, "\n");
 			Instr->used_lines++;
-			add_instruction(PUSHFRAME, NULL, NULL, NULL);
+			strcpy(INST, "PUSHfRAME\n");
+			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@%%retval\n");
-			Instr->used_lines--;
 			break;
 
 		case(SCOPE):
 			strcpy(INST, "LABEL SCOPE");
 			Instr->used_lines++;
-			add_instruction(CREATEFRAME, NULL, NULL, NULL);
-			add_instruction(PUSHFRAME, NULL, NULL, NULL);
-			Instr->used_lines--;
+			strcpy(INST, "CREATEfRAME\n");
+			Instr->used_lines++;
+			strcpy(INST, "PUSHfRAME\n");
+			
 			break;
 		
 		case(MOVE_LF_LF):
 			strcpy(INST, "MOVE LF@");
 			strcat(INST, op2->str);
-			strcat(INST, " LF@");
 			switch(op1->type)
 			{	
 				case TOK_identifier:
+					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
 				
-				case TOK_integer:
+				case TOK_integer:	
+					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
 					strcat(INST, c);
 					break;
 
 				case TOK_decimal:
+					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
@@ -251,19 +254,21 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(MOVE_TF_LF):
 			strcpy(INST, "MOVE TF@");
 			strcat(INST, op2->str);
-			strcat(INST, " LF@");			
 			switch(op1->type)
 			{	
 				case TOK_identifier:
+					strcat(INST, " LF@");			
 					strcat(INST, op1->value.stringVal->str);
 					break;
 				
 				case TOK_integer:
+					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
 					strcat(INST, c);
 					break;
 
 				case TOK_decimal:
+					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
@@ -278,19 +283,21 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(MOVE_LF_TF):
 			strcpy(INST, "MOVE LF@");
 			strcat(INST, op2->str);
-			strcat(INST, " TF@");
 			switch(op1->type)
 			{	
 				case TOK_identifier:
+					strcat(INST, " TF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
 				
 				case TOK_integer:
+					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
 					strcat(INST, c);
 					break;
 
 				case TOK_decimal:
+					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
@@ -493,6 +500,74 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			}
 			break;
 				
+		case(RETVAL_INT2FLOAT_OUT):
+			strcpy(INST, "INT2FLOAT LF@");
+			strcat(INST, op2->str);
+			strcat(INST, " TF@%retval");
+			break;
+
+		case(RETVAL_FLOAT2R2EINT_OUT):
+			strcpy(INST, "FLOAT2R2EINT LF@");
+			strcat(INST, op2->str);
+			strcat(INST, " TF@%retval");
+			break;
+
+		case(RETVAL_INT2FLOAT_IN):
+			strcpy(INST, "INT2FLOAT LF@%retval");
+			strcat(INST, " LF@");
+			strcat(INST, op2->str);
+			strcat(INST, "\n");
+			break;
+
+		case(RETVAL_FLOAT2R2EINT_IN):
+			strcpy(INST, "FLOAT2R2EINT LF@%retval");
+			strcat(INST, " LF@");
+			strcat(INST, op2->str);
+			strcat(INST, "\n");
+			break;
+
+		case(INT2FLOAT):
+			strcpy(INST, "INT2FLOAT TF@");
+			strcat(INST, op2->str);
+			switch(op1->type)
+			{
+				case TOK_identifier:
+					strcat(INST, " LF@");
+					strcat(INST, op1->value.stringVal->str);
+					break;
+
+				case TOK_integer:
+					strcat(INST, " int@");
+					sprintf(c, "%d", op1->value.integer);
+
+				default:
+					return INTERNAL_ERROR;
+
+			}
+			strcat(INST, "\n");
+			break;
+		
+		case(FLOAT2R2EINT):
+			strcpy(INST, "FLOAT2R2EINT TF@");
+			strcat(INST, op2->str);
+			switch(op1->type)
+			{
+				case TOK_identifier:
+					strcat(INST, " LF@");
+					strcat(INST, op1->value.stringVal->str);
+					break;
+
+				case TOK_decimal:
+					strcat(INST, " float@");
+					sprintf(c, "%g", op1->value.decimal);
+
+				default:
+					return INTERNAL_ERROR;
+
+			}
+			strcat(INST, "\n");
+			break;
+
 
 		default:
 			return INTERNAL_ERROR;
