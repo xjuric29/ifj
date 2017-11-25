@@ -124,7 +124,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, token_t tokenType, int context);
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context);
 
 
 /**
@@ -174,11 +174,11 @@ int expr_shift(myStack_t *stack, char character);
  *              EXPR_RETURN_ERROR_INTERNAL      when couldn't  add char to handle string
  *              EXPR_RETURN_ERROR_SYNTAX        when rule not found
  */
-int expr_reduce(myStack_t *stack, token_t token);
+int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token);
 int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
-void expr_generateInstruction(char terminal, token_t token);
+void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
 int expr_generateResult(int context, st_element_t *variable);
 void expr_testFinish_retVal(int retVal);
 

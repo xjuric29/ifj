@@ -75,9 +75,19 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	}
         
         
-	// --- Initializing stack and default values ---
-	myStack_t stack;	// Create stack
+	// --- Initializing stacks and default values ---
+	myStack_t stack;	// Create terminal stack
 	stackInit(&stack);	// Init stack (Push "$")
+	tokStack_t tokStack;
+	
+	int success;
+	success = tokStack_Init(&tokStack);
+	if(success == FAIL)
+	{
+		expr_error("expr_main: Couldn't init token stack");
+		DEBUG_PRINT("--- Expression module end (error) ---\n");	
+		return EXPR_RETURN_ERROR_INTERNAL;		
+	}
         
 	int continueLoading = 1;	// Determines if this module should read next token
 	
@@ -105,19 +115,38 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
 		
 		
-		// --- Check if variable exists ---
+		// --- Search for varibale in symbol table ---
 		if(loadedToken.type == TOK_identifier)  // If token is variable
-			if(st_find_element(st_global, func_name, loadedToken.value.stringVal) == NULL)   // Haven't found it in the table
+		{
+			st_element_t *element = st_find_element(st_global, func_name, loadedToken.value.stringVal);
+			
+			// --- Check if variable exists ---
+			if(element == NULL)   // Haven't found it in the table
 			{
 				expr_error("expr_main: Tried to work with nonexisting variable");
 				DEBUG_PRINT("--- Expression module end (error) ---\n");
 				return EXPR_RETURN_ERROR_SEM;   // Return semantics error
 			}
-                	
+			
+			// --- Find out variable type --- 
+			switch(element->el_type)
+			{
+				case TOK_integer:	tokStack_Push(&tokStack, TOK_integer);	break;
+				case TOK_decimal:	tokStack_Push(&tokStack, TOK_decimal);	break;
+				case TOK_string:	tokStack_Push(&tokStack, TOK_string);	break;
+				// Push variable type to the stack
+				// (If it's value and not variable, then this is done in expr_algorithm())
+				
+				default:
+					expr_error("expr_main: Found TOK_identifier but tokenType_t is strange");
+					DEBUG_PRINT("--- Expression module end (error) ---\n");		
+					return EXPR_RETURN_ERROR_INTERNAL;			
+			}
+        }       	
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, loadedToken, context);	// Use algorith on the loaded token
+		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context);	// Use algorith on the loaded token
 		
 		 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // TERM_endingToken = Found token that doesn't belong to expression anymore
@@ -153,7 +182,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		// --- Continue with the algorithm ---
 		int retVal;     // Return value of the algorithm
-		retVal = expr_algorithm(&stack, noMoreTokens, context);  
+		retVal = expr_algorithm(&stack, &tokStack, noMoreTokens, context);  
 
 
 		// --- Check for error ---
@@ -169,7 +198,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	return expr_generateResult(context, variable);	// Or return error   
 }
 
-int expr_algorithm(myStack_t *stack, token_t token, int context)
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context)
 {
 	static token_t savedToken;	// Save token if it had some tokenValue_t (identifier/integer/decimal/string)
 	
@@ -227,12 +256,18 @@ int expr_algorithm(myStack_t *stack, token_t token, int context)
                 
 		// Loaded token that has some value
 		case TOK_identifier:
+			type = TERM_id;	// Identifier terminal = 'i'
+			savedToken = token;	// Save token because it has value
+			break;
+			
+		 // All these tokens are going to be represented by 'i' @todo Is this good method?
 		case TOK_integer:
 		case TOK_decimal:
 			type = TERM_id;	// Identifier terminal = 'i'
-			savedToken = token;	// Save token because it has  
-		// All these tokens are going to be represented by 'i' @todo Is this good method?
+			savedToken = token;	// Save token because it has value
+			tokStack_Push(tokStack, token.type);
 			break;
+			
 		case TOK_string:
 			expr_error("expr_algorithm: @todo Processing string");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
@@ -269,13 +304,13 @@ int expr_algorithm(myStack_t *stack, token_t token, int context)
 		case ACTION_reduce:
                 {
 			int success;    // Return value of reducing (= searching for rule)
-                        success = expr_reduce(stack, savedToken);
+                        success = expr_reduce(stack, tokStack, savedToken);
                         
                         if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
                                 return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
                              
                         // Otherwise continue with algorithm
-                        return expr_algorithm(stack, token, context);       // Use recursion (don't ask why, that's just the way it should be)
+                        return expr_algorithm(stack, tokStack, token, context);       // Use recursion (don't ask why, that's just the way it should be)
 		}
                 
                 // Operation SPECIAL SHIFT '='
@@ -393,7 +428,7 @@ int expr_shift(myStack_t *stack, char character)
         return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
-int expr_reduce(myStack_t *stack, token_t token)
+int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 {
 	DEBUG_PRINT("[DBG] Operation >\n");
 	
@@ -404,7 +439,7 @@ int expr_reduce(myStack_t *stack, token_t token)
         
         // Generating instruction
         char terminal = stackGetTerminal(stack);
-        expr_generateInstruction(terminal, token);
+        expr_generateInstruction(tokStack, terminal, token);
         
         
         // Find out what to reduce
@@ -536,7 +571,7 @@ int expr_isFirstValid(token_t firstToken)
         }
 }
 
-void expr_generateInstruction(char terminal, token_t token) // @todo
+void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token) // @todo
 {
 	switch(terminal)
 	{
@@ -556,7 +591,7 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
 		break;
 	
 	// Identifier / integer / decimal
-	case 'i':     // We have to find out value
+	case 'i':
 		add_instruction(PUSHS, &token, NULL, NULL);
 		break;
 
@@ -582,6 +617,92 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
 		expr_error("expr_generateInstruction: @todo TERM_greaterEqual not done");
 		// @todo
 		break;
+	}
+}
+
+void expr_convertTypes(tokStack_t *tokStack, char terminal)
+{
+	switch(terminal)
+	{
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		{	
+			tokenType_t typeRight = tokStack_Pop(tokStack);
+			tokenType_t typeLeft = tokStack_Pop(tokStack);
+			
+			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
+			{	
+				tokStack_Push(tokStack, TOK_integer);
+			}
+			else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
+			{
+				tokStack_Push(tokStack, TOK_decimal);
+			}
+			else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec = dec
+			{	
+				/* Example :
+				[INT + DEC = DEC]
+				INT...a
+				DEC...b
+				-------------
+				POPS LF@$dec
+				INT2FLOATS
+				PUSHS LF@$dec
+				ADDS
+				*/
+				
+				// Prepare string with temporary variable
+				string tmpString;
+				strInit(&tmpString);
+				char *tmpChar = "LF@$dec";
+				strCopyConst(&tmpString, tmpChar);
+				
+				// Converting instructions
+				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+				
+				// Update tokStack
+				tokStack_Push(tokStack, TOK_decimal);
+				
+				// Free string memory
+				strFree(&tmpString);
+			}
+			else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int) = dec
+			{
+				/* Example:
+				[DEC + INT = DEC]
+				DEC...b
+				INT...a
+				-------------
+				INT2FLOATS
+				ADDS
+				*/
+				
+				// Prepare string with temporary variable
+				string tmpString;
+				strInit(&tmpString);
+				char *tmpChar = "LF@$dec";
+				strCopyConst(&tmpString, tmpChar);
+				
+				// Converting instruction
+				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+				
+				// Update tokStack
+				tokStack_Push(tokStack, TOK_decimal);
+				
+				// Free string memory
+				strFree(&tmpString);
+			}
+			else
+			{
+				expr_error("expr_convertTypes: Not prepared for this type combination");
+				return; // @todo
+			}
+			break;
+		}
 	}
 }
 
