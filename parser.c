@@ -138,6 +138,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
+
             DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
             RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
@@ -644,6 +645,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     }
 
     //TODO move do returnvall prazdny string alebo 0 alebo 0.0
+    add_instruction(RETVAL_IN, CurrentToken, NULL, NULL);
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -666,6 +668,9 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     if (CurrentToken->type != KW_function){
         return SYN_ERROR;
     }
+
+    //Return
+    add_instruction(RETURN, NULL, NULL, NULL);
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -1279,7 +1284,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
     //Create jump on label function
     add_instruction(CALL, NULL, &CalledFunction->key, NULL);
 
-    
+
     //Test of return type of function and type of Variable we are assigning in
     if (Variable->el_type != CalledFunction->func_type){
         //If one is string -> no conversions
