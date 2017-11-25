@@ -362,6 +362,18 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					break;
 				
+				case KW_double:
+					strcat(INST, "float@0.0\n");
+					break;
+
+				case KW_integer:
+					strcat(INST, "int@0\n");
+					break;
+
+				case KW_string:
+					strcat(INST, "string@\n");
+					break;
+				
 				default:
 					return INTERNAL_ERROR;
 			}
