@@ -129,20 +129,21 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			}
 			
 			// --- Find out variable type --- 
-			switch(element->el_type)
+			tokenType_t tokenType = elType2tokType(element->el_type);
+			if(tokenType == TOK_FAIL)
 			{
-				case KW_integer:	tokStack_Push(&tokStack, TOK_integer);	break;
-				case KW_double:	tokStack_Push(&tokStack, TOK_decimal);	break;
-				case KW_string:	tokStack_Push(&tokStack, TOK_string);	break;
+				// Error message already printed in elType2tokType()
+				DEBUG_PRINT("--- Expression module end (error) ---\n");		
+				return EXPR_RETURN_ERROR_INTERNAL;						
+			}
+			else
+			{
 				// Push variable type to the stack
 				// (If it's value and not variable, then this is done in expr_algorithm())
-				
-				default:
-					expr_error("expr_main: Found TOK_identifier but tokenType_t is strange");
-					DEBUG_PRINT("--- Expression module end (error) ---\n");		
-					return EXPR_RETURN_ERROR_INTERNAL;			
+				tokStack_Push(&tokStack, tokenType);
 			}
         }       	
+                	
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
@@ -195,7 +196,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 
 	// --- Generate result instuction ---
-	return expr_generateResult(context, variable);	// Or return error   
+	return expr_generateResult(&tokStack, context, variable);	// Or return error   
 }
 
 int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context)
@@ -728,17 +729,30 @@ void expr_error(char *msg)
 	// @todo This function should end whole module and return err value to parser
 }
 
-int expr_generateResult(int context, st_element_t *variable)
+int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variable)
 {
 	switch(context)
 	{
 		case EXPRESION_CONTEXT_ARIGH:
+			// Check if variable exists
 			if(variable == NULL)
 			{
 				expr_error("expr_generateResult: Result variable doesn't exist... Strange :O");
 				DEBUG_PRINT("--- Expression module end (error) ---\n");
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
+			
+			// Check if result is same type as result varaible
+			tokenType_t resVarType = elType2tokType(variable->el_type);	// Result variable type
+			if(resVarType == TOK_FAIL)
+				return(EXPR_RETURN_ERROR_INTERNAL);
+				
+			if(resVarType != tokStack_Top(tokStack))
+			{
+				expr_error("expr_generateResult: Result of expression and result variable are not the same data type");
+				return(EXPR_RETURN_ERROR_SEM);
+			}
+			
 			// @todo check types
 			add_instruction(POPS, NULL, &variable->key, NULL);
 			break;
@@ -749,7 +763,7 @@ int expr_generateResult(int context, st_element_t *variable)
 			
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
-			expr_error("expr_generateResult: Not done for EXPRESION_CONTEXT_PRINT");
+			expr_error("expr_generateResult: @todo Not done for EXPRESION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
 			break;
@@ -762,4 +776,17 @@ int expr_generateResult(int context, st_element_t *variable)
 	
 	DEBUG_PRINT("--- Expression module end (success)---\n");
 	return EXPR_RETURN_SUCC;
+}
+
+tokenType_t elType2tokType(type_t el_type)
+{
+	switch(el_type)
+	{
+		case KW_integer:	return TOK_integer;	break;
+		case KW_double:	return TOK_decimal;	break;
+		case KW_string:	return TOK_string;	break;
+		default:
+			expr_error("elType2tokType: Invalid el_type");
+			return TOK_FAIL;	// Represents error			
+	}
 }
