@@ -180,6 +180,7 @@ int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
 int expr_generateResult(int context, st_element_t *variable);
+void expr_convertTypes(tokStack_t *tokStack, char terminal);
 void expr_testFinish_retVal(int retVal);
 
 /**

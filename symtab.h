@@ -11,13 +11,14 @@ PRAVDEPODOBNE STRUKTURA NA TROJADRESNY KOD, TO SA PORIESI NESKOR
 
 #include <stdbool.h>
 #include "str.h"
+#include "scanner.h"
 
 
 typedef enum
 {
-    st_integer = 12, //Values from struct Token, for compatability
-    st_decimal = 5,
-    st_string = 18,
+    st_integer = KW_integer, //Values from struct Token, for compatability
+    st_decimal = KW_double,
+    st_string = KW_string,
 
 } type_t; //Type of Element or Function
 

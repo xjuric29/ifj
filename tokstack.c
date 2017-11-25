@@ -28,11 +28,11 @@ int tokStack_Push(tokStack_t *stack, tokenType_t tokenType)
 		return FAIL;
 	}
 
-	// Push token to the stack
-	stack->tokArr[stack->top] = tokenType;
-	
 	// Increase top of the stack
-	(stack->top)++;     
+	(stack->top)++;  
+
+	// Push token to the stack
+	stack->tokArr[stack->top] = tokenType;   
 	
 	// Return success
 	return SUCCESS;

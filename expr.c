@@ -131,9 +131,9 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			// --- Find out variable type --- 
 			switch(element->el_type)
 			{
-				case TOK_integer:	tokStack_Push(&tokStack, TOK_integer);	break;
-				case TOK_decimal:	tokStack_Push(&tokStack, TOK_decimal);	break;
-				case TOK_string:	tokStack_Push(&tokStack, TOK_string);	break;
+				case KW_integer:	tokStack_Push(&tokStack, TOK_integer);	break;
+				case KW_double:	tokStack_Push(&tokStack, TOK_decimal);	break;
+				case KW_string:	tokStack_Push(&tokStack, TOK_string);	break;
 				// Push variable type to the stack
 				// (If it's value and not variable, then this is done in expr_algorithm())
 				
@@ -577,17 +577,21 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 	{
 	// Operators
 	case '+':
+		expr_convertTypes(tokStack, terminal);
 		add_instruction(ADDS, NULL, NULL, NULL);
 		break;
 	case '-':
-		add_instruction(SUBS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(SUBS, NULL, NULL, NULL);		
 		break;               
 	case '*':
-		add_instruction(MULS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(MULS, NULL, NULL, NULL);		
 		break;
 	case '/':
 	case '\\':
-		add_instruction(DIVS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(DIVS, NULL, NULL, NULL);	
 		break;
 	
 	// Identifier / integer / decimal
@@ -628,9 +632,12 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 		case '-':
 		case '*':
 		case '/':
-		{	
+		{		
 			tokenType_t typeRight = tokStack_Pop(tokStack);
 			tokenType_t typeLeft = tokStack_Pop(tokStack);
+			
+			DEBUG_PRINT("####### %d\n", typeRight);
+			DEBUG_PRINT("####### %d\n", typeLeft);
 			
 			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
 			{	
@@ -653,17 +660,22 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				ADDS
 				*/
 				
+				
 				// Prepare string with temporary variable
 				string tmpString;
 				strInit(&tmpString);
 				char *tmpChar = "LF@$dec";
 				strCopyConst(&tmpString, tmpChar);
 				
+DEBUG_PRINT("#1111#################\n");
 				// Converting instructions
 				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+DEBUG_PRINT("#2222#################\n");
+				add_instruction(INT2FLOATS, NULL, NULL, NULL);
+DEBUG_PRINT("#3333#################\n");
 				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-				
+DEBUG_PRINT("#4444#################\n");
+								
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
 				
@@ -688,7 +700,7 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				strCopyConst(&tmpString, tmpChar);
 				
 				// Converting instruction
-				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+				add_instruction(INT2FLOATS, NULL, NULL, NULL);
 				
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
