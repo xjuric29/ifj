@@ -195,6 +195,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "NOTS\n");
 			break;
 	
+		case(INT2FLOATS):
+			strcpy(INST, "INT2FLOATS\n");
+			break;
+
+		case(FLOAT2R2EINTS):
+			strcpy(INST, "FLOAT2R2EINTS\n");
+			break;	
 	
 		case(READ):
 			strcpy(INST, "READ LF@");
@@ -209,7 +216,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "PUSHfRAME\n");
 			Instr->used_lines++;
-			strcpy(INST, "DEFVAR LF@%%retval\n");
+			strcpy(INST, "DEFVAR LF@%retval\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$int\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$dec\n");
+
 			break;
 
 		case(SCOPE):
@@ -218,6 +230,11 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "CREATEfRAME\n");
 			Instr->used_lines++;
 			strcpy(INST, "PUSHfRAME\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$int\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$dec\n");
+
 			
 			break;
 		
