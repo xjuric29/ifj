@@ -568,7 +568,7 @@ void expr_generateInstruction(char terminal, token_t token) // @todo
 		break;
 	case TERM_notEqual:
 		add_instruction(EQS, NULL, NULL, NULL);
-		add_instruction(NOT, NULL, NULL, NULL);
+		add_instruction(NOTS, NULL, NULL, NULL);
 		break;
 	case TERM_less:
 		add_instruction(LTS, NULL, NULL, NULL);
