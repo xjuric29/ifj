@@ -988,7 +988,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     add_instruction(WHILE, NULL, NULL, NULL);
     //EXPRESION
     //TODO
-    
+
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
     if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
@@ -1112,6 +1112,9 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
         return SYN_ERROR;
     }
 
+    //Create frame
+    add_instruction(CREATEFRAME, NULL, NULL, NULL);
+
     //Called function has 0 params
     if (CalledFunction->params == NULL){
 
@@ -1169,6 +1172,11 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                             //TODO stuff...
                             fprintf(stderr, "Prevadzam ID z int na float\n");
                         }
+
+                    }else{
+                        //Types are same, just move
+                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+
                     }
 
                     //TODO Presunut z jedneho framu do druheho
@@ -1193,6 +1201,9 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                             //TODO stuff
                         }
 
+                    }else{
+                        //Types are same, just move
+                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
                     }
 
                     //TODO Presunut z jedneho farmu do druheho
@@ -1215,6 +1226,10 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                             fprintf(stderr, "Prevadzam konstantu float na int\n");
                             //TODO stuff
                         }
+
+                    }else{
+                        //Types are same, just move
+                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
                     }
 
                     //TODO Frame
@@ -1226,6 +1241,11 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                     //If parameter definition isn`t string type
                     if (param->el_type != st_string){
                         return SEM_ERROR_COMP;
+
+                    }else{
+                        //Types are same, just move
+                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+
                     }
 
                     break;
@@ -1256,6 +1276,10 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
         }
     }
 
+    //Create jump on label function
+    add_instruction(CALL, NULL, &CalledFunction->key, NULL);
+
+    
     //Test of return type of function and type of Variable we are assigning in
     if (Variable->el_type != CalledFunction->func_type){
         //If one is string -> no conversions
@@ -1276,7 +1300,15 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
         }
 
     }else{
-        //TODO len prirad
+        //Call instruction to move return value to variable
+        if (strCopyString(CurrentToken->value.stringVal, &Variable->key)){
+            return INTERNAL_ERROR;
+        }
+        CurrentToken->type = TOK_identifier;
+
+        if (add_instruction(RETVAL_OUT, CurrentToken, NULL, NULL) != SUCCESS){
+            return INTERNAL_ERROR;
+        }
     }
 
     //EOL
