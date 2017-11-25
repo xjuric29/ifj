@@ -43,6 +43,8 @@ tokenType_t tokStack_Pop(tokStack_t *stack)
 {
 	// Get pointer to token on top of the stack
 	tokenType_t topType = tokStack_Top(stack);	
+	if(topType == TOK_FAIL)
+		return TOK_FAIL;
 		
 	// Decrease top of the stack
 	(stack->top)--;  
@@ -57,7 +59,7 @@ tokenType_t tokStack_Top(tokStack_t *stack)
 	if(tokStack_Empty(stack) == TRUE)      
 	{
 		tokStack_Error("tokStackPush: Tring to pop/top empty stack");
-		return; // @todo
+		return TOK_FAIL; // @todo checking whne called this function!!!!!!
 	}	
 		
 	// Return pointer to token on top of the stack

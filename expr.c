@@ -590,10 +590,14 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 		add_instruction(MULS, NULL, NULL, NULL);		
 		break;
 	case '/':
-	case '\\':
 		expr_convertTypes(tokStack, terminal);
 		add_instruction(DIVS, NULL, NULL, NULL);	
 		break;
+	case '\\':
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(DIVS, NULL, NULL, NULL);
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// divInt must have int result
+		break;	
 	
 	// Identifier / integer / decimal
 	case 'i':
@@ -633,16 +637,53 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 		case '-':
 		case '*':
 		case '/':
+		case '\\':
+		case TERM_equal:	// For logic result the top of tokStack is wrong after this function but it doesn't matter
+		case TERM_notEqual:
+		case TERM_less:
+		case TERM_lessEqual:
+		case TERM_greater:
+		case TERM_greaterEqual:
 		{		
 			tokenType_t typeRight = tokStack_Pop(tokStack);
 			tokenType_t typeLeft = tokStack_Pop(tokStack);
 			
-			DEBUG_PRINT("####### %d\n", typeRight);
-			DEBUG_PRINT("####### %d\n", typeLeft);
-			
 			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
 			{	
-				tokStack_Push(tokStack, TOK_integer);
+				if(terminal != '/' && terminal != '\\')
+					tokStack_Push(tokStack, TOK_integer);
+				else
+				{
+					/* Example:	// DIV must have two dec operands
+					[INT / INT = DEC]
+					INT...a
+					INT...b
+					-------------
+					POPS LF@$int
+					INT2FLOATS
+					PUSHS LF@$int
+					INT2FLOATS
+					DIVS
+					*/
+					
+					// Prepare string with temporary variable
+					string tmpString;
+					strInit(&tmpString);
+					char *tmpChar = "LF@$int";
+					strCopyConst(&tmpString, tmpChar);
+					
+					// Converting instructions
+					add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+					add_instruction(INT2FLOATS, NULL, NULL, NULL);
+					add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+					add_instruction(INT2FLOATS, NULL, NULL, NULL);
+									
+					// Update tokStack
+					tokStack_Push(tokStack, TOK_decimal);
+					
+					// Free string memory
+					strFree(&tmpString);
+				}
 			}
 			else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 			{
@@ -668,14 +709,11 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				char *tmpChar = "LF@$dec";
 				strCopyConst(&tmpString, tmpChar);
 				
-DEBUG_PRINT("#1111#################\n");
+				
 				// Converting instructions
 				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-DEBUG_PRINT("#2222#################\n");
 				add_instruction(INT2FLOATS, NULL, NULL, NULL);
-DEBUG_PRINT("#3333#################\n");
 				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-DEBUG_PRINT("#4444#################\n");
 								
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
@@ -694,20 +732,11 @@ DEBUG_PRINT("#4444#################\n");
 				ADDS
 				*/
 				
-				// Prepare string with temporary variable
-				string tmpString;
-				strInit(&tmpString);
-				char *tmpChar = "LF@$dec";
-				strCopyConst(&tmpString, tmpChar);
-				
 				// Converting instruction
 				add_instruction(INT2FLOATS, NULL, NULL, NULL);
 				
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
-				
-				// Free string memory
-				strFree(&tmpString);
 			}
 			else
 			{
