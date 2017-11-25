@@ -342,19 +342,22 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 	
 
 		case(RETVAL_IN):
-			strcpy(INST, "MOVE LF@%retval LF@");
+			strcpy(INST, "MOVE LF@%retval ");
 			switch(op1->type)
 			{
 				case TOK_identifier:
+					strcat(INST, "LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
 				
 				case TOK_integer:
+					strcat(INST, "int@");
 					sprintf(c, "%d", op1->value.integer);
 					strcat(INST, c);
 					break;
 
 				case TOK_decimal:
+					strcat(INST, "float@");
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
@@ -367,29 +370,9 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(RETVAL_OUT):
 			strcpy(INST, "MOVE LF@");
-			switch(op1->type)
-			{
-				case TOK_identifier:
-					strcat(INST, op1->value.stringVal->str);
-					break;
-				
-				case TOK_integer:
-					sprintf(c, "%d", op1->value.integer);
-					strcat(INST, c);
-					break;
-
-				case TOK_decimal:
-					sprintf(c, "%g", op1->value.decimal);
-					strcat(INST, c);
-					break;
-				
-				default:
-					return INTERNAL_ERROR;
-			}
+			strcat(INST, op1->value.stringVal->str);
 			strcat(INST, " TF@%retval\n");
 			break;
-
-
 
 		case(WHILE):
 			context = con_WHILE;
