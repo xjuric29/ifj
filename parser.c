@@ -988,7 +988,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     add_instruction(WHILE, NULL, NULL, NULL);
     //EXPRESION
     //TODO
-    printf("Volam\n");
+    
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
     if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
