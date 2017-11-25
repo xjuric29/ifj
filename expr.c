@@ -48,35 +48,6 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
   {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#'}   // >=
 };
 
-/**
- * @brief List of grammar rules.
- * 
- * There is only the right side, also called "handle".
- * Left side would always be "E -> ..."
- * 
- * @todo Expand for more values (Now using only 6 from example in lecture)
- * @todo Should be in header, source file or in function?
- */
-char *rule[RULES_COUNT] =
-{
-	"E+E",
-	"E-E",
-	"E\\E",
-	"E*E",
-	"E/E",
-	"(E)",
-	"i",
-	"E=E",
-	"E<>E",
-	"E<E",
-	"E<=E",
-	"E>E",
-	"E>=E"
-};
-
-
-
-
 
 // ========== CORE FUNCTIONS ==========
 
@@ -492,15 +463,42 @@ int expr_specialShift(myStack_t *stack, char character)
 
 int expr_searchRule(string handle)
 {
-	// @todo think about return value, I guess it should be E all the time
+	/**
+	 * @brief List of grammar rules.
+	 * 
+	 * There is only the right side, also called "handle".
+	 * Left side would always be "E -> ..."
+	 */
+	char rule[RULES_COUNT][4] =
+	{
+		"E+E",
+		"E-E",
+		"E\\E",
+		"E*E",
+		"E/E",
+		"(E)",
+		"i",
+		"E=E",
+		"E#E",	// E<>E
+		"E<E",
+		"E#E",	// E<=E
+		"E>E",
+		"E#E"	// E>=E
+	};
+	// Teporary solution for 2char terminals @todo
+	rule[8][1] = TERM_notEqual;
+	rule[10][1] = TERM_lessEqual;
+	rule[12][1] = TERM_greaterEqual;
 	
+	
+	// Comparation
 	for(int i=0; i < RULES_COUNT; i++)	// Compare with every existing grammar rule
 	{
 		if(strCmpConstStr(&handle, rule[i]))	// If found a match
-                {
+		{
 			return EXPR_RETURN_SUCC;	// Return succes
-                }
-        }	
+		}
+	}	
 	
 	return EXPR_RETURN_ERROR_SYNTAX;	// If not found syntax error
 }
