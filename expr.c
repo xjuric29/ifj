@@ -628,7 +628,7 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 void expr_convertTypes(tokStack_t *tokStack, char terminal)
 {
 	switch(terminal)
-	{
+	{		
 		case '+':
 		case '-':
 		case '*':
@@ -716,8 +716,35 @@ DEBUG_PRINT("#4444#################\n");
 			}
 			break;
 		}
+		default: break;
 	}
 }
+
+int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
+{
+	// Check if result is same type as result varaible
+	tokenType_t resVarType = elType2tokType(el_type);	// Result variable type
+	tokenType_t resType = tokStack_Top(tokStack);	// Result expression type
+	
+	// Couldn't findout result variable type
+	if(resVarType == TOK_FAIL)
+		return EXPR_RETURN_ERROR_INTERNAL;
+	
+	// Result expression and result variable are the same type
+	if(resVarType == resType)
+		return EXPR_RETURN_SUCC;
+		
+	if(resVarType == TOK_integer && resType == TOK_decimal)	// int = dec
+		add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);
+	else if(resVarType == TOK_integer && resType == TOK_decimal)	// dec = int
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);
+	else
+	{
+		expr_error("expr_convertResultType: Not compatible or convertable data types");
+		return EXPR_RETURN_ERROR_TYPES;
+	}	
+}
+
 
 // ========== OTHER FUNCTIONS ==========
 
@@ -742,19 +769,14 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variabl
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
 			
-			// Check if result is same type as result varaible
-			tokenType_t resVarType = elType2tokType(variable->el_type);	// Result variable type
-			if(resVarType == TOK_FAIL)
-				return(EXPR_RETURN_ERROR_INTERNAL);
-				
-			if(resVarType != tokStack_Top(tokStack))
-			{
-				expr_error("expr_generateResult: Result of expression and result variable are not the same data type");
-				return(EXPR_RETURN_ERROR_SEM);
-			}
+			// Convert result to be same data type as result variable
+			int retVal;
+			retVal = expr_convertResultType(tokStack, variable->el_type);
+			if(retVal != EXPR_RETURN_SUCC);
+				return retVal;
 			
-			// @todo check types
 			add_instruction(POPS, NULL, &variable->key, NULL);
+			
 			break;
 			
 		case EXPRESION_CONTEXT_LOGIC:
