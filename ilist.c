@@ -190,6 +190,11 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(EQS):
 			strcpy(INST, "EQS\n");
 			break;
+
+		case(NOTS):
+			strcpy(INST, "NOTS\n");
+			break;
+	
 	
 		case(READ):
 			strcpy(INST, "READ LF@");
