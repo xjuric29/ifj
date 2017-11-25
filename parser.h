@@ -24,6 +24,9 @@ struct check{
 #define EXPRESION_CONTEXT_RETURN 4
 
 
+token_t *TokenInit();
+void TokenFree(token_t *Token);
+
 int parse();
 
 

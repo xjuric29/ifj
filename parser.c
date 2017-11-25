@@ -909,14 +909,14 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems.InIf = true; //Set InIf to true so token ELSE is SUCCESS
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
 
+            //IF
+            add_instruction(IF, NULL, NULL, NULL);
+
             //Call function that will check whole structure IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
             RecurCallResult = IfStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-
-            //IF
-            add_instruction(IF, NULL, NULL, NULL);
 
             //last <stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
@@ -988,6 +988,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     add_instruction(WHILE, NULL, NULL, NULL);
     //EXPRESION
     //TODO
+    
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
     if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
@@ -1030,10 +1031,10 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
         return RecurCallResult;
     }
 
-    //Check token from expresion
+    /*//Check token from expresion
     if (CurrentToken->type != TOK_endOfLine){
         return SYN_ERROR;
-    }
+    }*/
 
     //Check then
     if (CurrentToken->type != KW_then){
@@ -1079,6 +1080,9 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     if (CurrentToken->type != KW_if){
         return SYN_ERROR;
     }
+
+    //ENDIF
+    add_instruction(ENDIF, NULL, NULL, NULL);
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){

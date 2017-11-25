@@ -75,8 +75,6 @@ typedef enum
 	TERM_id,		/// Identificator	(@todo Not sure)
 	// Special
 	TERM_stackEnd,	/// End of stack = "$"
-	TERM_expr,		/// Expression = "E" (in rule)
-	TERM_endingToken,	/// First token that doesn't belong to expression @warning This must be the last in this list!
 	
 	// Logic operators
 	TERM_equal,	/// Operator "="
@@ -84,7 +82,11 @@ typedef enum
 	TERM_less,		/// Operator "<"
 	TERM_lessEqual,	/// Operator "<="
 	TERM_greater,	/// Operator ">"
-	TERM_greaterEqual	/// Operator ">="
+	TERM_greaterEqual,	/// Operator ">="
+	
+	// Special special
+	TERM_expr,		/// Expression = "E" (in rule)
+	TERM_endingToken	/// First token that doesn't belong to expression @warning This must be the last in this list!
 }	precTableIndex_t;
 
 
