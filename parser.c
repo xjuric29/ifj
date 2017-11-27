@@ -902,6 +902,16 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
             //Da sa to tak?
 
+            //Call expresion
+            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+                return RecurCallResult;
+            }
+
+            //Check what returns expr_main
+            if (CurrentToken->type != TOK_endOfLine){
+                return SYN_ERROR;
+            }
+
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
         //TODO If a While --> zatial neviem ako sa s tym bude pracovat co sa tyka instrukcnej pasky..
