@@ -35,7 +35,7 @@
 //	--- Constants ---
 // Internal values
 #define PREC_TABLE_SIZE 16	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
-#define RULES_COUNT     15	/// Number of all the grammar rules used
+#define RULES_COUNT     14	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true

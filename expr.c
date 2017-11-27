@@ -119,7 +119,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	token_t loadedToken;	// Loaded token for this iterration of cycle
 	loadedToken = *parserToken;	// It has no purpose, it's just to be more read friendly
 	
-	if(context != EXPRESION_CONTEXT_ARIGH)	// If context is arithmetic, first token is already loaded by parser
+	if(context != EXPRESSION_CONTEXT_ASSIGN)	// If context is arithmetic, first token is already loaded by parser
 	{
 		// Load token from scanner
 		getToken(&loadedToken);
@@ -249,7 +249,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_lessEqual:
 		case TOK_greater:
 		case TOK_greaterEqual:
-			if(context == EXPRESION_CONTEXT_ARIGH || context == EXPRESION_CONTEXT_PRINT)
+			if(context == EXPRESSION_CONTEXT_ASSIGN || context == EXPRESSION_CONTEXT_PRINT)
 			{
 				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
 				return EXPR_RETURN_ERROR_SEM;
@@ -309,7 +309,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
         // === Other tokens ===
         // --- Semicolon ---
         case TOK_semicolon:
-			if(context == EXPRESION_CONTEXT_PRINT)
+			if(context == EXPRESSION_CONTEXT_PRINT)
 			{
 				// Finish the algorithm
 				int retVal = expr_finishAlgorithm(stack, tokStack, token, context);
@@ -564,7 +564,6 @@ int expr_searchRule(string handle)
 		{'E',TERM_lessEqual,'E','\0'},	// E<=E
 		"E>E",
 		{'E',TERM_greaterEqual,'E','\0'},	// E>=E
-        {TERM_string,'+',TERM_string,'\0'},	// str + str
         {TERM_string,'\0'}	// str
 	};
 	
@@ -876,7 +875,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 	switch(context)
 	{
 		// ===== Expression context assignment =====
-		case EXPRESION_CONTEXT_ARIGH:
+		case EXPRESSION_CONTEXT_ASSIGN:
 			// Check if variable exists
 			if(variable == NULL)
 			{
@@ -924,23 +923,23 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 		
 		
 		// ===== Expression context logic =====	
-		case EXPRESION_CONTEXT_LOGIC:
+		case EXPRESSION_CONTEXT_LOGIC:
 			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
 		
 		
 		// ===== Expression context print =====	
-		case EXPRESION_CONTEXT_PRINT:
+		case EXPRESSION_CONTEXT_PRINT:
 		
 			// @todo WRITE LF@$str
-			expr_error("expr_generateResult: @todo Not done for EXPRESION_CONTEXT_PRINT");
+			expr_error("expr_generateResult: @todo Not done for EXPRESSION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
 			break;
 		
 		
 		// ===== Expression context return =====	
-		case EXPRESION_CONTEXT_RETURN:
+		case EXPRESSION_CONTEXT_RETURN:
 		{
 			// --- Search for function ---
 			st_localTable_t *function = st_find_func(st_global, func_name);
