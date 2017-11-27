@@ -48,7 +48,6 @@ void inst_free()
 
 	free(Instr);
 
-
 }
 
 void print_all()
@@ -408,6 +407,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
+
+				case TOK_string:
+					strcat(INST, "string@");
+					strcat(INST, op1->value.stringVal->str);
 				
 				case KW_double:
 					strcat(INST, "float@0.0\n");
@@ -581,6 +584,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_integer:
 					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
+					strcat(INST, c);
+					strcat(INST, "\n");
 					break;
 
 				default:
@@ -603,12 +608,42 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_decimal:
 					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
+					strcat(INST, c);
+					strcat(INST, "\n");
 					break;
 
 				default:
 					return INTERNAL_ERROR;
 
 			}
+			strcat(INST, "\n");
+			break;
+
+		case(CONCAT):
+			strcpy(INST, "CONCAT LF@");
+			strcat(INST, op2->str);
+			strcat(INST, " LF@");
+			strcat(INST, op2->str);
+			switch(op1->type)
+			{
+				case TOK_identifier:
+					strcat(INST, " LF@");
+					strcat(INST, op1->value.stringVal->str);
+					strcat(INST, "\n");
+					break;
+
+				case TOK_string:
+					strcat(INST, " string@");
+					strcat(INST, op1->value.stringVal->str);
+					strcat(INST, "\n");
+					break;
+			}
+
+			break;
+
+		case(WRITE):
+			strcpy(INST, "WRITE LF@");
+			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
 
