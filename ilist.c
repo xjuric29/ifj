@@ -91,14 +91,32 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		
 		case(DEFVAR_TF):
 			strcpy(INST, "DEFVAR TF@");
-			strcat(INST, op1->value.stringVal->str);
-			strcat(INST, "\n");
+			if(op1 != NULL)
+			{
+				strcat(INST, op1->value.stringVal->str);
+				strcat(INST, "\n");
+			}
+
+			else
+			{
+				strcat(INST, op2->str);
+				strcat(INST, "\n");
+			}
 			break;
 	
 		case(DEFVAR_LF):
-			strcpy(INST, "DEFVAR LF@");
-			strcat(INST, op1->value.stringVal->str);
-			strcat(INST, "\n");
+			if(op1 != NULL)
+			{
+				strcpy(INST, "DEFVAR LF@");
+				strcat(INST, op1->value.stringVal->str);
+				strcat(INST, "\n");
+			}
+
+			else
+			{
+				strcat(INST, op2->str);
+				strcat(INST, "\n");
+			}
 			break;
 		
 		case(CREATEFRAME):
@@ -232,7 +250,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$int\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$dec\n");
-
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$str\n");
 			break;
 
 		case(SCOPE):
@@ -245,8 +264,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$int\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$dec\n");
-
-			
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$str\n");
 			break;
 		
 		case(MOVE_LF_LF):
@@ -562,6 +581,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_integer:
 					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
+					break;
 
 				default:
 					return INTERNAL_ERROR;
@@ -583,6 +603,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_decimal:
 					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
+					break;
 
 				default:
 					return INTERNAL_ERROR;
