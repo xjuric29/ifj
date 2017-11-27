@@ -930,13 +930,37 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 		
 		// ===== Expression context print =====	
 		case EXPRESSION_CONTEXT_PRINT:
+		{
+			// Get type of token on top of the stack
+			tokenType_t topType = tokStack_Top(tokStack);
+			if(topType == TOK_FAIL)
+			{
+				expr_error("expr_generateResult: Can't get top of the token stack");
+				return EXPR_RETURN_ERROR_INTERNAL;				
+			}
+			
+			// Create varaible name string
+			string *varString;
+			strInit(varString);
+			char varChar[7]; 
+			switch(topType)
+			{
+				case TOK_integer:	strcpy(varChar, "LF@$int");
+				case TOK_decimal:	strcpy(varChar, "LF@$dec");
+				case TOK_string:	strcpy(varChar, "LF@$str");
+				default:
+					expr_error("expr_generateResult: Wrong token type on top of the stack");
+					return EXPR_RETURN_ERROR_INTERNAL;
+			}
+			strCopyConst(varString, varChar);
+			
+			// Add print instruction
+			add_instruction(WRITE, NULL, varString, NULL);
 		
-			// @todo WRITE LF@$str
-			expr_error("expr_generateResult: @todo Not done for EXPRESSION_CONTEXT_PRINT");
-			DEBUG_PRINT("--- Expression module end (error) ---\n");
-			return(EXPR_RETURN_ERROR_INTERNAL);
+			// Free memory
+			strFree(varString);
 			break;
-		
+		}
 		
 		// ===== Expression context return =====	
 		case EXPRESSION_CONTEXT_RETURN:

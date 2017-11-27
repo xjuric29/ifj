@@ -20,7 +20,7 @@
 //	--- Includes ---
 // Libraries
 #include <stdio.h>
-#include <stdlib.h>     // For postfix debug
+#include <string.h>
 
 // Module dependency
 #include "stack.h"
