@@ -35,12 +35,11 @@
 //	--- Constants ---
 // Internal values
 #define PREC_TABLE_SIZE 16	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
-#define RULES_COUNT     14	/// Number of all the grammar rules used
+#define RULES_COUNT     15	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true
 #define EXPR_FALSE      0  /// Intarnal return value for false
-#define EXPR_RETURN_NOMORETOKENS       420    /// Internal return value respresenting loaded token doen't belog to expression
 #define TOK_FAIL	TOK_endOfFile	/// Representing error return with type tokenType_t
 #define RESULT_ASSIGNMENT 'R'	/// Representing result assignment with type char (in expr_convertTypes())
 // External return values (@todo This is already defined somewhere for sure)
@@ -49,7 +48,9 @@
 #define EXPR_RETURN_ERROR_SEM   3       // e.g. Varibale not defined
 #define EXPR_RETURN_ERROR_TYPES   4       // e.g. Wrong data types combination
 #define EXPR_RETURN_ERROR_INTERNAL      99      // e.g. malloc fail
-
+// Internal return value
+#define EXPR_RETURN_NOMORETOKENS 123    /// Representing end of expression input
+#define EXPR_RETURN_STARTOVER 124       /// Representing instruction to start over (used when there is TOK_semicolon in CONTEXT_PRINT)
 
 /**
  * @brief Enum structure for determinating next move of the algorith
@@ -92,7 +93,6 @@ typedef enum
 	
 	// Special special
 	TERM_expr,		/// Expression = "E" (in rule)
-	TERM_endingToken	/// First token that doesn't belong to expression @warning This must be the last in this list!
 }	precTableIndex_t;
 
 
@@ -187,6 +187,7 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
 void expr_convertTypes(tokStack_t *tokStack, char terminal);
 tokenType_t expr_elTypeConvert(type_t el_type);
+int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context);
 
 /**
  * @brief Check if token be used as begining of expression

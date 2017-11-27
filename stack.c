@@ -131,6 +131,7 @@ int stackGetTerminalIndex(myStack_t *stack)
 	terminals[12] = TERM_lessEqual;
 	terminals[13] = TERM_greater;
 	terminals[14] = TERM_greaterEqual;
+        terminals[15] = TERM_string;
 	
         for(int i = stack->top; i >= 0; i--)    // Start searching from top of the stack
         {

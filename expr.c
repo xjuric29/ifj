@@ -2,7 +2,6 @@
  * @file expr.c
  * @author Jiri Furda (xfurda00)
  * @brief Source file for precedent analysis of expressions
- * @todo Write test for return values
  */
  
 // --- TESTING ---
@@ -25,8 +24,6 @@ int algotihmFinished = EXPR_FALSE;       // Used static because I was lost in re
  * "#" = error
  * rows = STACK - character on top of the stack
  * cols = INPUT - token loaded on input
- * @todo Expand for more values (Now using only 6 from example in lecture)
- * @todo Should be in header, source file or in function?
  */
 char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 {  
@@ -179,10 +176,15 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID);	// Use algorith on the loaded token
-		
+		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID);	// Use algorithm on the loaded token
+		if(retVal == EXPR_RETURN_STARTOVER)
+		{
+			// Found semicolon in print -> Start process over
+			expr_generateResult(&tokStack, context, st_global, func_name, variable);
+			return expr_main(context, parserToken, st_global, func_name, variable);
+		}
 		 
-		if(retVal == EXPR_RETURN_NOMORETOKENS)    // TERM_endingToken = Found token that doesn't belong to expression anymore
+		if(retVal == EXPR_RETURN_NOMORETOKENS)    // EXPR_RETURN_NOMORETOKENS = Found token that doesn't belong to expression anymore
 		{
                         // --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
@@ -208,25 +210,18 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
         
 	// --- Finish the algorith ---
 	// (This happens when there are no more tokens to load but algorithm is still not finished)
-	while(expr_isAlgotihmFinished(&stack, loadedToken.type) == EXPR_FALSE)  // Should algorithm continue?        
+	int retVal = expr_finishAlgorithm(&stack, &tokStack, loadedToken, context);
+	if(retVal != EXPR_RETURN_SUCC)
 	{
-		// --- Token indicating stop of loading ---
-		token_t noMoreTokens;
-		noMoreTokens.type = TOK_endOfFile; // (Not really TOK_endOfFile, see header file at expr_algorithm())
-
-		// --- Continue with the algorithm ---
-		int retVal;     // Return value of the algorithm
-		retVal = expr_algorithm(&stack, &tokStack, noMoreTokens, context, EXPR_FALSE);  
-
-
-		// --- Check for error ---
-		if(retVal != EXPR_RETURN_SUCC)
+		// Found semicolon in print -> Start process over
+		if(retVal == EXPR_RETURN_STARTOVER)
 		{
-			DEBUG_PRINT("--- Expression module end (error) ---\n");
-			return retVal;
+			expr_generateResult(&tokStack, context, st_global, func_name, variable);
+			return expr_main(context, parserToken, st_global, func_name, variable);
 		}
+		else
+			return retVal;
 	}
-
 
 	// --- Generate result instuction ---
 	return expr_generateResult(&tokStack, context, st_global, func_name, variable);	// Or return error   
@@ -238,7 +233,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 	
         // Check if algortihm is finished
         if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
-                return EXPR_RETURN_SUCC;    // @todo Is this considered as success?
+                return EXPR_RETURN_SUCC;
         
 	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
@@ -254,9 +249,9 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_lessEqual:
 		case TOK_greater:
 		case TOK_greaterEqual:
-			if(context == EXPRESION_CONTEXT_ARIGH)	// @todo Maybe also PRINT?
+			if(context == EXPRESION_CONTEXT_ARIGH || context == EXPRESION_CONTEXT_PRINT)
 			{
-				expr_error("expr_algortihm: Logic oprator can't be in arithmetic expression");
+				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
 				return EXPR_RETURN_ERROR_SEM;
 			}
 			break;
@@ -270,7 +265,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 	// Getting column index (based on external type of token (tokenType_t from scanner.h))
 	switch(token.type)  
 	{
-		// Loaded token belong to the expression
+		// === Arithmetic operators ===
 		case TOK_plus:	type = TERM_plus;	break;	// Operator terminal '+'
 		case TOK_minus:	type = TERM_minus;	break;	// Operator terminal '-'
 		case TOK_divInt:	type = TERM_divInt;	break;	// Operator terminal '\'			
@@ -280,7 +275,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_rParenth:	type = TERM_rBrac;	break;	// Right bracket terminal = ')'
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
         
-        // Loaded logic token
+        // === Logic operators ===
         case TOK_equal:	type = TERM_equal;	break;			// Operator "="
 		case TOK_notEqual:	type = TERM_notEqual;	break;		// Operator "<>"
 		case TOK_less:	type = TERM_less;	break;			// Operator "<"
@@ -288,7 +283,21 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_greater:	type = TERM_greater;	break;		// Operator ">"
 		case TOK_greaterEqual:	type = TERM_greaterEqual;	break;	// Operator ">="
                 
-		// Loaded token that has some value
+		// === Tokens with values ===
+		// --- Numbers ---
+		case TOK_integer: // Both represented by 'i', they have the same behavior
+		case TOK_decimal:
+			type = TERM_id;	// Identifier terminal = 'i'
+			savedToken = token;	// Save token because it has value
+			tokStack_Push(tokStack, token.type);
+			break;
+		// --- Strings ---
+		case TOK_string:
+			type = TERM_string;
+			savedToken = token;	// Save token because it has value
+			tokStack_Push(tokStack, TOK_string);
+			break;
+		// --- Variables ---
 		case TOK_identifier:
 			savedToken = token; // Save token because it has value
 			if(skipMaskingAsID == EXPR_FALSE)
@@ -296,28 +305,27 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			else
 				type = TERM_string;	// String terminal = 'str'
 		break;
-			
-		 // All these tokens are going to be represented by 'i' @todo Is this good method?
-		case TOK_integer:
-		case TOK_decimal:
-			type = TERM_id;	// Identifier terminal = 'i'
-			savedToken = token;	// Save token because it has value
-			tokStack_Push(tokStack, token.type);
-			break;
-			
-		case TOK_string:
-			type = TERM_string;
-			savedToken = token;	// Save token because it has value
-			tokStack_Push(tokStack, TOK_string);
-			break;
-                
-                
-                // Loaded token DOESN'T belong to the expression
+
+        // === Other tokens ===
+        // --- Semicolon ---
+        case TOK_semicolon:
+			if(context == EXPRESION_CONTEXT_PRINT)
+			{
+				// Finish the algorithm
+				int retVal = expr_finishAlgorithm(stack, tokStack, token, context);
+				if(retVal != EXPR_RETURN_SUCC)
+					return retVal;
+					
+				// @todo Print write instruction
+				
+				// Return signal to start over expr_main
+				return EXPR_RETURN_STARTOVER;
+			}
+			else
+				return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
+        break;
+        // --- Nonexpression token ---
 		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
-			
-		/* @todo More cases for later
-		case TOK_string:
-		*/
 	}
 	
 	// Getting row index (depending on terminal on top of the stack)
@@ -389,8 +397,8 @@ precTableAction_t expr_readTable(precTableIndex_t rowIndex, precTableIndex_t col
 		case '#':	return ACTION_ilegal;
 		
 		default:	// Invalid character
-			expr_error("expr_readTable: Invalid character in the precedent table ()");
-			return EXPR_ERROR;	// @todo Return values, this is here just because gcc won't stop bitching about it
+			expr_error("expr_readTable: Invalid character in the precedent table");
+			return ACTION_ilegal;
 	}
 }
 
@@ -414,7 +422,7 @@ precTableIndex_t expr_getIndexFromChar(char character)
 			return character;
 /*			
 		default:	// Invalid character
-			expr_error("expr_getIndexFromChar: Invalid character (dosn't need to be an error if called from stack.c)");
+			expr_error("expr_getIndexFromChar: Invalid character");
 			return EXPR_ERROR;	// @todo Return values, this is here just because gcc won't stop bitching about it
 */
 	}
@@ -551,17 +559,14 @@ int expr_searchRule(string handle)
 		"(E)",
 		"i",
 		"E=E",
-		"E#E",	// E<>E
+		{'E',TERM_notEqual,'E','\0'},	// E<>E
 		"E<E",
-		"E#E",	// E<=E
+		{'E',TERM_lessEqual,'E','\0'},	// E<=E
 		"E>E",
-		"E#E",	// E>=E
-                {TERM_string,'+',TERM_string,'\0'}
+		{'E',TERM_greaterEqual,'E','\0'},	// E>=E
+        {TERM_string,'+',TERM_string,'\0'},	// str + str
+        {TERM_string,'\0'}	// str
 	};
-	// Teporary solution for 2char terminals @todo
-	rule[8][1] = TERM_notEqual;
-	rule[10][1] = TERM_lessEqual;
-	rule[12][1] = TERM_greaterEqual;
 	
 	
 	// Comparation
@@ -599,7 +604,7 @@ int expr_isFirstValid(token_t firstToken)
 		case TOK_identifier:
 		case TOK_integer:
 		case TOK_decimal:
-		//case TOK_string: @todo string
+		case TOK_string:
                         return EXPR_TRUE;
                         
                 // Other terminals
@@ -861,9 +866,6 @@ tokenType_t expr_elTypeConvert(type_t el_type)
 void expr_error(char *msg)
 {
 	fprintf(stderr, "[ERROR] %s\n", msg);
-//        expr_finish();  // Postfix debug
-//        exit(42);
-	// @todo This function should end whole module and return err value to parser
 }
 
 int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable)
@@ -968,5 +970,28 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 	}
 	
 	DEBUG_PRINT("--- Expression module end (success)---\n");
+	return EXPR_RETURN_SUCC;
+}
+
+
+int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context)
+{
+	while(expr_isAlgotihmFinished(stack, token.type) == EXPR_FALSE)  // Should algorithm continue?        
+	{
+		// --- Token indicating stop of loading ---
+		token_t noMoreTokens;
+		noMoreTokens.type = EXPR_RETURN_NOMORETOKENS; // (Not really TOK_endOfFile, see header file at expr_algorithm())
+
+		// --- Continue with the algorithm ---
+		int retVal;     // Return value of the algorithm
+		retVal = expr_algorithm(stack, tokStack, noMoreTokens, context, EXPR_FALSE);  
+
+		// --- Check for error ---
+		if(retVal != EXPR_RETURN_SUCC)
+		{
+			DEBUG_PRINT("--- Expression module end (error) ---\n");
+			return retVal;
+		}
+	}	
 	return EXPR_RETURN_SUCC;
 }
