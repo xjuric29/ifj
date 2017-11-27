@@ -97,7 +97,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
     // --- Reset temporary varaible for strings ---
 	string *varString;
 	strInit(varString);
-	char *varChar = "LF@$str";
+	char *varChar = "$str";
 	strCopyConst(varString, varChar);
 	
 	// Creating token with empty string
@@ -105,7 +105,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	resetToken->type = TOK_string;
 	
 	// Resetting variable in 3AC
-	add_instruction(MOVE, resetToken, varString, NULL);	// MOVE LF@$str ""
+	add_instruction(MOVE_LF_LF, resetToken, varString, NULL);	// MOVE LF@$str ""
 					
 	// Update tokStack (strings are NOT stored in stack but tokStack is still used for data type check)
 	tokStack_Push(&tokStack, TOK_string);
@@ -628,11 +628,11 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 			// --- String ---
 			string *varString;
 			strInit(varString);
-			char *varChar = "LF@$str";
+			char *varChar = "$str";
 			strCopyConst(varString, varChar);
 	
 			// Resetting variable in 3AC
-			add_instruction(CONCATE, &token, varString, NULL);	// Add string at end of the temporary string
+			add_instruction(CONCAT, &token, varString, NULL);	// Add string at end of the temporary string
 	
 			// Free memory
 			strFree(varString);
@@ -731,7 +731,7 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 					// Prepare string with temporary variable
 					string tmpString;
 					strInit(&tmpString);
-					char *tmpChar = "LF@$int";
+					char *tmpChar = "$int";
 					strCopyConst(&tmpString, tmpChar);
 					
 					// Converting instructions
@@ -772,7 +772,7 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				// Prepare string with temporary variable
 				string tmpString;
 				strInit(&tmpString);
-				char *tmpChar = "LF@$dec";
+				char *tmpChar = "$dec";
 				strCopyConst(&tmpString, tmpChar);
 				
 				
@@ -904,7 +904,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				// Temporary varaible for strings
 				string *varString;
 				strInit(varString);
-				char *varChar = "LF@$str";
+				char *varChar = "$str";
 				strCopyConst(varString, varChar);
 				
 				// Temporary token for result variable
@@ -913,7 +913,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
 	
 				// Move result to result variable
-				add_instruction(MOVE, resToken, varString, NULL);	// MOVE LF@result LF@$str
+				add_instruction(MOVE_LF_LF, resToken, varString, NULL);	// MOVE LF@result LF@$str
 	
 				// Free memory
 				strFree(varString);
@@ -942,12 +942,12 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			// Create varaible name string
 			string *varString;
 			strInit(varString);
-			char varChar[7]; 
+			char varChar[4]; 
 			switch(topType)
 			{
-				case TOK_integer:	strcpy(varChar, "LF@$int");
-				case TOK_decimal:	strcpy(varChar, "LF@$dec");
-				case TOK_string:	strcpy(varChar, "LF@$str");
+				case TOK_integer:	strcpy(varChar, "$int");
+				case TOK_decimal:	strcpy(varChar, "$dec");
+				case TOK_string:	strcpy(varChar, "$str");
 				default:
 					expr_error("expr_generateResult: Wrong token type on top of the stack");
 					return EXPR_RETURN_ERROR_INTERNAL;
