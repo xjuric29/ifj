@@ -34,8 +34,8 @@
 
 //	--- Constants ---
 // Internal values
-#define PREC_TABLE_SIZE 15	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
-#define RULES_COUNT     13	/// Number of all the grammar rules used
+#define PREC_TABLE_SIZE 16	/// Defines size of precedent table (legal indexes are 0..SIZE-1)
+#define RULES_COUNT     14	/// Number of all the grammar rules used
 #define EXPR_ERROR      -1   /// Internal return value for error
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true
@@ -87,6 +87,8 @@ typedef enum
 	TERM_lessEqual,	/// Operator "<="
 	TERM_greater,	/// Operator ">"
 	TERM_greaterEqual,	/// Operator ">="
+        
+        TERM_string,     /// String "str"
 	
 	// Special special
 	TERM_expr,		/// Expression = "E" (in rule)
@@ -127,7 +129,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context);
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context, int skipMaskingAsID);
 
 
 /**
