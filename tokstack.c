@@ -19,7 +19,7 @@ int tokStack_Init(tokStack_t *stack)
 }
 
 
-int tokStack_Push(tokStack_t *stack, token_t token)
+int tokStack_Push(tokStack_t *stack, tokenType_t tokenType)
 {
 	// Check if stack is full
 	if(tokStack_Full(stack) == TRUE)
@@ -27,53 +27,39 @@ int tokStack_Push(tokStack_t *stack, token_t token)
 		tokStack_Error("tokStackInit: Stack is not allocated");
 		return FAIL;
 	}
-	
-	// Inicialize token to be pushed
-	token_t *pushToken = TokenInit();
-	if(pushToken == NULL)
-	{
-		tokStack_Error("tokStackPush: Couldn't init new token");
-		return FAIL;
-	}
-	
-	// Copy token values
-	pushToken->type = token.type;
-	pushToken->value = token.value;
+
+	// Increase top of the stack
+	(stack->top)++;  
 
 	// Push token to the stack
-	stack->tokArr[stack->top] = pushToken;
-	
-	// Increase top of the stack
-	(stack->top)++;     
+	stack->tokArr[stack->top] = tokenType;   
 	
 	// Return success
 	return SUCCESS;
 }
 
 
-token_t* tokStack_Pop(tokStack_t *stack)
+tokenType_t tokStack_Pop(tokStack_t *stack)
 {
 	// Get pointer to token on top of the stack
-	token_t *topToken = tokStack_Top(stack);	
-	
-	// Check if it was successful
-	if(topToken == NULL)	// If there is none token on top of the stack
-		return NULL;	// No need to print error (It is already printed in tokStack_top())
+	tokenType_t topType = tokStack_Top(stack);	
+	if(topType == TOK_FAIL)
+		return TOK_FAIL;
 		
 	// Decrease top of the stack
 	(stack->top)--;  
 	
 	// Return pointer to the token on top of the stack
-	return topToken;
+	return topType;
 }
 
-token_t* tokStack_Top(tokStack_t *stack)
+tokenType_t tokStack_Top(tokStack_t *stack)
 {
 	// Check if stack is empty
 	if(tokStack_Empty(stack) == TRUE)      
 	{
 		tokStack_Error("tokStackPush: Tring to pop/top empty stack");
-		return NULL;
+		return TOK_FAIL; // @todo checking whne called this function!!!!!!
 	}	
 		
 	// Return pointer to token on top of the stack
