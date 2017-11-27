@@ -156,10 +156,10 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			}
 			
 			// --- Find out variable type --- 
-			tokenType_t tokenType = elType2tokType(element->el_type);
+			tokenType_t tokenType = expr_elTypeConvert(element->el_type);
 			if(tokenType == TOK_FAIL)
 			{
-				// Error message already printed in elType2tokType()
+				// Error message already printed in expr_elTypeConvert()
 				DEBUG_PRINT("--- Expression module end (error) ---\n");		
 				return EXPR_RETURN_ERROR_INTERNAL;						
 			}
@@ -229,7 +229,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 
 	// --- Generate result instuction ---
-	return expr_generateResult(&tokStack, context, variable);	// Or return error   
+	return expr_generateResult(&tokStack, context, st_global, func_name, variable);	// Or return error   
 }
 
 int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int skipMaskingAsID)
@@ -682,6 +682,11 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 	}
 }
 
+
+
+
+// ========== CONVERT FUNCTIONS ==========
+
 void expr_convertTypes(tokStack_t *tokStack, char terminal)
 {
 	switch(terminal)
@@ -809,22 +814,23 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
 {
 	// Check if result is same type as result varaible
-	tokenType_t resVarType = elType2tokType(el_type);	// Result variable type
+	tokenType_t resVarType = expr_elTypeConvert(el_type);	// Result variable type
 	tokenType_t resType = tokStack_Top(tokStack);	// Result expression type
 	
 	// Couldn't findout result variable type
 	if(resVarType == TOK_FAIL)
-        {
-                expr_error("expr_convertResultType: Fail in elType2tokType");
+	{
+		expr_error("expr_convertResultType: Fail in expr_elTypeConvert");
 		return EXPR_RETURN_ERROR_INTERNAL;
 	}
         
 	// Result expression and result variable are the same type
 	if(resVarType == resType)
-        {
-                DEBUG_PRINT("expr_convertResultType: same type\n");
+	{
+		DEBUG_PRINT("expr_convertResultType: same type\n");
 		return EXPR_RETURN_SUCC;
 	}
+        	  	
         	
 	if(resVarType == TOK_integer && resType == TOK_decimal)	// int = dec
 		add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);
@@ -837,6 +843,18 @@ int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
 	}	
 }
 
+tokenType_t expr_elTypeConvert(type_t el_type)
+{
+	switch(el_type)
+	{
+		case KW_integer:	return TOK_integer;	break;
+		case KW_double:	return TOK_decimal;	break;
+		case KW_string:	return TOK_string;	break;
+		default:
+			expr_error("expr_elTypeConvert: Invalid el_type");
+			return TOK_FAIL;	// Represents error			
+	}
+}
 
 // ========== OTHER FUNCTIONS ==========
 
@@ -848,12 +866,14 @@ void expr_error(char *msg)
 	// @todo This function should end whole module and return err value to parser
 }
 
-int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variable)
+int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable)
 {
-        DEBUG_PRINT("[DBG] Generating result\n");
+    DEBUG_PRINT("[DBG] Generating result\n");
+    int retVal;
         
 	switch(context)
 	{
+		// ===== Expression context assignment =====
 		case EXPRESION_CONTEXT_ARIGH:
 			// Check if variable exists
 			if(variable == NULL)
@@ -864,19 +884,21 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variabl
 			}
 			
 			// Convert result to be same data type as result variable
-			int retVal;
 			retVal = expr_convertResultType(tokStack, variable->el_type);
 			if(retVal != EXPR_RETURN_SUCC)
 			{
-				DEBUG_PRINT("expr_generateResult: retVal is %d\n", retVal);
-				DEBUG_PRINT("--- Expression module end (error) #1 ---\n");
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
 				return retVal;
 			}
 			
-			// Add instruction to move result expression to result variable
-			if(tokStack_Top(tokStack) != TOK_string)	// If number value
+			// === Add instruction === (pop/move result value to variable)
+			// --- Integer/Decimal value ---
+			if(tokStack_Top(tokStack) != TOK_string)
+			{
 				add_instruction(POPS, NULL, &variable->key, NULL);	// Pop from stack to variable
-			else	// If string value
+			}
+			else
+			// --- String value ---
 			{
 				// Temporary varaible for strings
 				string *varString;
@@ -896,39 +918,55 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variabl
 				strFree(varString);
 				TokenFree(resToken);
 			}
-			
 			break;
-			
+		
+		
+		// ===== Expression context logic =====	
 		case EXPRESION_CONTEXT_LOGIC:
 			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
-			
+		
+		
+		// ===== Expression context print =====	
 		case EXPRESION_CONTEXT_PRINT:
+		
 			// @todo WRITE LF@$str
 			expr_error("expr_generateResult: @todo Not done for EXPRESION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
 			break;
-			
+		
+		
+		// ===== Expression context return =====	
 		case EXPRESION_CONTEXT_RETURN:
-			// @todo check types
+		{
+			// --- Search for function ---
+			st_localTable_t *function = st_find_func(st_global, func_name);
+			
+			// Check if function exists
+			if(function == NULL)
+			{
+				expr_error("expr_generateResult: Function not found");
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				return(EXPR_RETURN_ERROR_INTERNAL);			
+			}
+			
+			
+			// --- Convert result value data type --- (to match result variable)
+			retVal = expr_convertResultType(tokStack, variable->el_type);
+			if(retVal != EXPR_RETURN_SUCC)
+			{
+				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				return retVal;
+			}
+			
+			// --- Add instruction --- (pop result value to variable)
 			add_instruction(RETVAL_POP, NULL, NULL, NULL);
+			
 			break;
+		}
 	}
 	
 	DEBUG_PRINT("--- Expression module end (success)---\n");
 	return EXPR_RETURN_SUCC;
-}
-
-tokenType_t elType2tokType(type_t el_type)
-{
-	switch(el_type)
-	{
-		case KW_integer:	return TOK_integer;	break;
-		case KW_double:	return TOK_decimal;	break;
-		case KW_string:	return TOK_string;	break;
-		default:
-			expr_error("elType2tokType: Invalid el_type");
-			return TOK_FAIL;	// Represents error			
-	}
 }

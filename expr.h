@@ -184,9 +184,9 @@ int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
-int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variable);
+int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
 void expr_convertTypes(tokStack_t *tokStack, char terminal);
-tokenType_t elType2tokType(type_t el_type);
+tokenType_t expr_elTypeConvert(type_t el_type);
 
 /**
  * @brief Check if token be used as begining of expression
