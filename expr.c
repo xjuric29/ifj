@@ -129,20 +129,21 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			}
 			
 			// --- Find out variable type --- 
-			switch(element->el_type)
+			tokenType_t tokenType = elType2tokType(element->el_type);
+			if(tokenType == TOK_FAIL)
 			{
-				case TOK_integer:	tokStack_Push(&tokStack, TOK_integer);	break;
-				case TOK_decimal:	tokStack_Push(&tokStack, TOK_decimal);	break;
-				case TOK_string:	tokStack_Push(&tokStack, TOK_string);	break;
+				// Error message already printed in elType2tokType()
+				DEBUG_PRINT("--- Expression module end (error) ---\n");		
+				return EXPR_RETURN_ERROR_INTERNAL;						
+			}
+			else
+			{
 				// Push variable type to the stack
 				// (If it's value and not variable, then this is done in expr_algorithm())
-				
-				default:
-					expr_error("expr_main: Found TOK_identifier but tokenType_t is strange");
-					DEBUG_PRINT("--- Expression module end (error) ---\n");		
-					return EXPR_RETURN_ERROR_INTERNAL;			
+				tokStack_Push(&tokStack, tokenType);
 			}
         }       	
+                	
                 		
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
@@ -195,7 +196,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 
 	// --- Generate result instuction ---
-	return expr_generateResult(context, variable);	// Or return error   
+	return expr_generateResult(&tokStack, context, variable);	// Or return error   
 }
 
 int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context)
@@ -577,18 +578,26 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 	{
 	// Operators
 	case '+':
+		expr_convertTypes(tokStack, terminal);
 		add_instruction(ADDS, NULL, NULL, NULL);
 		break;
 	case '-':
-		add_instruction(SUBS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(SUBS, NULL, NULL, NULL);		
 		break;               
 	case '*':
-		add_instruction(MULS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(MULS, NULL, NULL, NULL);		
 		break;
 	case '/':
-	case '\\':
-		add_instruction(DIVS, NULL, NULL, NULL);
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(DIVS, NULL, NULL, NULL);	
 		break;
+	case '\\':
+		expr_convertTypes(tokStack, terminal);
+		add_instruction(DIVS, NULL, NULL, NULL);
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// divInt must have int result
+		break;	
 	
 	// Identifier / integer / decimal
 	case 'i':
@@ -623,18 +632,58 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 void expr_convertTypes(tokStack_t *tokStack, char terminal)
 {
 	switch(terminal)
-	{
+	{		
 		case '+':
 		case '-':
 		case '*':
 		case '/':
-		{	
+		case '\\':
+		case TERM_equal:	// For logic result the top of tokStack is wrong after this function but it doesn't matter
+		case TERM_notEqual:
+		case TERM_less:
+		case TERM_lessEqual:
+		case TERM_greater:
+		case TERM_greaterEqual:
+		{		
 			tokenType_t typeRight = tokStack_Pop(tokStack);
 			tokenType_t typeLeft = tokStack_Pop(tokStack);
 			
 			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
 			{	
-				tokStack_Push(tokStack, TOK_integer);
+				if(terminal != '/' && terminal != '\\')
+					tokStack_Push(tokStack, TOK_integer);
+				else
+				{
+					/* Example:	// DIV must have two dec operands
+					[INT / INT = DEC]
+					INT...a
+					INT...b
+					-------------
+					POPS LF@$int
+					INT2FLOATS
+					PUSHS LF@$int
+					INT2FLOATS
+					DIVS
+					*/
+					
+					// Prepare string with temporary variable
+					string tmpString;
+					strInit(&tmpString);
+					char *tmpChar = "LF@$int";
+					strCopyConst(&tmpString, tmpChar);
+					
+					// Converting instructions
+					add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+					add_instruction(INT2FLOATS, NULL, NULL, NULL);
+					add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+					add_instruction(INT2FLOATS, NULL, NULL, NULL);
+									
+					// Update tokStack
+					tokStack_Push(tokStack, TOK_decimal);
+					
+					// Free string memory
+					strFree(&tmpString);
+				}
 			}
 			else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 			{
@@ -653,17 +702,19 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				ADDS
 				*/
 				
+				
 				// Prepare string with temporary variable
 				string tmpString;
 				strInit(&tmpString);
 				char *tmpChar = "LF@$dec";
 				strCopyConst(&tmpString, tmpChar);
 				
+				
 				// Converting instructions
 				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+				add_instruction(INT2FLOATS, NULL, NULL, NULL);
 				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-				
+								
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
 				
@@ -681,20 +732,11 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 				ADDS
 				*/
 				
-				// Prepare string with temporary variable
-				string tmpString;
-				strInit(&tmpString);
-				char *tmpChar = "LF@$dec";
-				strCopyConst(&tmpString, tmpChar);
-				
 				// Converting instruction
-				add_instruction(INT2FLOATS, NULL, &tmpString, NULL);
+				add_instruction(INT2FLOATS, NULL, NULL, NULL);
 				
 				// Update tokStack
 				tokStack_Push(tokStack, TOK_decimal);
-				
-				// Free string memory
-				strFree(&tmpString);
 			}
 			else
 			{
@@ -703,8 +745,35 @@ void expr_convertTypes(tokStack_t *tokStack, char terminal)
 			}
 			break;
 		}
+		default: break;
 	}
 }
+
+int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
+{
+	// Check if result is same type as result varaible
+	tokenType_t resVarType = elType2tokType(el_type);	// Result variable type
+	tokenType_t resType = tokStack_Top(tokStack);	// Result expression type
+	
+	// Couldn't findout result variable type
+	if(resVarType == TOK_FAIL)
+		return EXPR_RETURN_ERROR_INTERNAL;
+	
+	// Result expression and result variable are the same type
+	if(resVarType == resType)
+		return EXPR_RETURN_SUCC;
+		
+	if(resVarType == TOK_integer && resType == TOK_decimal)	// int = dec
+		add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);
+	else if(resVarType == TOK_integer && resType == TOK_decimal)	// dec = int
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);
+	else
+	{
+		expr_error("expr_convertResultType: Not compatible or convertable data types");
+		return EXPR_RETURN_ERROR_TYPES;
+	}	
+}
+
 
 // ========== OTHER FUNCTIONS ==========
 
@@ -716,19 +785,27 @@ void expr_error(char *msg)
 	// @todo This function should end whole module and return err value to parser
 }
 
-int expr_generateResult(int context, st_element_t *variable)
+int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variable)
 {
 	switch(context)
 	{
 		case EXPRESION_CONTEXT_ARIGH:
+			// Check if variable exists
 			if(variable == NULL)
 			{
 				expr_error("expr_generateResult: Result variable doesn't exist... Strange :O");
 				DEBUG_PRINT("--- Expression module end (error) ---\n");
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
-			// @todo check types
+			
+			// Convert result to be same data type as result variable
+			int retVal;
+			retVal = expr_convertResultType(tokStack, variable->el_type);
+			if(retVal != EXPR_RETURN_SUCC);
+				return retVal;
+			
 			add_instruction(POPS, NULL, &variable->key, NULL);
+			
 			break;
 			
 		case EXPRESION_CONTEXT_LOGIC:
@@ -737,7 +814,7 @@ int expr_generateResult(int context, st_element_t *variable)
 			
 		case EXPRESION_CONTEXT_PRINT:
 			// @todo
-			expr_error("expr_generateResult: Not done for EXPRESION_CONTEXT_PRINT");
+			expr_error("expr_generateResult: @todo Not done for EXPRESION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
 			break;
@@ -750,4 +827,17 @@ int expr_generateResult(int context, st_element_t *variable)
 	
 	DEBUG_PRINT("--- Expression module end (success)---\n");
 	return EXPR_RETURN_SUCC;
+}
+
+tokenType_t elType2tokType(type_t el_type)
+{
+	switch(el_type)
+	{
+		case KW_integer:	return TOK_integer;	break;
+		case KW_double:	return TOK_decimal;	break;
+		case KW_string:	return TOK_string;	break;
+		default:
+			expr_error("elType2tokType: Invalid el_type");
+			return TOK_FAIL;	// Represents error			
+	}
 }

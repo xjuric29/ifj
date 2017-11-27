@@ -24,8 +24,7 @@
 #define FAIL 1
 #define TRUE 1
 #define FALSE 0
-//#define STACK_ENDCHAR '$'	/// Character representing end of stack
-//#define STACK_NOTFOUND -1       /// Return value representing "not found"
+#define TOK_FAIL	TOK_endOfFile	/// Representing error return with type tokenType_t
 
 
 //	--- Strucutres ---

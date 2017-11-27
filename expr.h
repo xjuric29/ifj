@@ -41,10 +41,13 @@
 #define EXPR_TRUE       1  /// Intarnal return value for true
 #define EXPR_FALSE      0  /// Intarnal return value for false
 #define EXPR_RETURN_NOMORETOKENS       420    /// Internal return value respresenting loaded token doen't belog to expression
+#define TOK_FAIL	TOK_endOfFile	/// Representing error return with type tokenType_t
+#define RESULT_ASSIGNMENT 'R'	/// Representing result assignment with type char (in expr_convertTypes())
 // External return values (@todo This is already defined somewhere for sure)
 #define EXPR_RETURN_SUCC        0
 #define EXPR_RETURN_ERROR_SYNTAX        2       // e.g. Missing operator/rule not found
 #define EXPR_RETURN_ERROR_SEM   3       // e.g. Varibale not defined
+#define EXPR_RETURN_ERROR_TYPES   4       // e.g. Wrong data types combination
 #define EXPR_RETURN_ERROR_INTERNAL      99      // e.g. malloc fail
 
 
@@ -179,8 +182,9 @@ int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
 void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
-int expr_generateResult(int context, st_element_t *variable);
-void expr_testFinish_retVal(int retVal);
+int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variable);
+void expr_convertTypes(tokStack_t *tokStack, char terminal);
+tokenType_t elType2tokType(type_t el_type);
 
 /**
  * @brief Check if token be used as begining of expression

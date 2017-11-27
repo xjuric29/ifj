@@ -1,0 +1,7 @@
+'Test convertion: Add decimal to int value
+
+Scope
+    Dim dec As Double
+
+    dec = 5.3 + 10
+End Scope
