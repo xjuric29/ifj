@@ -894,7 +894,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //TODO Kde vyriesit kontrolu ci vraciame spravny typ akeho je typu funkcia
 
             //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+            if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
                 return RecurCallResult;
             }
 
@@ -919,7 +919,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //Da sa to tak?
 
             //Call expresion
-            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_RETURN, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+            if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_PRINT, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
                 return RecurCallResult;
             }
 
@@ -1024,7 +1024,7 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
 
 
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+    if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
     }
 
@@ -1063,7 +1063,7 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     //TODO predat riadenie precedencnej
 
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-    if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
+    if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
     }
 
@@ -1181,7 +1181,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
             }
 
             //Add instruction to create variable with name of first parameter on Temporary frame
-            //add_instruction(DEFVAR_TF, NULL, &param->key, NULL);
+            add_instruction(DEFVAR_TF, NULL, &param->key, NULL);
 
             //Choose what type is parameter.. Constant or variable
             switch(CurrentToken->type){
@@ -1289,7 +1289,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If parameter in definition is type int, do conversion
                         if (param->el_type == st_integer){
-                            fprintf(stderr, "Prevadzam konstantu float na int, token = %d\n", CurrentToken->type);
+                            fprintf(stderr, "Prevadzam konstantu float na int, token = %g\n", CurrentToken->value.decimal);
 
                             //Change double to integer
                             if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
@@ -1438,7 +1438,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 //fprintf(stderr, "Spracovava expresion\n");
 
                 //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-                if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+                if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_ASSIGN, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                     return RecurCallResult;
                 }
 
@@ -1533,7 +1533,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
         default:
             //TODO Call expresion
             //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
-            if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_ARIGH, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
+            if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_ASSIGN, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                 return RecurCallResult;
             }
 
