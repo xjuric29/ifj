@@ -872,7 +872,30 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variabl
 				DEBUG_PRINT("--- Expression module end (error) #1 ---\n");
 				return retVal;
 			}
-			add_instruction(POPS, NULL, &variable->key, NULL);
+			
+			// Add instruction to move result expression to result variable
+			if(tokStack_Top(tokStack) != TOK_string)	// If number value
+				add_instruction(POPS, NULL, &variable->key, NULL);	// Pop from stack to variable
+			else	// If string value
+			{
+				// Temporary varaible for strings
+				string *varString;
+				strInit(varString);
+				char *varChar = "LF@$str";
+				strCopyConst(varString, varChar);
+				
+				// Temporary token for result variable
+				token_t *resToken = TokenInit();
+				resToken->type = TOK_identifier;
+				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
+	
+				// Move result to result variable
+				add_instruction(MOVE, resToken, varString, NULL);	// MOVE LF@result LF@$str
+	
+				// Free memory
+				strFree(varString);
+				TokenFree(resToken);
+			}
 			
 			break;
 			
@@ -881,7 +904,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_element_t *variabl
 			break;
 			
 		case EXPRESION_CONTEXT_PRINT:
-			// @todo
+			// @todo WRITE LF@$str
 			expr_error("expr_generateResult: @todo Not done for EXPRESION_CONTEXT_PRINT");
 			DEBUG_PRINT("--- Expression module end (error) ---\n");
 			return(EXPR_RETURN_ERROR_INTERNAL);
