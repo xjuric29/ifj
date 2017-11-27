@@ -186,7 +186,9 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             //Copy Scope to token so 'add_instruction can read it'
             //strCopyString(CurrentToken->value.stringVal, &FunctionID);
             //Create label Scope
-            add_instruction(SCOPE, NULL, NULL, NULL);
+            if (add_instruction(SCOPE, NULL, NULL, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
 
             // <scope-body>
             ToCheck.InScope = true; //Set that we are entering scope.. return in scope is error
@@ -596,7 +598,9 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     }
 
     //Create label with Function name
-    add_instruction(FUNC, CurrentToken, NULL, NULL);
+    if (add_instruction(FUNC, CurrentToken, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //LEFT_BRACKET
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -645,7 +649,9 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
     }
 
     //TODO move do returnvall prazdny string alebo 0 alebo 0.0
-    add_instruction(RETVAL_IN, CurrentToken, NULL, NULL);
+    if (add_instruction(RETVAL_IN, CurrentToken, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -669,8 +675,10 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         return SYN_ERROR;
     }
 
-    //Return
-    add_instruction(RETURN, NULL, NULL, NULL);
+    //Return has to be also here, due to no return in function
+    if (add_instruction(RETURN, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -734,7 +742,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
             //Generate instruction for read
-            add_instruction(READ, CurrentToken, NULL, NULL);
+            if (add_instruction(READ, CurrentToken, NULL, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
 
             //EOL
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -774,7 +784,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
             //Create variable
-            add_instruction(DEFVAR_LF, CurrentToken, NULL, NULL);
+            if (add_instruction(DEFVAR_LF, CurrentToken, NULL, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
 
             //AS
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -810,7 +822,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                     //TODO premennu inicializovat na nulu alebo prazdny string
 
                     CurrentToken->type = Variable->el_type;
-                    add_instruction(MOVE, CurrentToken, &Variable->key, NULL);
+                    if (add_instruction(MOVE, CurrentToken, &Variable->key, NULL) != SUCCESS){
+                        return INTERNAL_ERROR;
+                    }
 
                     return Stats(CurrentToken, ToCheck, GlobalTable);
                 //EQUAL
@@ -885,7 +899,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
             //Return
-            add_instruction(RETURN, NULL, NULL, NULL);
+            if (add_instruction(RETURN, NULL, NULL, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
 
             //Check token from expresion
             if (CurrentToken->type != TOK_endOfLine){
@@ -925,7 +941,9 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
 
             //IF
-            add_instruction(IF, NULL, NULL, NULL);
+            if (add_instruction(IF, NULL, NULL, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
 
             //Call function that will check whole structure IF <condition> THEN EOL <stat> ELSE EOL <stat> END IF EOL
             RecurCallResult = IfStat(CurrentToken, SolveProblems, GlobalTable);
@@ -1000,9 +1018,10 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
         return SYN_ERROR;
     }
 
-    add_instruction(WHILE, NULL, NULL, NULL);
-    //EXPRESION
-    //TODO
+    if (add_instruction(WHILE, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
+
 
     //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
     if ((RecurCallResult = expr_main(EXPRESION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
@@ -1024,7 +1043,9 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
         return RecurCallResult;
     }
 
-    add_instruction(LOOP, NULL, NULL, NULL);
+    if (add_instruction(LOOP, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
     //TODO treba navestia testovat uz tu alebo az ked odtialto vystupim?
     //Ak nie tu staci return Stats...
     return RecurCallResult;
@@ -1069,7 +1090,9 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
         return RecurCallResult;
     }
 
-    add_instruction(ELSE, NULL, NULL, NULL);
+    if (add_instruction(ELSE, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -1097,7 +1120,9 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     }
 
     //ENDIF
-    add_instruction(ENDIF, NULL, NULL, NULL);
+    if (add_instruction(ENDIF, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //EOL
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -1128,7 +1153,9 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
     }
 
     //Create frame
-    add_instruction(CREATEFRAME, NULL, NULL, NULL);
+    if (add_instruction(CREATEFRAME, NULL, NULL, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
     //Called function has 0 params
     if (CalledFunction->params == NULL){
@@ -1152,6 +1179,10 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
+
+            //Add instruction to create variable with name of first parameter on Temporary frame
+            //add_instruction(DEFVAR_TF, NULL, &param->key, NULL);
+
             //Choose what type is parameter.. Constant or variable
             switch(CurrentToken->type){
 
@@ -1160,7 +1191,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                     fprintf(stderr, "Funkcia bola volana s menej argumentamy ako ma jej definicia\n");
                     return SEM_ERROR_COMP;
 
-                //First argument is ID
+                //First argumen ct is ID
                 case TOK_identifier:
                     //Check if ID was defined
                     if ((IDparameter = st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal)) == NULL){
@@ -1178,19 +1209,32 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If given variable is decimal -> parameter in funct is integer
                         if (IDparameter->el_type == st_decimal){
-                            //TODO volanie prislusnej...
                             fprintf(stderr, "Prevadzam ID z float na int\n");
+                            //Change type of given ID from int to float
+                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+
+
                         }
 
                         //If given variable is int -> parameter is float
                         if (IDparameter->el_type == st_integer){
-                            //TODO stuff...
+
+                            //Change type of given ID from int to float
+                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+
                             fprintf(stderr, "Prevadzam ID z int na float\n");
                         }
 
                     }else{
+
                         //Types are same, just move
-                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }
 
                     }
 
@@ -1213,12 +1257,19 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                         //If parameter in definition is type of double, do conversion
                         if (param->el_type == st_decimal){
                             fprintf(stderr, "Prevadzam konstantu INT na DOUBLE\n");
-                            //TODO stuff
+
+                            //Change given integer to float
+                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
                         }
 
                     }else{
+                        //TODO
                         //Types are same, just move
-                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }
                     }
 
                     //TODO Presunut z jedneho farmu do druheho
@@ -1238,16 +1289,23 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If parameter in definition is type int, do conversion
                         if (param->el_type == st_integer){
-                            fprintf(stderr, "Prevadzam konstantu float na int\n");
-                            //TODO stuff
+                            fprintf(stderr, "Prevadzam konstantu float na int, token = %d\n", CurrentToken->type);
+
+                            //Change double to integer
+                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
                         }
 
                     }else{
+                        //TODO deftvar_tf
                         //Types are same, just move
-                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }
                     }
 
-                    //TODO Frame
                     break;
 
                 //Parameter is represented as constant of type string
@@ -1258,8 +1316,11 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                         return SEM_ERROR_COMP;
 
                     }else{
+
                         //Types are same, just move
-                        add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL);
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }
 
                     }
 
@@ -1273,6 +1334,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                 return ScannerInt;
             }
+
             //If we are checking last parameter expect token ')'
             if (pNumber == CalledFunction->params->params_n){
                 if (CurrentToken->type != TOK_rParenth){
@@ -1292,7 +1354,9 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
     }
 
     //Create jump on label function
-    add_instruction(CALL, NULL, &CalledFunction->key, NULL);
+    if (add_instruction(CALL, NULL, &CalledFunction->key, NULL) != SUCCESS){
+        return INTERNAL_ERROR;
+    }
 
 
     //Test of return type of function and type of Variable we are assigning in
@@ -1306,12 +1370,22 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
         //If Variable is int -> function is double
         if (Variable->el_type == st_integer){
             fprintf(stderr, "Navratovy typ funkce dobule prevadzam na int\n");
-            //TODO konverzia
+
+            //Change return type of function to type of variable we are assigning in
+            if (add_instruction(RETVAL_FLOAT2R2EINT_OUT, NULL, &Variable->key, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
+
         }
 
         if (Variable->el_type == st_decimal){
             fprintf(stderr, "Navratov typ funkce int prevadzam na float\n");
-            //TODO konverzia
+
+            //Change return type of function to type of variable we are assigning in
+            if (add_instruction(RETVAL_INT2FLOAT_OUT, NULL, &Variable->key, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
+
         }
 
     }else{
@@ -1471,14 +1545,3 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
     }
     return SUCCESS;
 }
-
-
-/*
-int main(){
-    instr_init();
-    int ret = parse();
-    print_all();
-    inst_free();
-
-    printf("return %d\n", ret);
-}*/
