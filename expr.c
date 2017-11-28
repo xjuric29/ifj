@@ -5,7 +5,7 @@
  */
  
 // --- TESTING ---
-#define DEBUG   // Print stack, operations and table indexes
+//#define DEBUG   // Print stack, operations and table indexes
 
 
 // Header file
@@ -923,10 +923,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			// --- String value ---
 			{
 				// Temporary varaible for strings
-				string *varString;
-				strInit(varString);
+				string varString;
+				strInit(&varString);
 				char *varChar = "$str";
-				strCopyConst(varString, varChar);
+				strCopyConst(&varString, varChar);
 				
 				// Temporary token for result variable
 				token_t *resToken = TokenInit();
@@ -934,10 +934,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
 	
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, resToken, varString, NULL);	// MOVE LF@result LF@$str
+				add_instruction(MOVE_LF_LF, resToken, &varString, NULL);	// MOVE LF@result LF@$str
 	
 				// Free memory
-				strFree(varString);
+				strFree(&varString);
 				TokenFree(resToken);
 			}
 			break;
@@ -961,8 +961,8 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			}
 			
 			// Create varaible name string
-			string *varString;
-			strInit(varString);
+			string varString;
+			strInit(&varString);
 			char varChar[4]; 
 			switch(topType)
 			{
@@ -974,13 +974,13 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 					expr_error("expr_generateResult: Wrong token type on top of the stack");
 					return EXPR_RETURN_ERROR_INTERNAL;
 			}
-			strCopyConst(varString, varChar);
+			strCopyConst(&varString, varChar);
 			
 			// Add print instruction
-			add_instruction(WRITE, NULL, varString, NULL);
+			add_instruction(WRITE, NULL, &varString, NULL);
 		
 			// Free memory
-			strFree(varString);
+			strFree(&varString);
 			break;
 		}
 		

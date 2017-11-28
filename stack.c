@@ -6,6 +6,7 @@
  */
 
 #include "stack.h"
+//#define STACKDEBUG
 
 
 void stackInit(myStack_t *stack)
