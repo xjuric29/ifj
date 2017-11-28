@@ -89,29 +89,29 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	if(success == FAIL)
 	{
 		expr_error("expr_main: Couldn't init token stack");
-		DEBUG_PRINT("--- Expression module end (error) ---\n");	
+		DEBUG_PRINT("--- Expression module end (error #01) ---\n");	
 		return EXPR_RETURN_ERROR_INTERNAL;		
 	}
     
     
     // --- Reset temporary varaible for strings ---
-	string *varString;
-	strInit(varString);
+	string varString;
+	strInit(&varString);
 	char *varChar = "$str";
-	strCopyConst(varString, varChar);
+	strCopyConst(&varString, varChar);
 	
 	// Creating token with empty string
 	token_t *resetToken = TokenInit(); // Initialize token
 	resetToken->type = TOK_string;
 	
 	// Resetting variable in 3AC
-	add_instruction(MOVE_LF_LF, resetToken, varString, NULL);	// MOVE LF@$str ""
+	add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);	// MOVE LF@$str ""
 					
 	// Update tokStack (strings are NOT stored in stack but tokStack is still used for data type check)
 	tokStack_Push(&tokStack, TOK_string);
 	
 	// Free memory
-	strFree(varString);
+	strFree(&varString);
 	TokenFree(resetToken);
     
 	
@@ -129,8 +129,20 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	
 	// --- Check first token type ---
 	if(expr_isFirstValid(loadedToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
-		return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error     
-	
+	{
+		if(context == EXPRESSION_CONTEXT_PRINT)	// If found semicolon in print context
+		{
+			DEBUG_PRINT("[DBG] First token is not valid but context is PRINT\n");
+			DEBUG_PRINT("--- Expression module success ---\n");
+			return EXPR_RETURN_SUCC;	// Return to parser
+		}
+		else
+		{
+			expr_error("expr_main: Wrong first token");
+			DEBUG_PRINT("--- Expression module end (error #02) ---\n");
+			return EXPR_RETURN_ERROR_SYNTAX;        // If not -> Syntax error     
+		}
+	}
 	
 	// --- Loading tokens ---
 	while(continueLoading)
@@ -148,22 +160,25 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			if(element == NULL)   // Haven't found it in the table
 			{
 				expr_error("expr_main: Tried to work with nonexisting variable");
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #02) ---\n");
 				return EXPR_RETURN_ERROR_SEM;   // Return semantics error
 			}
 			
 			// --- Find out variable type --- 
 			tokenType_t tokenType = expr_elTypeConvert(element->el_type);
+			DEBUG_PRINT("tokenType %d\n", tokenType);
+			
 			if(tokenType == TOK_FAIL)
 			{
 				// Error message already printed in expr_elTypeConvert()
-				DEBUG_PRINT("--- Expression module end (error) ---\n");		
+				DEBUG_PRINT("--- Expression module end (error #03) ---\n");		
 				return EXPR_RETURN_ERROR_INTERNAL;						
 			}
 			else
 			{
 				// Push variable type to the stack
 				// (If it's value and not variable, then this is done in expr_algorithm())
+				DEBUG_PRINT("Pushing on tokStack type %d\n", tokenType);
 				tokStack_Push(&tokStack, tokenType);
 				
 				if(tokenType == TOK_string)
@@ -195,7 +210,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			// --- Check for error ---
 			if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
 			{
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #04) ---\n");
 				return retVal;  // End module and report error
 			}       
 
@@ -307,6 +322,9 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		break;
 
         // === Other tokens ===
+        case EXPR_RETURN_NOMORETOKENS:
+				type = TERM_stackEnd;	// End of input terminal '$'
+			break;
         // --- Semicolon ---
         case TOK_semicolon:
 			if(context == EXPRESSION_CONTEXT_PRINT)
@@ -315,8 +333,8 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				int retVal = expr_finishAlgorithm(stack, tokStack, token, context);
 				if(retVal != EXPR_RETURN_SUCC)
 					return retVal;
-					
-				// @todo Print write instruction
+				
+				// @todo Print write instruction (maybe done in expr_main)
 				
 				// Return signal to start over expr_main
 				return EXPR_RETURN_STARTOVER;
@@ -585,12 +603,14 @@ int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
         if(algotihmFinished == EXPR_TRUE)       // If already finished
                 return EXPR_TRUE;
         
-        if(stack->top == 1 && stackTop(stack) == 'E' && tokenType == TOK_endOfFile)  // If finishing now
+        if(stack->top == 1 && stackTop(stack) == 'E' && tokenType == EXPR_RETURN_NOMORETOKENS)  // If finishing now
         {
+				
                 algotihmFinished = EXPR_TRUE;   // Change static int
                 return EXPR_TRUE;
         }
-        
+        stackInfo(stack);
+
         return EXPR_FALSE;      // Otherwise return false
 }
 
@@ -608,7 +628,7 @@ int expr_isFirstValid(token_t firstToken)
                         
                 // Other terminals
                 default:
-                        expr_error("expr_isFirstValid(): First token is not suitable for being first in expression");
+                        DEBUG_PRINT("[DBG] expr_isFirstValid(): First token is not suitable for being first in expression\n");
                         return EXPR_FALSE;
         }
 }
@@ -626,16 +646,16 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 		else
 		{
 			// --- String ---
-			string *varString;
-			strInit(varString);
+			string varString;
+			strInit(&varString);
 			char *varChar = "$str";
-			strCopyConst(varString, varChar);
+			strCopyConst(&varString, varChar);
 	
 			// Resetting variable in 3AC
-			add_instruction(CONCAT, &token, varString, NULL);	// Add string at end of the temporary string
+			add_instruction(CONCAT, &token, &varString, NULL);	// Add string at end of the temporary string
 	
 			// Free memory
-			strFree(varString);
+			strFree(&varString);
 		}
 		break;
 	case '-':
@@ -849,11 +869,12 @@ int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
 
 tokenType_t expr_elTypeConvert(type_t el_type)
 {
+	DEBUG_PRINT("eltype = %d\n", el_type);
 	switch(el_type)
 	{
-		case KW_integer:	return TOK_integer;	break;
-		case KW_double:	return TOK_decimal;	break;
-		case KW_string:	return TOK_string;	break;
+		case st_integer:	return TOK_integer;	break;
+		case st_decimal:	return TOK_decimal;	break;
+		case st_string:	return TOK_string;	break;
 		default:
 			expr_error("expr_elTypeConvert: Invalid el_type");
 			return TOK_FAIL;	// Represents error			
@@ -880,7 +901,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			if(variable == NULL)
 			{
 				expr_error("expr_generateResult: Result variable doesn't exist... Strange :O");
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #05) ---\n");
 				return(EXPR_RETURN_ERROR_INTERNAL);
 			}
 			
@@ -888,7 +909,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			retVal = expr_convertResultType(tokStack, variable->el_type);
 			if(retVal != EXPR_RETURN_SUCC)
 			{
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #06) ---\n");
 				return retVal;
 			}
 			
@@ -945,10 +966,11 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			char varChar[4]; 
 			switch(topType)
 			{
-				case TOK_integer:	strcpy(varChar, "$int");
-				case TOK_decimal:	strcpy(varChar, "$dec");
-				case TOK_string:	strcpy(varChar, "$str");
+				case TOK_integer:	strcpy(varChar, "$int");	break;
+				case TOK_decimal:	strcpy(varChar, "$dec");	break;
+				case TOK_string:	strcpy(varChar, "$str");	break;
 				default:
+					DEBUG_PRINT("top type is %d\n",topType);
 					expr_error("expr_generateResult: Wrong token type on top of the stack");
 					return EXPR_RETURN_ERROR_INTERNAL;
 			}
@@ -972,7 +994,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			if(function == NULL)
 			{
 				expr_error("expr_generateResult: Function not found");
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #07) ---\n");
 				return(EXPR_RETURN_ERROR_INTERNAL);			
 			}
 			
@@ -981,7 +1003,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			retVal = expr_convertResultType(tokStack, variable->el_type);
 			if(retVal != EXPR_RETURN_SUCC)
 			{
-				DEBUG_PRINT("--- Expression module end (error) ---\n");
+				DEBUG_PRINT("--- Expression module end (error #08) ---\n");
 				return retVal;
 			}
 			
@@ -1010,9 +1032,10 @@ int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, 
 		retVal = expr_algorithm(stack, tokStack, noMoreTokens, context, EXPR_FALSE);  
 
 		// --- Check for error ---
-		if(retVal != EXPR_RETURN_SUCC)
+		if(retVal != EXPR_RETURN_SUCC && retVal != EXPR_RETURN_NOMORETOKENS)
 		{
-			DEBUG_PRINT("--- Expression module end (error) ---\n");
+			DEBUG_PRINT("retVal=%d\n",retVal);
+			DEBUG_PRINT("--- Expression module end (error #09) ---\n");
 			return retVal;
 		}
 	}	

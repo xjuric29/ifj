@@ -103,7 +103,7 @@ int stackFull(myStack_t *stack)
 
 void stackInfo(myStack_t *stack)
 {
-#ifdef DEBUG
+#ifdef STACKDEBUG
 	if(stack == NULL)   // If the stack is not allocated
 	{
 		stackError(ERR_STACK_NULL);

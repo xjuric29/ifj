@@ -8,6 +8,10 @@
 #ifndef STACK_H
 #define STACK_H
 
+
+#define STACKDEBUG
+
+
 //	--- Includes ---
 // Libraries
 #include <stdio.h>
