@@ -41,6 +41,47 @@ void print_built_in();
 
 struct I_output *Instr = NULL;
 
+char *convert_string(char *str)
+{
+	int len = 0;
+	size_t max_len = 2*strlen(str);
+	char c[5];
+	char *result = malloc(max_len);
+	if(result == NULL)
+		return NULL;
+	for(unsigned i = 0; str[i] != '\0'; i++)
+	{
+		if(i + 5 > max_len)
+		{
+			max_len *= 2;
+			result = realloc(result, max_len);
+			if(result == NULL)
+				return NULL;
+		}
+		
+		if((str[i] >= 0 && str[i] <= 32) || str[i] == 35 || str[i] == 92 || str[i] == 34)
+		{
+			sprintf(c, "%d", str[i]);
+			result[len] = 92;
+			len++;
+			result[len] = '0';
+			len++;
+			strcpy(&result[len], c);
+			len += 2;
+		}
+
+		else
+		{
+			result[len] = str[i];
+			len++;
+		}
+
+	}
+	return result;
+}
+
+
+
 void inst_free()
 {	
 	for (unsigned i = 0; i < Instr->alloc_lines; i++)
@@ -165,6 +206,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 						strcat(INST, c);
 						strcat(INST, "\n");
 						break;
+
+					case TOK_string:
+						strcat(INST, "string@");
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+						break;
 				
 					default:
 						return INTERNAL_ERROR;
@@ -288,6 +336,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
 					break;
+
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+					break;
 				
 				default:
 					return INTERNAL_ERROR;
@@ -319,6 +374,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					break;
 
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+					break;
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -348,6 +410,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					break;
 
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+
+					break;
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -374,7 +444,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case KW_string:
 					strcat(INST, " string@");
-					//sprintf(c, "%d", op1->value.stringVal); //TODO
+					//sprintf(c, "%d", op1->value.stringVal);
 					//strcat(INST, c);
 					break;
 
@@ -409,8 +479,11 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					break;
 
 				case TOK_string:
-					strcat(INST, "string@");
-					strcat(INST, op1->value.stringVal->str);
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+					break;
 				
 				case KW_double:
 					strcat(INST, "float@0.0\n");
@@ -629,15 +702,19 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_identifier:
 					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
-					strcat(INST, "\n");
 					break;
-
+	
 				case TOK_string:
 					strcat(INST, " string@");
-					strcat(INST, op1->value.stringVal->str);
-					strcat(INST, "\n");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
 					break;
+
+				default:
+					return INTERNAL_ERROR;
 			}
+			strcat(INST, "\n");
 
 			break;
 
