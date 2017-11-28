@@ -26,7 +26,7 @@
 #define STACK_ENDCHAR '$'	/// Character representing end of stack
 #define STACK_NULLCHAR 0	/// Character representing no value (returned when tried to pop/top empty stack)
 #define STACK_NOTFOUND -1       /// Return value representing "not found"
-#define TERMINAL_COUNT  15       /// Number of all possible terminals
+#define TERMINAL_COUNT  16       /// Number of all possible terminals
 
 typedef enum
 {

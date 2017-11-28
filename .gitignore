@@ -1,3 +1,4 @@
 *.o
 *.gch
 compiler
+tests/04_expressions
