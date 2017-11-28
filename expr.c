@@ -132,7 +132,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	{
 		if(context == EXPRESSION_CONTEXT_PRINT)	// If found semicolon in print context
 		{
-			DEBUG_PRINT("[DBG] First token is not valid but context is PRINT\n");
+			*parserToken = loadedToken;	// Save token for parser
 			DEBUG_PRINT("--- Expression module success ---\n");
 			return EXPR_RETURN_SUCC;	// Return to parser
 		}
@@ -976,7 +976,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			}
 			strCopyConst(&varString, varChar);
 			
-			// Add print instruction
+			
+			
+			// Add instructions
+			add_instruction(POPS, NULL, &varString, NULL);
 			add_instruction(WRITE, NULL, &varString, NULL);
 		
 			// Free memory
