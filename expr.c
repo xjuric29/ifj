@@ -923,10 +923,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			// --- String value ---
 			{
 				// Temporary varaible for strings
-				string *varString;
-				strInit(varString);
+				string varString;
+				strInit(&varString);
 				char *varChar = "$str";
-				strCopyConst(varString, varChar);
+				strCopyConst(&varString, varChar);
 				
 				// Temporary token for result variable
 				token_t *resToken = TokenInit();
@@ -934,10 +934,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
 	
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, resToken, varString, NULL);	// MOVE LF@result LF@$str
+				add_instruction(MOVE_LF_LF, resToken, &varString, NULL);	// MOVE LF@result LF@$str
 	
 				// Free memory
-				strFree(varString);
+				strFree(&varString);
 				TokenFree(resToken);
 			}
 			break;
