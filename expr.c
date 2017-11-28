@@ -5,7 +5,7 @@
  */
  
 // --- TESTING ---
-#define DEBUG   // Print stack, operations and table indexes
+//#define DEBUG   // Print stack, operations and table indexes
 
 
 // Header file
@@ -976,7 +976,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			}
 			strCopyConst(&varString, varChar);
 			
-			// Add print instruction
+			
+			
+			// Add instructions
+			add_instruction(POPS, NULL, &varString, NULL);
 			add_instruction(WRITE, NULL, &varString, NULL);
 		
 			// Free memory
