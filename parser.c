@@ -913,16 +913,12 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
 
         //PRINT <expresion> SEMICOLON <more-print> <stats>
         case KW_print:
-            //<expresion>
-            //TODO predat riadenie precedencnej analyze
-            //Tu by mohol aj skontrolovat ci po ; ide EOL alebo dalsi vyraz,
-            //Da sa to tak?
 
             //Call expresion
             if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_PRINT, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
                 return RecurCallResult;
             }
-
+            
             //Check what returns expr_main
             if (CurrentToken->type != TOK_endOfLine){
                 return SYN_ERROR;
