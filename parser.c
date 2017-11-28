@@ -918,7 +918,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_PRINT, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
                 return RecurCallResult;
             }
-            
+
             //Check what returns expr_main
             if (CurrentToken->type != TOK_endOfLine){
                 return SYN_ERROR;
