@@ -5,7 +5,7 @@
  */
  
 // --- TESTING ---
-//#define DEBUG   // Print stack, operations and table indexes
+#define DEBUG   // Print stack, operations and table indexes
 
 
 // Header file
@@ -132,7 +132,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	{
 		if(context == EXPRESSION_CONTEXT_PRINT)	// If found semicolon in print context
 		{
-			DEBUG_PRINT("[DBG] First token is not valid but context is PRINT\n");
+			*parserToken = loadedToken;	// Save token for parser
 			DEBUG_PRINT("--- Expression module success ---\n");
 			return EXPR_RETURN_SUCC;	// Return to parser
 		}
