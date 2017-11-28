@@ -302,7 +302,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(SCOPE):
-			strcpy(INST, "LABEL SCOPE");
+			strcpy(INST, "LABEL Scope");
 			Instr->used_lines++;
 			strcpy(INST, "CREATEfRAME\n");
 			Instr->used_lines++;
