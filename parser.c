@@ -956,7 +956,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
             //Change if number. Back from recursion in IfNumber can be 1.. we need to change it to actual number of int
-            ToCheck.IfNumber = AllIfsCount + 1;
+            ToCheck.IfNumber = AllIfsCount;
             //last <stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
@@ -994,7 +994,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
 
-            ToCheck.WhileNumber = AllWhilesCount + 1;
+            ToCheck.WhileNumber = AllWhilesCount;
             return Stats(CurrentToken, ToCheck, GlobalTable); //Continue to check other stats, recurively
 
         //We must test if we are inside WHILE otherwise its error. Here ends recursive call from WhileStat
