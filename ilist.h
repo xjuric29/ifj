@@ -24,14 +24,14 @@
 #define LTS 13
 #define GTS 14
 #define EQS 15
-#define LTEQS 16 // TODO
-#define GTEQS 17 // TODO
+#define LTEQS 16 
+#define GTEQS 17 
 #define JUMPIFEQS 18
 #define JUMPIFENQS 19
 #define JUMP 20
 #define PUSHFRAME 21
 #define READ 22
-#define WRITE 23 // TODO
+#define WRITE 23
 #define MOVE_LF_LF 24
 #define MOVE_LF_TF 25
 #define MOVE_TF_LF 26
@@ -46,15 +46,20 @@
 #define RETVAL_POP 35
 #define NOTS 36
 #define INT2FLOAT 37
-#define FLOAT2R2EINT 38 //TODO
-#define RETVAL_INT2FLOAT_IN 39 //TODO
-#define RETVAL_FLOAT2R2EINT_IN 40 //TODO
-#define RETVAL_INT2FLOAT_OUT 41 //TODO
-#define RETVAL_FLOAT2R2EINT_OUT 42 //TODO
+#define FLOAT2R2EINT 38
+#define RETVAL_INT2FLOAT_IN 39
+#define RETVAL_FLOAT2R2EINT_IN 40 
+#define RETVAL_INT2FLOAT_OUT 41 
+#define RETVAL_FLOAT2R2EINT_OUT 42 
 #define INT2FLOATS 43
 #define FLOAT2R2EINTS 44
 #define CONCAT 45
-
+#define LT 46
+#define GT 47
+#define EQ 48
+#define NOTEQ 49
+#define LTEQ 50
+#define GTEQ 51
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300

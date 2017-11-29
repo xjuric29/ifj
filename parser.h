@@ -15,13 +15,15 @@ struct check{
     bool InWhile; //If comes token while set to True
     bool InIf; //If comes token If set to True
     bool InElse; //If comes token Else set to True
+    int IfNumber; //Number that helps code generator to name IF labels
+    int WhileNumber; //Number that helps code generator to  name WHILE labels
 };
 
 
-#define EXPRESION_CONTEXT_ARIGH 1
-#define EXPRESION_CONTEXT_LOGIC 2
-#define EXPRESION_CONTEXT_PRINT 3
-#define EXPRESION_CONTEXT_RETURN 4
+#define EXPRESSION_CONTEXT_ASSIGN 1
+#define EXPRESSION_CONTEXT_LOGIC 2
+#define EXPRESSION_CONTEXT_PRINT 3
+#define EXPRESSION_CONTEXT_RETURN 4
 
 
 token_t *TokenInit();

@@ -6,6 +6,7 @@
  */
 
 #include "stack.h"
+//#define STACKDEBUG
 
 
 void stackInit(myStack_t *stack)
@@ -103,7 +104,7 @@ int stackFull(myStack_t *stack)
 
 void stackInfo(myStack_t *stack)
 {
-#ifdef DEBUG
+#ifdef STACKDEBUG
 	if(stack == NULL)   // If the stack is not allocated
 	{
 		stackError(ERR_STACK_NULL);
@@ -131,6 +132,7 @@ int stackGetTerminalIndex(myStack_t *stack)
 	terminals[12] = TERM_lessEqual;
 	terminals[13] = TERM_greater;
 	terminals[14] = TERM_greaterEqual;
+        terminals[15] = TERM_string;
 	
         for(int i = stack->top; i >= 0; i--)    // Start searching from top of the stack
         {

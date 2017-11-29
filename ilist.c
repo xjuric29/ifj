@@ -41,6 +41,51 @@ void print_built_in();
 
 struct I_output *Instr = NULL;
 
+char *convert_string(char *str)
+{
+	int len = 0;
+	size_t max_len = 2*strlen(str);
+	char c[5];
+	char *result = malloc(max_len);
+	result[0] = '\0';
+	if(result == NULL)
+		return NULL;
+	for(unsigned i = 0; str[i] != '\0'; i++)
+	{
+		if(i + 5 > max_len)
+		{
+			max_len *= 2;
+			result = realloc(result, max_len);
+			if(result == NULL)
+				return NULL;
+		}
+		
+		if((str[i] >= 0 && str[i] <= 32) || str[i] == 35 || str[i] == 92 || str[i] == 34)
+		{
+			sprintf(c, "%d", str[i]);
+			result[len] = 92;
+			len++;
+			result[len] = '0';
+			len++;
+			strcpy(&result[len], c);
+			len += 2;
+		}
+
+		else
+		{
+			result[len] = str[i];
+			len++;
+		}
+
+	}
+	result[len] = '\0';
+	//printf("****************recieved: %s ****************\n", str);
+	//printf("****************returned: %s ****************\n", result);
+	return result;
+}
+
+
+
 void inst_free()
 {	
 	for (unsigned i = 0; i < Instr->alloc_lines; i++)
@@ -63,7 +108,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 {
 	
 	
-	static int inst_endif = 0;
+	static int inst_if = 0;
 	static int inst_else = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
@@ -165,6 +210,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 						strcat(INST, c);
 						strcat(INST, "\n");
 						break;
+
+					case TOK_string:
+						strcat(INST, "string@");
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+						break;
 				
 					default:
 						return INTERNAL_ERROR;
@@ -180,6 +232,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			}
 
 			break;
+
 
 		case(POPS):
 			strcpy(INST, "POPS LF@");
@@ -234,7 +287,25 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(READ):
 			strcpy(INST, "READ LF@");
 			strcat(INST, op1->value.stringVal->str);
+			switch(op1->type)
+			{
+				case KW_integer:
+					strcat(INST, " int");
+					break;
+				
+				case KW_double:
+					strcat(INST, " float");
+					break;
+
+				case KW_string:
+					strcat(INST, " string");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
 			strcat(INST, "\n");
+			
 			break;
 
 		case(FUNC):
@@ -251,10 +322,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$dec\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
 
 		case(SCOPE):
-			strcpy(INST, "LABEL SCOPE");
+			strcpy(INST, "LABEL Scope");
 			Instr->used_lines++;
 			strcpy(INST, "CREATEfRAME\n");
 			Instr->used_lines++;
@@ -265,6 +340,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$dec\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
 		
 		case(MOVE_LF_LF):
@@ -287,6 +366,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, " float@");
 					sprintf(c, "%g", op1->value.decimal);
 					strcat(INST, c);
+					break;
+
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
 					break;
 				
 				default:
@@ -319,6 +405,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					break;
 
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+					break;
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -348,6 +441,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					break;
 
+				case TOK_string:
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+
+					break;
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -374,7 +475,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case KW_string:
 					strcat(INST, " string@");
-					//sprintf(c, "%d", op1->value.stringVal); //TODO
+					//sprintf(c, "%d", op1->value.stringVal);
 					//strcat(INST, c);
 					break;
 
@@ -409,8 +510,11 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					break;
 
 				case TOK_string:
-					strcat(INST, "string@");
-					strcat(INST, op1->value.stringVal->str);
+					strcat(INST, " string@");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
+					break;
 				
 				case KW_double:
 					strcat(INST, "float@0.0\n");
@@ -438,7 +542,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(WHILE):
 			context = con_WHILE;
-			inst_while++;
+			inst_while = op1->value.integer;
 			strcpy(INST, "LABEL ");
 			sprintf(c, "%d", inst_while);
 			strcat(INST, "$$");
@@ -448,6 +552,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(LOOP):
 			context = con_NONE;
+			inst_while = op1->value.integer;
 			
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
@@ -458,7 +563,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
-			sprintf(c, "%d", inst_while - inst_loop);
+			sprintf(c, "%d", inst_while);
 			strcat(INST, c);
 			strcat(INST, "$$LOOP\n");
 			inst_loop += 1;
@@ -466,8 +571,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		case(IF):
 			context = con_IF;
-			inst_else++;
-			inst_endif++;
+			inst_if = op1->value.integer;
 			return SUCCESS;
 		
 		case(ELSE):
@@ -475,14 +579,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
-			sprintf(c, "%d", inst_else);
+			sprintf(c, "%d", op1->value.integer);
 			strcat(INST, c);
 			strcat(INST, "$$ENDIF\n");			
 			Instr->used_lines++;	
 	
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
-			sprintf(c, "%d", inst_else);
+			sprintf(c, "%d", op1->value.integer);
 			strcat(INST, c);
 			strcat(INST, "$$ELSE\n");
 			break;
@@ -490,10 +594,9 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(ENDIF):
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
-			sprintf(c, "%d", inst_endif);
+			sprintf(c, "%d", op1->value.integer);
 			strcat(INST, c);
 			strcat(INST, "$$ENDIF\n");
-			inst_endif--;
 			break;
 
 		case(JUMPIFEQS):
@@ -504,13 +607,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			switch(context)
 			{
 				case(con_IF):
-					sprintf(c, "%d", inst_else);
+					sprintf(c, "%d", inst_if);
 					strcat(INST, c);
 					strcat(INST, "$$ELSE\n");
 					break;
 				
 				case(con_WHILE):	
-					sprintf(c, "%d", inst_while - inst_loop);
+					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
 					break;
@@ -521,6 +624,99 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			}
 			break;
 
+		case(LTEQS):
+			strcpy(INST, "JUMPIFENQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "LTS\n");
+			Instr->used_lines++;
+			strcpy(INST, "PUSHS bool@false\n");
+			Instr->used_lines++;
+			strcpy(INST, "JUMPIFEQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			break;
+
+		case(GTEQS):
+			strcpy(INST, "JUMPIFENQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "GTS\n");
+			Instr->used_lines++;
+			strcpy(INST, "PUSHS bool@false\n");
+			Instr->used_lines++;
+			strcpy(INST, "JUMPIFEQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			break;
+	
+
 		case(JUMPIFENQS):
 			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
@@ -529,13 +725,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			switch(context)
 			{
 				case(con_IF):
-					sprintf(c, "%d", inst_else);
+					sprintf(c, "%d", inst_if);
 					strcat(INST, c);
 					strcat(INST, "$$ELSE\n");
 					break;
 
 				case(con_WHILE):	
-					sprintf(c, "%d", inst_loop);
+					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
 					break;
@@ -629,15 +825,19 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case TOK_identifier:
 					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
-					strcat(INST, "\n");
 					break;
-
+	
 				case TOK_string:
 					strcat(INST, " string@");
-					strcat(INST, op1->value.stringVal->str);
-					strcat(INST, "\n");
+					char *tmp = convert_string(op1->value.stringVal->str);
+					strcat(INST, tmp);
+					free(tmp);
 					break;
+
+				default:
+					return INTERNAL_ERROR;
 			}
+			strcat(INST, "\n");
 
 			break;
 
@@ -646,6 +846,73 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
+		
+		case(LT):
+			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+
+		case(GT):
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+
+		case(EQ):
+			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+
+		case(NOTEQ):
+			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "NOTS\n");
+			break;
+
+		case(LTEQ):
+			strcpy(INST, "JUMPIFNEQ ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+				
+				case(con_WHILE):
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+		
+		case(GTEQ):
+			strcpy(INST, "JUMPIFNEQ ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+				
+				case(con_WHILE):
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+
 
 
 		default:
