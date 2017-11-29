@@ -216,7 +216,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             }
             //Skip EOLs..
             while(CurrentToken->type == TOK_endOfLine){
-                printf("Najdene\n");
+                //printf("Najdene %d\n", CurrentToken->type);
                 if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                     return ScannerInt;
                 }
