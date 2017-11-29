@@ -942,7 +942,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems = ToCheck;
             SolveProblems.InIf = true; //Set InIf to true so token ELSE is SUCCESS
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
-            SolveProblems.IfNumber++; //Raise number of if
+            SolveProblems.IfNumber = AllIfsCount + 1; //Raise number of if
             AllIfsCount++; //+1 in All ifs in program
 
             //IF
@@ -958,7 +958,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             }
 
             //Change if number. Back from recursion in IfNumber can be 1.. we need to change it to actual number of int
-            ToCheck.IfNumber = AllIfsCount;
+            //ToCheck.IfNumber = AllIfsCount;
             //last <stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
@@ -979,7 +979,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems = ToCheck;
             SolveProblems.InIf = false; //Set InIf to false so token ELSE that come before LOOP won`t be evaluated as SUCCESS
             SolveProblems.InWhile = true; //Set InWhile to true so LOOP is success
-            SolveProblems.WhileNumber++; //Rise number of next While label
+            SolveProblems.WhileNumber = AllWhilesCount + 1; //Rise number of next While label
             AllWhilesCount++; //+1 in counter of all whiles in program
 
             //Call function to result while..
