@@ -216,6 +216,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             }
             //Skip EOLs..
             while(CurrentToken->type == TOK_endOfLine){
+                printf("Najdene\n");
                 if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
                     return ScannerInt;
                 }
@@ -741,12 +742,13 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
             //Check if ID exist in functions
-            if (st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal) == NULL){
+            if ((Variable = st_find_element(GlobalTable, &FunctionID, CurrentToken->value.stringVal)) == NULL){
                 fprintf(stderr,"Nedefinovany ID\n");
                 return SEM_ERROR_FUNC;
             }
 
             //Generate instruction for read
+            CurrentToken->type = Variable->el_type;
             if (add_instruction(READ, CurrentToken, NULL, NULL) != SUCCESS){
                 return INTERNAL_ERROR;
             }
