@@ -47,6 +47,7 @@ char *convert_string(char *str)
 	size_t max_len = 2*strlen(str);
 	char c[5];
 	char *result = malloc(max_len);
+	result[0] = '\0';
 	if(result == NULL)
 		return NULL;
 	for(unsigned i = 0; str[i] != '\0'; i++)
@@ -77,6 +78,8 @@ char *convert_string(char *str)
 		}
 
 	}
+	//printf("****************recieved: %s ****************\n", str);
+	//printf("****************returned: %s ****************\n", result);
 	return result;
 }
 
