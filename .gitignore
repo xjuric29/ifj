@@ -2,3 +2,5 @@
 *.gch
 compiler
 tests/04_expressions
+*.3ac
+ic17int

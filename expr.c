@@ -14,7 +14,8 @@
 
 
 
-int algotihmFinished = EXPR_FALSE;       // Used static because I was lost in recursion
+int algotihmFinished = EXPR_FALSE;  // Used static because I was lost in recursion                     first str  <  second str
+int firstString = EXPR_TRUE;  // Indicates if we are working with first string or second string (e.g. str1 + str2 < str3 + str4)
 
 /**
  * @brief Precedental table determinating next action.
@@ -54,7 +55,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	DEBUG_PRINT("--- Expression module start ---\n");
 	DEBUG_PRINT("Context: %d\n", context);
 
-	int firstToken = EXPR_TRUE;     // Indicates if the processed token is the first in the expression
+	
 
 	// --- Check arguments ---
 	if(parserToken == NULL)
@@ -76,7 +77,10 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
     // --- Setup variables ---
  	int continueLoading = 1;	// Determines if this module should read next token
+ 	int firstToken = EXPR_TRUE;     // Indicates if the processed token is the first in the expression
+ 	// Reset global variables
 	algotihmFinished = EXPR_FALSE;
+	firstString = EXPR_TRUE;
 
 
 	// --- Initializing stacks ---
@@ -97,18 +101,23 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
     // --- Reset temporary varaible for strings ---
 	string varString;
 	strInit(&varString);
-	char *varChar = "$str";
-	strCopyConst(&varString, varChar);
-
+	
 	// Creating token with empty string
 	token_t *resetToken = TokenInit(); // Initialize token
-	resetToken->type = TOK_string;
-
-	// Resetting variable in 3AC
+	resetToken->type = TOK_string;	
+	
+	// Update tokStack (strings are NOT stored in stack but tokStack is still used for data type check)
+	//tokStack_Push(&tokStack, TOK_string);	// @todo Maybe this must be here but it should work (testing printing first string value)
+	
+	// Reset $str1
+	char *var1Char = "$str";
+	strCopyConst(&varString, var1Char);
 	add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);	// MOVE LF@$str ""
 
-	// Update tokStack (strings are NOT stored in stack but tokStack is still used for data type check)
-	tokStack_Push(&tokStack, TOK_string);
+	// Reset $str2
+	char *var2Char = "$str2";
+	strCopyConst(&varString, var2Char);
+	add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);	// MOVE LF@$str2 ""
 
 	// Free memory
 	strFree(&varString);
@@ -291,12 +300,12 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
 
         // === Logic operators ===
-        case TOK_equal:	type = TERM_equal;	break;			// Operator "="
-		case TOK_notEqual:	type = TERM_notEqual;	break;		// Operator "<>"
-		case TOK_less:	type = TERM_less;	break;			// Operator "<"
-		case TOK_lessEqual:	type = TERM_lessEqual;	break;		// Operator "<="
-		case TOK_greater:	type = TERM_greater;	break;		// Operator ">"
-		case TOK_greaterEqual:	type = TERM_greaterEqual;	break;	// Operator ">="
+        case TOK_equal:	type = TERM_equal;	firstString = EXPR_FALSE;	break;			// Operator "="
+		case TOK_notEqual:	type = TERM_notEqual;	firstString = EXPR_FALSE;	break;		// Operator "<>"
+		case TOK_less:	type = TERM_less;	firstString = EXPR_FALSE;	break;			// Operator "<"
+		case TOK_lessEqual:	type = TERM_lessEqual;	firstString = EXPR_FALSE;	break;		// Operator "<="
+		case TOK_greater:	type = TERM_greater;	firstString = EXPR_FALSE;	break;		// Operator ">"
+		case TOK_greaterEqual:	type = TERM_greaterEqual;	firstString = EXPR_FALSE;	break;	// Operator ">="
 
 		// === Tokens with values ===
 		// --- Numbers ---
@@ -306,12 +315,6 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			savedToken = token;	// Save token because it has value
 			tokStack_Push(tokStack, token.type);
 			break;
-		// --- Strings ---
-		case TOK_string:
-			type = TERM_string;
-			savedToken = token;	// Save token because it has value
-			tokStack_Push(tokStack, TOK_string);
-			break;
 		// --- Variables ---
 		case TOK_identifier:
 			savedToken = token; // Save token because it has value
@@ -320,6 +323,48 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			else
 				type = TERM_string;	// String terminal = 'str'
 		break;
+		// --- Strings ---
+		case TOK_string:
+			// Setting things for algorithm
+			type = TERM_string;
+			savedToken = token;	// Save token because it has value
+			
+			// --- Concating string ---
+			// (It's done here instead of expr_reduce() because of first string not printed bug)
+			// Creating name string for temporary variable
+			string varString;
+			strInit(&varString);
+
+			// Switch from $str to $str2 if necessary
+			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE)	// It's not cancating of strings or it's first token
+			{
+				if(firstString == EXPR_TRUE)
+					firstString = EXPR_FALSE;	// Use $str2
+				else
+					expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
+			}
+
+			if(firstString == EXPR_TRUE)	// Determines if using first temporary string variable or second ($str or $str2)
+			{
+				char *varChar = "$str";
+				strCopyConst(&varString, varChar);
+			}
+			else
+			{
+				char *var2Char = "$str2";
+				strCopyConst(&varString, var2Char);
+			}
+			
+
+			// Concating string in 3AC
+			add_instruction(CONCAT, &token, &varString, NULL);	// Add string at end of the temporary string
+
+			// Updating token stack
+			tokStack_Push(tokStack, TOK_string);
+
+			// Free memory
+			strFree(&varString);
+			break;
 
         // === Other tokens ===
         case EXPR_RETURN_NOMORETOKENS:
@@ -361,28 +406,30 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 	switch(action)
 	{
                 // Operation SHIFT '<'
-		case ACTION_shift:      return expr_shift(stack, expr_getCharFromIndex(type));
+		case ACTION_shift:
+			return expr_shift(stack, expr_getCharFromIndex(type));
 
                 // Operation REDUCE '>'
 		case ACTION_reduce:
-                {
+		{
 			int success;    // Return value of reducing (= searching for rule)
-                        success = expr_reduce(stack, tokStack, savedToken);
+			success = expr_reduce(stack, tokStack, savedToken);
 
-                        if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
-                                return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
+				return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
 
-                        // Otherwise continue with algorithm
-                        return expr_algorithm(stack, tokStack, token, context, skipMaskingAsID);       // Use recursion (don't ask why, that's just the way it should be)
+			// Otherwise continue with algorithm
+			return expr_algorithm(stack, tokStack, token, context, skipMaskingAsID);       // Use recursion (don't ask why, that's just the way it should be)
 		}
 
-                // Operation SPECIAL SHIFT '='
-                case ACTION_specialShift:       return expr_specialShift(stack, expr_getCharFromIndex(type));
+		// Operation SPECIAL SHIFT '='
+		case ACTION_specialShift:
+			return expr_specialShift(stack, expr_getCharFromIndex(type));
 
-                // ILEGAL OPERATON '#'
-                case ACTION_ilegal:
+		// ILEGAL OPERATON '#'
+		case ACTION_ilegal:
 			expr_error("expr_algorithm: Tried to perform an ilegal action");
-                        return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
 	}
 
         // @todo Edit this function so this below doesn't look so stupid
@@ -641,22 +688,9 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 	case '+':
 		expr_convertTypes(tokStack, terminal);
 
-		if(tokStack_Top(tokStack) != TOK_string)	// Operator '+' uses different function for string concate and arithmetic plus
+		if(tokStack_Top(tokStack) != TOK_string)	// Operator '+' used as arithmetic plus
 			add_instruction(ADDS, NULL, NULL, NULL);
-		else
-		{
-			// --- String ---
-			string varString;
-			strInit(&varString);
-			char *varChar = "$str";
-			strCopyConst(&varString, varChar);
-
-			// Resetting variable in 3AC
-			add_instruction(CONCAT, &token, &varString, NULL);	// Add string at end of the temporary string
-
-			// Free memory
-			strFree(&varString);
-		}
+		// If it's used for strings then it is already concated upon loading (kinda strange but easier)
 		break;
 	case '-':
 		expr_convertTypes(tokStack, terminal);
@@ -693,15 +727,13 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 		add_instruction(LTS, NULL, NULL, NULL);
 		break;
 	case TERM_lessEqual:
-		expr_error("expr_generateInstruction: @todo TERM_lessEqual not done");
-		// @todo
+		add_instruction(LTEQS, NULL, NULL, NULL);
 		break;
 	case TERM_greater:
 		add_instruction(GTS, NULL, NULL, NULL);
 		break;
 	case TERM_greaterEqual:
-		expr_error("expr_generateInstruction: @todo TERM_greaterEqual not done");
-		// @todo
+		add_instruction(GTEQS, NULL, NULL, NULL);
 		break;
 	}
 }
@@ -968,7 +1000,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			{
 				case TOK_integer:	strcpy(varChar, "$int");	break;
 				case TOK_decimal:	strcpy(varChar, "$dec");	break;
-				case TOK_string:	strcpy(varChar, "$str");	break;
+				case TOK_string:	strcpy(varChar, "$str");	break;	// e.g. boolean = str + str < str + str isn't alllowed so we don't need $str2 temporaty variable
 				default:
 					DEBUG_PRINT("top type is %d\n",topType);
 					expr_error("expr_generateResult: Wrong token type on top of the stack");
