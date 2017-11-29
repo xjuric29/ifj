@@ -15,11 +15,15 @@
 
 
 
-//strInit(CurrentToken.value.stringVal);
+//** GLobal variables, that helps in parser **//
 bool DecOrDefAndEOF = false; //To check if program have scope and then eof
 int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
 string FunctionID; //To know in which function we are
 int ParamNumber; //To store number of parameter we are checking
+int AllIfsCount = 0; //Ifs counter for naming labels
+int AllWhilesCount = 0; //While counter for naming labels
+//** END OF GLOBAL VARIABLES **//
+
 
 /**@Brief Function to malloc space for token
   *@param Token
@@ -75,6 +79,7 @@ int parse(){
     //Structure to check if we are inside Scope or While or If
     struct check ToCheck;
     ToCheck.InScope = false; ToCheck.InWhile = false; ToCheck.InIf = false; ToCheck.InElse = false;
+    ToCheck.IfNumber = 0; ToCheck.WhileNumber = 0;
     //Start recursive descent
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
@@ -935,9 +940,12 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             SolveProblems = ToCheck;
             SolveProblems.InIf = true; //Set InIf to true so token ELSE is SUCCESS
             SolveProblems.InWhile = false; //Set InWhile to false so LOOP is Error
+            SolveProblems.IfNumber++; //Raise number of if
+            AllIfsCount++; //+1 in All ifs in program
 
             //IF
-            if (add_instruction(IF, NULL, NULL, NULL) != SUCCESS){
+            CurrentToken->value.integer = SolveProblems.IfNumber;
+            if (add_instruction(IF, CurrentToken, NULL, NULL) != SUCCESS){
                 return INTERNAL_ERROR;
             }
 
@@ -947,9 +955,12 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return RecurCallResult;
             }
 
+            //Change if number. Back from recursion in IfNumber can be 1.. we need to change it to actual number of int
+            ToCheck.IfNumber = AllIfsCount + 1;
             //last <stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
+        //Else, here ends recursive call from IfStat..
         case KW_else:
             //If we are not inside of if block
             if (!ToCheck.InIf){
@@ -957,20 +968,23 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
             return SUCCESS;
-            //TODO Vygenerovanie instrukcii na skok?
 
         //DO WHILE <expresion> EOL <stats> LOOP EOL
         case KW_do:
+
+            //Sets structure for checking whiles, if in recursive calls.
+
             SolveProblems = ToCheck;
             SolveProblems.InIf = false; //Set InIf to false so token ELSE that come before LOOP won`t be evaluated as SUCCESS
             SolveProblems.InWhile = true; //Set InWhile to true so LOOP is success
+            SolveProblems.WhileNumber++; //Rise number of next While label
+            AllWhilesCount++; //+1 in counter of all whiles in program
 
             //Call function to result while..
             RecurCallResult = WhileStat(CurrentToken, SolveProblems, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-            //TODO nejake navestia...
 
             //Check EOL
             if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
@@ -980,9 +994,10 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
                 return SYN_ERROR;
             }
 
+            ToCheck.WhileNumber = AllWhilesCount + 1;
             return Stats(CurrentToken, ToCheck, GlobalTable); //Continue to check other stats, recurively
 
-        //We must test if we are inside WHILE otherwise its error
+        //We must test if we are inside WHILE otherwise its error. Here ends recursive call from WhileStat
         case KW_loop:
             if(ToCheck.InWhile){ //If we are in While its OK
                 return SUCCESS;
@@ -1014,7 +1029,8 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
         return SYN_ERROR;
     }
 
-    if (add_instruction(WHILE, NULL, NULL, NULL) != SUCCESS){
+    CurrentToken->value.integer = ToCheck.WhileNumber;
+    if (add_instruction(WHILE, CurrentToken, NULL, NULL) != SUCCESS){
         return INTERNAL_ERROR;
     }
 
@@ -1023,11 +1039,6 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
     if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_LOGIC, CurrentToken, GlobalTable, &FunctionID, NULL)) != SUCCESS){
         return RecurCallResult;
     }
-
-    //Malo by vratit EOL takze tieto riadky pravdepodobne vymazat
-    /*if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
-        return ScannerInt;
-    }*/
 
     //Check token from expresion
     if (CurrentToken->type != TOK_endOfLine){
@@ -1039,7 +1050,8 @@ int WhileStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Glo
         return RecurCallResult;
     }
 
-    if (add_instruction(LOOP, NULL, NULL, NULL) != SUCCESS){
+    CurrentToken->value.integer = ToCheck.WhileNumber;
+    if (add_instruction(LOOP, CurrentToken, NULL, NULL) != SUCCESS){
         return INTERNAL_ERROR;
     }
     //TODO treba navestia testovat uz tu alebo az ked odtialto vystupim?
@@ -1086,7 +1098,8 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
         return RecurCallResult;
     }
 
-    if (add_instruction(ELSE, NULL, NULL, NULL) != SUCCESS){
+    CurrentToken->value.integer = ToCheck.IfNumber; // In token save number of else for label
+    if (add_instruction(ELSE, CurrentToken, NULL, NULL) != SUCCESS){
         return INTERNAL_ERROR;
     }
 
@@ -1116,7 +1129,8 @@ int IfStat(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Global
     }
 
     //ENDIF
-    if (add_instruction(ENDIF, NULL, NULL, NULL) != SUCCESS){
+    CurrentToken->value.integer = ToCheck.IfNumber; // To token save number of label
+    if (add_instruction(ENDIF, CurrentToken, NULL, NULL) != SUCCESS){
         return INTERNAL_ERROR;
     }
 

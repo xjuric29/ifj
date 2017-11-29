@@ -15,6 +15,8 @@ struct check{
     bool InWhile; //If comes token while set to True
     bool InIf; //If comes token If set to True
     bool InElse; //If comes token Else set to True
+    int IfNumber; //Number that helps code generator to name IF labels
+    int WhileNumber; //Number that helps code generator to  name WHILE labels
 };
 
 
