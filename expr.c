@@ -733,8 +733,13 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(EQS, NULL, NULL, NULL);
 		break;
 	case TERM_notEqual:
-		add_instruction(EQS, NULL, NULL, NULL);
-		add_instruction(NOTS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(NOTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+		{
+			add_instruction(EQS, NULL, NULL, NULL);
+			add_instruction(NOTS, NULL, NULL, NULL);
+		}
 		break;
 	case TERM_less:
 		if(topType == TOK_string)
@@ -743,7 +748,10 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(LTS, NULL, NULL, NULL);
 		break;
 	case TERM_lessEqual:
-		add_instruction(LTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		if(topType == TOK_string)
+			add_instruction(LTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+			add_instruction(LTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		break;
 	case TERM_greater:
 		if(topType == TOK_string)
@@ -752,7 +760,10 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(GTS, NULL, NULL, NULL);
 		break;
 	case TERM_greaterEqual:
-		add_instruction(GTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		if(topType == TOK_string)
+			add_instruction(GTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+			add_instruction(GTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		break;
 	}
 	
