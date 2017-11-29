@@ -78,6 +78,7 @@ char *convert_string(char *str)
 		}
 
 	}
+	result[len] = '\0';
 	//printf("****************recieved: %s ****************\n", str);
 	//printf("****************returned: %s ****************\n", result);
 	return result;
@@ -232,6 +233,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 			break;
 
+
 		case(POPS):
 			strcpy(INST, "POPS LF@");
 			strcat(INST, op2->str);
@@ -283,13 +285,25 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;	
 	
 		case(READ):
-			strcpy(INST, "TYPE LF@$type LF@");
-			strcat(INST, op1->value.stringVal->str);
-			strcat(INST, "\n");
-			Instr->used_lines++;
 			strcpy(INST, "READ LF@");
 			strcat(INST, op1->value.stringVal->str);
-			strcat(INST, " LF@$type@");
+			switch(op1->type)
+			{
+				case KW_integer:
+					strcat(INST, " int");
+					break;
+				
+				case KW_double:
+					strcat(INST, " float");
+					break;
+
+				case KW_string:
+					strcat(INST, " string");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
 			strcat(INST, "\n");
 			
 			break;
@@ -309,7 +323,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
 			Instr->used_lines++;
-			strcpy(INST, "DEFVAR LF@$type\n");
+			strcpy(INST, "DEFVAR LF@$test\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
@@ -327,7 +341,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
 			Instr->used_lines++;
-			strcpy(INST, "DEFVAR LF@$type\n");
+			strcpy(INST, "DEFVAR LF@$test\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
@@ -832,7 +846,18 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
+		
+		case(LT):
+			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			break;
 
+		case(GT):
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			break;
+
+		case(EQ):
+			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			break;
 
 		default:
 			return INTERNAL_ERROR;
