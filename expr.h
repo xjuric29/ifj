@@ -40,7 +40,8 @@
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true
 #define EXPR_FALSE      0  /// Intarnal return value for false
-#define TOK_FAIL	TOK_endOfFile	/// Representing error return with type tokenType_t
+#define TOK_FAIL        TOK_endOfFile	/// Representing error return with type tokenType_t
+#define TOK_BOOLEAN     100	/// Boolean data type for tokStack
 #define RESULT_ASSIGNMENT 'R'	/// Representing result assignment with type char (in expr_convertTypes())
 // External return values (@todo This is already defined somewhere for sure)
 #define EXPR_RETURN_SUCC        0
@@ -129,7 +130,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context, int skipMaskingAsID);
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context, int skipMaskingAsID, int *resetTempStr);
 
 
 /**
@@ -183,11 +184,11 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token);
 int expr_specialShift(myStack_t *stack, char character);
 int expr_searchRule(string handle);
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType);  // For successful end there should be only "$E" in the stack
-void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
+int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token);
 int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
-void expr_convertTypes(tokStack_t *tokStack, char terminal);
+int expr_convertTypes(tokStack_t *tokStack, char terminal);
 tokenType_t expr_elTypeConvert(type_t el_type);
-int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context);
+int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int *resetTempStr);
 
 /**
  * @brief Check if token be used as begining of expression

@@ -19,6 +19,7 @@ int firstString = EXPR_TRUE;  // Indicates if we are working with first string o
 
 /**
  * @brief Precedental table determinating next action.
+ * @see https://docs.google.com/spreadsheets/d/1S_9ILug0ak7JUh5eQEjLLjyhXUuf_DkzCt4iOQbTlP8/edit?usp=sharing
  * "<" = shift
  * ">" = reduce
  * "=" = special shift for brackets
@@ -29,21 +30,21 @@ int firstString = EXPR_TRUE;  // Indicates if we are working with first string o
 char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
 {
 //  +    -    \    *    /    (    )    i    $    =   <>    <   <=    >   >=   str
-  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // +
-  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '#'},  // -
-  {'>', '>', '>', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '#'},  // \    // The space after '\' is important
-  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '#'},  // *
-  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '#'},  // /
-  {'<', '<', '<', '<', '<', '<', '=', '<', '#', '#', '#', '#', '#', '#', '#', '#'},  // (
-  {'>', '>', '>', '>', '>', '#', '>', '#', '>', '#', '#', '#', '#', '#', '#', '#'},  // )
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '<'},  // +
+  {'>', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // -
+  {'>', '>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // \    // The space after '\' is important
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // *
+  {'>', '>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // /
+  {'<', '<', '<', '<', '<', '<', '=', '<', '#', '<', '<', '<', '<', '<', '<', '#'},  // (
+  {'>', '>', '>', '>', '>', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // )
   {'>', '>', '>', '>', '>', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // i
   {'<', '<', '<', '<', '<', '<', '#', '<', '#', '<', '<', '<', '<', '<', '<', '<'},  // $
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // =
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <>
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <=
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >
-  {'#', '#', '#', '#', '#', '#', '#', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >=
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // =
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <>
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <=
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >
+  {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >=
   {'>', '#', '#', '#', '#', '#', '#', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // str
 };
 
@@ -78,6 +79,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
     // --- Setup variables ---
  	int continueLoading = 1;	// Determines if this module should read next token
  	int firstToken = EXPR_TRUE;     // Indicates if the processed token is the first in the expression
+ 	int resetTempStr = EXPR_TRUE;	// Deterimines if reset of $str is necessary
  	// Reset global variables
 	algotihmFinished = EXPR_FALSE;
 	firstString = EXPR_TRUE;
@@ -96,32 +98,6 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		DEBUG_PRINT("--- Expression module end (error #01) ---\n");
 		return EXPR_RETURN_ERROR_INTERNAL;
 	}
-
-
-    // --- Reset temporary varaible for strings ---
-	string varString;
-	strInit(&varString);
-	
-	// Creating token with empty string
-	token_t *resetToken = TokenInit(); // Initialize token
-	resetToken->type = TOK_string;	
-	
-	// Update tokStack (strings are NOT stored in stack but tokStack is still used for data type check)
-	//tokStack_Push(&tokStack, TOK_string);	// @todo Maybe this must be here but it should work (testing printing first string value)
-	
-	// Reset $str1
-	char *var1Char = "$str";
-	strCopyConst(&varString, var1Char);
-	add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);	// MOVE LF@$str ""
-
-	// Reset $str2
-	char *var2Char = "$str2";
-	strCopyConst(&varString, var2Char);
-	add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);	// MOVE LF@$str2 ""
-
-	// Free memory
-	strFree(&varString);
-	TokenFree(resetToken);
 
 
 	// --- Loading first token ---
@@ -200,7 +176,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID);	// Use algorithm on the loaded token
+		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID, &resetTempStr);	// Use algorithm on the loaded token
 		if(retVal == EXPR_RETURN_STARTOVER)
 		{
 			// Found semicolon in print -> Start process over
@@ -229,12 +205,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			getToken(&loadedToken);
 		}
 	}
-        DEBUG_PRINT("[DBG] Loading done\n");
+	DEBUG_PRINT("[DBG] Loading done\n");
 
 
 	// --- Finish the algorith ---
 	// (This happens when there are no more tokens to load but algorithm is still not finished)
-	int retVal = expr_finishAlgorithm(&stack, &tokStack, loadedToken, context);
+	int retVal = expr_finishAlgorithm(&stack, &tokStack, loadedToken, context, &resetTempStr);
 	if(retVal != EXPR_RETURN_SUCC)
 	{
 		// Found semicolon in print -> Start process over
@@ -251,13 +227,13 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	return expr_generateResult(&tokStack, context, st_global, func_name, variable);	// Or return error
 }
 
-int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int skipMaskingAsID)
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int skipMaskingAsID, int *resetTempStr)
 {
 	static token_t savedToken;	// Save token if it had some tokenValue_t (identifier/integer/decimal/string)
 
-        // Check if algortihm is finished
-        if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
-                return EXPR_RETURN_SUCC;
+	// Check if algortihm is finished
+	if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
+		return EXPR_RETURN_SUCC;
 
 	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
@@ -329,6 +305,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			type = TERM_string;
 			savedToken = token;	// Save token because it has value
 			
+			
 			// --- Concating string ---
 			// (It's done here instead of expr_reduce() because of first string not printed bug)
 			// Creating name string for temporary variable
@@ -338,12 +315,17 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			// Switch from $str to $str2 if necessary
 			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE)	// It's not cancating of strings or it's first token
 			{
-				if(firstString == EXPR_TRUE)
+				if(firstString == EXPR_TRUE)	// Switch $str to $str2
+				{
 					firstString = EXPR_FALSE;	// Use $str2
+					*resetTempStr = EXPR_TRUE;	// Set flag to reset $str2
+				}
 				else
 					expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
 			}
 
+
+			// --- Choose $str or $str2 ---
 			if(firstString == EXPR_TRUE)	// Determines if using first temporary string variable or second ($str or $str2)
 			{
 				char *varChar = "$str";
@@ -353,6 +335,24 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			{
 				char *var2Char = "$str2";
 				strCopyConst(&varString, var2Char);
+			}
+
+
+			// --- Reset temporary string value ---
+			if(*resetTempStr == EXPR_TRUE)
+			{
+				// Creating token with empty string
+				token_t *resetToken = TokenInit(); // Initialize token
+				resetToken->type = TOK_string;	
+				
+				// Add instruction to reset temporary string
+				add_instruction(MOVE_LF_LF, resetToken, &varString, NULL);
+
+				// Change reset flag (don't reset $str)
+				*resetTempStr = EXPR_FALSE;
+
+				// Free memory
+				TokenFree(resetToken);
 			}
 			
 
@@ -375,7 +375,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			if(context == EXPRESSION_CONTEXT_PRINT)
 			{
 				// Finish the algorithm
-				int retVal = expr_finishAlgorithm(stack, tokStack, token, context);
+				int retVal = expr_finishAlgorithm(stack, tokStack, token, context, resetTempStr);
 				if(retVal != EXPR_RETURN_SUCC)
 					return retVal;
 
@@ -412,14 +412,14 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
                 // Operation REDUCE '>'
 		case ACTION_reduce:
 		{
-			int success;    // Return value of reducing (= searching for rule)
-			success = expr_reduce(stack, tokStack, savedToken);
+			int retVal;    // Return value of reducing (= searching for rule)
+			retVal = expr_reduce(stack, tokStack, savedToken);
 
-			if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
-				return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			if(retVal != EXPR_RETURN_SUCC) // If rule not found
+				return retVal;        // Return syntax error
 
 			// Otherwise continue with algorithm
-			return expr_algorithm(stack, tokStack, token, context, skipMaskingAsID);       // Use recursion (don't ask why, that's just the way it should be)
+			return expr_algorithm(stack, tokStack, token, context, skipMaskingAsID, resetTempStr);       // Use recursion (don't ask why, that's just the way it should be)
 		}
 
 		// Operation SPECIAL SHIFT '='
@@ -533,9 +533,9 @@ int expr_shift(myStack_t *stack, char character)
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
 
-        stackInfo(stack);	// Debug
+	stackInfo(stack);	// Debug
 
-        return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
+	return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
 int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
@@ -549,7 +549,10 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 
 	// Generating instruction
 	char terminal = stackGetTerminal(stack);
-	expr_generateInstruction(tokStack, terminal, token);
+	int retVal;
+	retVal = expr_generateInstruction(tokStack, terminal, token);
+	if(retVal != EXPR_RETURN_SUCC)
+		return retVal;
 
 
 	// Find out what to reduce
@@ -565,39 +568,39 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 			return EXPR_RETURN_ERROR_INTERNAL;        // Return internal error
 		}
 		top = stackPop(stack);	// Get character from top of the stack for next run of the cycle
-        }
+	}
 
-        // Search for grammar rule
-		int ruleFound;
-        ruleFound = expr_searchRule(handle);
-        strFree(&handle);       // Free memory of the handle
+	// Search for grammar rule
+	int ruleFound;
+	ruleFound = expr_searchRule(handle);
+	strFree(&handle);       // Free memory of the handle
 
-        // Check if rule was found
-        if(ruleFound == EXPR_RETURN_ERROR_SYNTAX)
-        {
-                expr_error("expr_reduce: Handle doen't match any rule");
-                return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
-        }
+	// Check if rule was found
+	if(ruleFound == EXPR_RETURN_ERROR_SYNTAX)
+	{
+		expr_error("expr_reduce: Handle doen't match any rule");
+		return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+	}
 
-        // Update stack
-        stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
+	// Update stack
+	stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
 
-        // Debug
-        stackInfo(stack);
+	// Debug
+	stackInfo(stack);
 
-        // Return value
-        return EXPR_RETURN_SUCC;       // Return success
+	// Return value
+	return EXPR_RETURN_SUCC;       // Return success
 }
 
 int expr_specialShift(myStack_t *stack, char character)
 {
-        DEBUG_PRINT("[DBG] Operation =\n");
+	DEBUG_PRINT("[DBG] Operation =\n");
 
-        stackPush(stack, character);    // Push the terminal at the end of the stack
+	stackPush(stack, character);    // Push the terminal at the end of the stack
 
-        stackInfo(stack);	// Debug
+	stackInfo(stack);	// Debug
 
-        return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
+	return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
 
 
@@ -647,67 +650,75 @@ int expr_searchRule(string handle)
 
 int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
 {
-        if(algotihmFinished == EXPR_TRUE)       // If already finished
-                return EXPR_TRUE;
+	if(algotihmFinished == EXPR_TRUE)       // If already finished
+		return EXPR_TRUE;
 
-        if(stack->top == 1 && stackTop(stack) == 'E' && tokenType == EXPR_RETURN_NOMORETOKENS)  // If finishing now
-        {
+	if(stack->top == 1 && stackTop(stack) == 'E' && tokenType == EXPR_RETURN_NOMORETOKENS)  // If finishing now
+	{
+		algotihmFinished = EXPR_TRUE;   // Change static int
+		return EXPR_TRUE;
+	}
+	stackInfo(stack);
 
-                algotihmFinished = EXPR_TRUE;   // Change static int
-                return EXPR_TRUE;
-        }
-        stackInfo(stack);
-
-        return EXPR_FALSE;      // Otherwise return false
+	return EXPR_FALSE;      // Otherwise return false
 }
 
 int expr_isFirstValid(token_t firstToken)
 {
-        switch(firstToken.type) // Check token type
-        {
-        // Legal terminals to stand as first
-		case TOK_lParenth:
-		case TOK_identifier:
-		case TOK_integer:
-		case TOK_decimal:
-		case TOK_string:
-                        return EXPR_TRUE;
+	switch(firstToken.type) // Check token type
+	{
+	// Legal terminals to stand as first
+	case TOK_lParenth:
+	case TOK_identifier:
+	case TOK_integer:
+	case TOK_decimal:
+	case TOK_string:
+		return EXPR_TRUE;
 
-                // Other terminals
-                default:
-                        DEBUG_PRINT("[DBG] expr_isFirstValid(): First token is not suitable for being first in expression\n");
-                        return EXPR_FALSE;
-        }
+	// Other terminals
+	default:
+		DEBUG_PRINT("[DBG] expr_isFirstValid(): First token is not suitable for being first in expression\n");
+		return EXPR_FALSE;
+	}
 }
 
-void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token) // @todo
+int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token) // @todo
 {
+	// --- Converting types ---
+	tokenType_t topType = tokStack_Top(tokStack);
+	if(topType == TOK_integer && topType == TOK_decimal && topType == TOK_string)	// No need to convert identifier (int and dec) and string
+	{
+		int retVal;
+		retVal = expr_convertTypes(tokStack, terminal);
+		if(retVal != EXPR_RETURN_SUCC)
+			return retVal;
+	}
+	
+	
+	// --- Add instruction ---
 	switch(terminal)
 	{
 	// Operators
 	case '+':
-		expr_convertTypes(tokStack, terminal);
-
 		if(tokStack_Top(tokStack) != TOK_string)	// Operator '+' used as arithmetic plus
 			add_instruction(ADDS, NULL, NULL, NULL);
 		// If it's used for strings then it is already concated upon loading (kinda strange but easier)
 		break;
 	case '-':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(SUBS, NULL, NULL, NULL);
 		break;
 	case '*':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(MULS, NULL, NULL, NULL);
 		break;
 	case '/':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(DIVS, NULL, NULL, NULL);
 		break;
-	case '\\':
-		expr_convertTypes(tokStack, terminal);
-		add_instruction(DIVS, NULL, NULL, NULL);
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// divInt must have int result
+	case '\\':	
+		add_instruction(DIVS, NULL, NULL, NULL);	// Div have always dec result
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// But divInt must have int result
+		// Update token stack
+		tokStack_Pop(tokStack);
+		tokStack_Push(tokStack, TOK_integer);
 		break;
 
 	// Identifier / integer / decimal
@@ -717,25 +728,47 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 
 	// Logic operators
 	case TERM_equal:
-		add_instruction(EQS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(EQ, NULL, NULL, NULL);
+		else
+			add_instruction(EQS, NULL, NULL, NULL);
 		break;
 	case TERM_notEqual:
-		add_instruction(EQS, NULL, NULL, NULL);
-		add_instruction(NOTS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(NOTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+		{
+			add_instruction(EQS, NULL, NULL, NULL);
+			add_instruction(NOTS, NULL, NULL, NULL);
+		}
 		break;
 	case TERM_less:
-		add_instruction(LTS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(LT, NULL, NULL, NULL);
+		else
+			add_instruction(LTS, NULL, NULL, NULL);
 		break;
 	case TERM_lessEqual:
-		add_instruction(LTEQS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(LTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+			add_instruction(LTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		break;
 	case TERM_greater:
-		add_instruction(GTS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(GT, NULL, NULL, NULL);
+		else
+			add_instruction(GTS, NULL, NULL, NULL);
 		break;
 	case TERM_greaterEqual:
-		add_instruction(GTEQS, NULL, NULL, NULL);
+		if(topType == TOK_string)
+			add_instruction(GTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
+		else
+			add_instruction(GTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		break;
 	}
+	
+	return EXPR_RETURN_SUCC;
 }
 
 
@@ -743,128 +776,104 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 
 // ========== CONVERT FUNCTIONS ==========
 
-void expr_convertTypes(tokStack_t *tokStack, char terminal)
+int expr_convertTypes(tokStack_t *tokStack, char terminal)
 {
+	// Determine if it's logic operation
+	int logicOperator;
 	switch(terminal)
 	{
-		case '+':
-		case '-':
-		case '*':
-		case '/':
-		case '\\':
-		case TERM_equal:	// For logic result the top of tokStack is wrong after this function but it doesn't matter
-		case TERM_notEqual:	// @todo int < int = bool, not int (that means when using logic operation, the tokStack is wrong but it doesn't matter)
+		case TERM_equal:
+		case TERM_notEqual:
 		case TERM_less:
 		case TERM_lessEqual:
 		case TERM_greater:
-		case TERM_greaterEqual:
-		{
-			tokenType_t typeRight = tokStack_Pop(tokStack);
-			tokenType_t typeLeft = tokStack_Pop(tokStack);
-
-			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
-			{
-				if(terminal != '/' && terminal != '\\')
-					tokStack_Push(tokStack, TOK_integer);
-				else
-				{
-					/* Example:	// DIV must have two dec operands
-					[INT / INT = DEC]
-					INT...a
-					INT...b
-					-------------
-					POPS LF@$int
-					INT2FLOATS
-					PUSHS LF@$int
-					INT2FLOATS
-					DIVS
-					*/
-
-					// Prepare string with temporary variable
-					string tmpString;
-					strInit(&tmpString);
-					char *tmpChar = "$int";
-					strCopyConst(&tmpString, tmpChar);
-
-					// Converting instructions
-					add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-					add_instruction(INT2FLOATS, NULL, NULL, NULL);
-					add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-					add_instruction(INT2FLOATS, NULL, NULL, NULL);
-
-					// Update tokStack
-					tokStack_Push(tokStack, TOK_decimal);
-
-					// Free string memory
-					strFree(&tmpString);
-				}
-			}
-			else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
-			{
-				tokStack_Push(tokStack, TOK_decimal);
-			}
-			else if(typeLeft == TOK_string && typeRight == TOK_string)	// string # string = string
-			{
-				tokStack_Push(tokStack, TOK_string);
-			}
-			else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec = dec
-			{
-				/* Example :
-				[INT + DEC = DEC]
-				INT...a
-				DEC...b
-				-------------
-				POPS LF@$dec
-				INT2FLOATS
-				PUSHS LF@$dec
-				ADDS
-				*/
-
-
-				// Prepare string with temporary variable
-				string tmpString;
-				strInit(&tmpString);
-				char *tmpChar = "$dec";
-				strCopyConst(&tmpString, tmpChar);
-
-
-				// Converting instructions
-				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-				add_instruction(INT2FLOATS, NULL, NULL, NULL);
-				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-
-				// Update tokStack
-				tokStack_Push(tokStack, TOK_decimal);
-
-				// Free string memory
-				strFree(&tmpString);
-			}
-			else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int) = dec
-			{
-				/* Example:
-				[DEC + INT = DEC]
-				DEC...b
-				INT...a
-				-------------
-				INT2FLOATS
-				ADDS
-				*/
-
-				// Converting instruction
-				add_instruction(INT2FLOATS, NULL, NULL, NULL);
-
-				// Update tokStack
-				tokStack_Push(tokStack, TOK_decimal);
-			}
-			else
-			{
-				expr_error("expr_convertTypes: Invalid data types combination");
-				return; // @todo
-			}
+		case TERM_greaterEqual:	
+			logicOperator = EXPR_TRUE;
 			break;
-		}
-		default: break;
+		default:
+			logicOperator = EXPR_FALSE;
+			break;
 	}
+	
+	
+	// Operand types to be converted
+	tokenType_t typeRight = tokStack_Pop(tokStack);
+	tokenType_t typeLeft = tokStack_Pop(tokStack);
+
+	if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int
+	{
+		if(terminal != '/' && terminal != '\\')	//  If not using divade then result is int
+			tokStack_Push(tokStack, TOK_integer);
+		else	// If using divade then operands must be decimal
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$int";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$int
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$int
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);	// Result of div is always dec
+
+			// Free string memory
+			strFree(&tmpString);
+		}
+	}
+	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
+	{
+		tokStack_Push(tokStack, TOK_decimal);
+	}
+	else if(typeLeft == TOK_string && typeRight == TOK_string)	// str # str
+	{
+		tokStack_Push(tokStack, TOK_string);	
+	}
+	else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec
+	{
+		// Prepare string with temporary variable
+		string tmpString;
+		strInit(&tmpString);
+		char *tmpChar = "$dec";
+		strCopyConst(&tmpString, tmpChar);
+
+		// Converting instructions
+		add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+		add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+
+		// Update tokStack
+		tokStack_Push(tokStack, TOK_decimal);
+
+		// Free string memory
+		strFree(&tmpString);
+	}
+	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
+	{
+		// Converting instruction
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);
+
+		// Update tokStack
+		tokStack_Push(tokStack, TOK_decimal);
+	}
+	else
+	{
+		expr_error("expr_convertTypes: Invalid data types combination");
+		return EXPR_RETURN_ERROR_INTERNAL;
+	}
+	
+	
+	if(logicOperator == EXPR_TRUE)	// If this is logic operation
+	{
+		tokStack_Pop(tokStack);	// Remove previous tokenType
+		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
+	}
+	
+	return EXPR_RETURN_SUCC;
 }
 
 int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
@@ -1054,7 +1063,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 }
 
 
-int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context)
+int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int *resetTempExpr)
 {
 	while(expr_isAlgotihmFinished(stack, token.type) == EXPR_FALSE)  // Should algorithm continue?
 	{
@@ -1064,7 +1073,7 @@ int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, 
 
 		// --- Continue with the algorithm ---
 		int retVal;     // Return value of the algorithm
-		retVal = expr_algorithm(stack, tokStack, noMoreTokens, context, EXPR_FALSE);
+		retVal = expr_algorithm(stack, tokStack, noMoreTokens, context, EXPR_FALSE, resetTempExpr);
 
 		// --- Check for error ---
 		if(retVal != EXPR_RETURN_SUCC && retVal != EXPR_RETURN_NOMORETOKENS)
