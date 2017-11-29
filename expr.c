@@ -960,7 +960,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				return EXPR_RETURN_ERROR_INTERNAL;
 			}
 
-			// Create varaible name string
+			// Create name string for temporary variable
 			string varString;
 			strInit(&varString);
 			char varChar[4];
@@ -972,15 +972,15 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				default:
 					DEBUG_PRINT("top type is %d\n",topType);
 					expr_error("expr_generateResult: Wrong token type on top of the stack");
+					strFree(&varString);
 					return EXPR_RETURN_ERROR_INTERNAL;
 			}
 			strCopyConst(&varString, varChar);
 
-
-
 			// Add instructions
-			add_instruction(POPS, NULL, &varString, NULL);
-			add_instruction(WRITE, NULL, &varString, NULL);
+			if(topType == TOK_integer || topType == TOK_decimal)	// If it's a number value
+				add_instruction(POPS, NULL, &varString, NULL);	// Pop the value into temporary varaible (string is already in variable $str)
+			add_instruction(WRITE, NULL, &varString, NULL);	// Write the result
 
 			// Free memory
 			strFree(&varString);
