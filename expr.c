@@ -5,7 +5,7 @@
  */
 
 // --- TESTING ---
-//#define DEBUG   // Print stack, operations and table indexes
+#define DEBUG   // Print stack, operations and table indexes
 
 
 // Header file
@@ -255,9 +255,9 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 {
 	static token_t savedToken;	// Save token if it had some tokenValue_t (identifier/integer/decimal/string)
 
-        // Check if algortihm is finished
-        if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
-                return EXPR_RETURN_SUCC;
+	// Check if algortihm is finished
+	if(expr_isAlgotihmFinished(stack, token.type) == EXPR_TRUE)
+		return EXPR_RETURN_SUCC;
 
 	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
@@ -412,11 +412,11 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
                 // Operation REDUCE '>'
 		case ACTION_reduce:
 		{
-			int success;    // Return value of reducing (= searching for rule)
-			success = expr_reduce(stack, tokStack, savedToken);
+			int retVal;    // Return value of reducing (= searching for rule)
+			retVal = expr_reduce(stack, tokStack, savedToken);
 
-			if(success == EXPR_RETURN_ERROR_SYNTAX) // If rule not found
-				return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			if(retVal != EXPR_RETURN_SUCC) // If rule not found
+				return retVal;        // Return syntax error
 
 			// Otherwise continue with algorithm
 			return expr_algorithm(stack, tokStack, token, context, skipMaskingAsID);       // Use recursion (don't ask why, that's just the way it should be)
@@ -549,7 +549,10 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 
 	// Generating instruction
 	char terminal = stackGetTerminal(stack);
-	expr_generateInstruction(tokStack, terminal, token);
+	int retVal;
+	retVal = expr_generateInstruction(tokStack, terminal, token);
+	if(retVal != EXPR_RETURN_SUCC)
+		return retVal;
 
 
 	// Find out what to reduce
@@ -565,28 +568,28 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 			return EXPR_RETURN_ERROR_INTERNAL;        // Return internal error
 		}
 		top = stackPop(stack);	// Get character from top of the stack for next run of the cycle
-        }
+	}
 
-        // Search for grammar rule
-		int ruleFound;
-        ruleFound = expr_searchRule(handle);
-        strFree(&handle);       // Free memory of the handle
+	// Search for grammar rule
+	int ruleFound;
+	ruleFound = expr_searchRule(handle);
+	strFree(&handle);       // Free memory of the handle
 
-        // Check if rule was found
-        if(ruleFound == EXPR_RETURN_ERROR_SYNTAX)
-        {
-                expr_error("expr_reduce: Handle doen't match any rule");
-                return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
-        }
+	// Check if rule was found
+	if(ruleFound == EXPR_RETURN_ERROR_SYNTAX)
+	{
+		expr_error("expr_reduce: Handle doen't match any rule");
+		return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+	}
 
-        // Update stack
-        stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
+	// Update stack
+	stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
 
-        // Debug
-        stackInfo(stack);
+	// Debug
+	stackInfo(stack);
 
-        // Return value
-        return EXPR_RETURN_SUCC;       // Return success
+	// Return value
+	return EXPR_RETURN_SUCC;       // Return success
 }
 
 int expr_specialShift(myStack_t *stack, char character)
@@ -680,34 +683,42 @@ int expr_isFirstValid(token_t firstToken)
         }
 }
 
-void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token) // @todo
+int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token) // @todo
 {
+	// --- Converting types ---
+	if(terminal != 'i' && terminal != TERM_string)	// No need to convert identifier (int and dec) and string
+	{
+		int retVal;
+		retVal = expr_convertTypes(tokStack, terminal);
+		if(retVal != EXPR_RETURN_SUCC)
+			return retVal;
+	}
+	
+	
+	// --- Add instruction ---
 	switch(terminal)
 	{
 	// Operators
 	case '+':
-		expr_convertTypes(tokStack, terminal);
-
 		if(tokStack_Top(tokStack) != TOK_string)	// Operator '+' used as arithmetic plus
 			add_instruction(ADDS, NULL, NULL, NULL);
 		// If it's used for strings then it is already concated upon loading (kinda strange but easier)
 		break;
 	case '-':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(SUBS, NULL, NULL, NULL);
 		break;
 	case '*':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(MULS, NULL, NULL, NULL);
 		break;
 	case '/':
-		expr_convertTypes(tokStack, terminal);
 		add_instruction(DIVS, NULL, NULL, NULL);
 		break;
-	case '\\':
-		expr_convertTypes(tokStack, terminal);
-		add_instruction(DIVS, NULL, NULL, NULL);
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// divInt must have int result
+	case '\\':	
+		add_instruction(DIVS, NULL, NULL, NULL);	// Div have always dec result
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// But divInt must have int result
+		// Update token stack
+		tokStack_Pop(tokStack);
+		tokStack_Push(tokStack, TOK_integer);
 		break;
 
 	// Identifier / integer / decimal
@@ -736,6 +747,8 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 		add_instruction(GTEQS, NULL, NULL, NULL);
 		break;
 	}
+	
+	return EXPR_RETURN_SUCC;
 }
 
 
@@ -743,128 +756,104 @@ void expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token
 
 // ========== CONVERT FUNCTIONS ==========
 
-void expr_convertTypes(tokStack_t *tokStack, char terminal)
+int expr_convertTypes(tokStack_t *tokStack, char terminal)
 {
+	// Determine if it's logic operation
+	int logicOperator;
 	switch(terminal)
 	{
-		case '+':
-		case '-':
-		case '*':
-		case '/':
-		case '\\':
-		case TERM_equal:	// For logic result the top of tokStack is wrong after this function but it doesn't matter
-		case TERM_notEqual:	// @todo int < int = bool, not int (that means when using logic operation, the tokStack is wrong but it doesn't matter)
+		case TERM_equal:
+		case TERM_notEqual:
 		case TERM_less:
 		case TERM_lessEqual:
 		case TERM_greater:
-		case TERM_greaterEqual:
-		{
-			tokenType_t typeRight = tokStack_Pop(tokStack);
-			tokenType_t typeLeft = tokStack_Pop(tokStack);
-
-			if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int = int
-			{
-				if(terminal != '/' && terminal != '\\')
-					tokStack_Push(tokStack, TOK_integer);
-				else
-				{
-					/* Example:	// DIV must have two dec operands
-					[INT / INT = DEC]
-					INT...a
-					INT...b
-					-------------
-					POPS LF@$int
-					INT2FLOATS
-					PUSHS LF@$int
-					INT2FLOATS
-					DIVS
-					*/
-
-					// Prepare string with temporary variable
-					string tmpString;
-					strInit(&tmpString);
-					char *tmpChar = "$int";
-					strCopyConst(&tmpString, tmpChar);
-
-					// Converting instructions
-					add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-					add_instruction(INT2FLOATS, NULL, NULL, NULL);
-					add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-					add_instruction(INT2FLOATS, NULL, NULL, NULL);
-
-					// Update tokStack
-					tokStack_Push(tokStack, TOK_decimal);
-
-					// Free string memory
-					strFree(&tmpString);
-				}
-			}
-			else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
-			{
-				tokStack_Push(tokStack, TOK_decimal);
-			}
-			else if(typeLeft == TOK_string && typeRight == TOK_string)	// string # string = string
-			{
-				tokStack_Push(tokStack, TOK_string);
-			}
-			else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec = dec
-			{
-				/* Example :
-				[INT + DEC = DEC]
-				INT...a
-				DEC...b
-				-------------
-				POPS LF@$dec
-				INT2FLOATS
-				PUSHS LF@$dec
-				ADDS
-				*/
-
-
-				// Prepare string with temporary variable
-				string tmpString;
-				strInit(&tmpString);
-				char *tmpChar = "$dec";
-				strCopyConst(&tmpString, tmpChar);
-
-
-				// Converting instructions
-				add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-				add_instruction(INT2FLOATS, NULL, NULL, NULL);
-				add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-
-				// Update tokStack
-				tokStack_Push(tokStack, TOK_decimal);
-
-				// Free string memory
-				strFree(&tmpString);
-			}
-			else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int) = dec
-			{
-				/* Example:
-				[DEC + INT = DEC]
-				DEC...b
-				INT...a
-				-------------
-				INT2FLOATS
-				ADDS
-				*/
-
-				// Converting instruction
-				add_instruction(INT2FLOATS, NULL, NULL, NULL);
-
-				// Update tokStack
-				tokStack_Push(tokStack, TOK_decimal);
-			}
-			else
-			{
-				expr_error("expr_convertTypes: Invalid data types combination");
-				return; // @todo
-			}
+		case TERM_greaterEqual:	
+			logicOperator = EXPR_TRUE;
 			break;
-		}
-		default: break;
+		default:
+			logicOperator = EXPR_FALSE;
+			break;
 	}
+	
+	
+	// Operand types to be converted
+	tokenType_t typeRight = tokStack_Pop(tokStack);
+	tokenType_t typeLeft = tokStack_Pop(tokStack);
+
+	if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int
+	{
+		if(terminal != '/' && terminal != '\\')	//  If not using divade then result is int
+			tokStack_Push(tokStack, TOK_integer);
+		else	// If using divade then operands must be decimal
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$int";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$int
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$int
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);	// Result of div is always dec
+
+			// Free string memory
+			strFree(&tmpString);
+		}
+	}
+	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
+	{
+		tokStack_Push(tokStack, TOK_decimal);
+	}
+	else if(typeLeft == TOK_string && typeRight == TOK_string)	// str # str
+	{
+		tokStack_Push(tokStack, TOK_string);	
+	}
+	else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec
+	{
+		// Prepare string with temporary variable
+		string tmpString;
+		strInit(&tmpString);
+		char *tmpChar = "$dec";
+		strCopyConst(&tmpString, tmpChar);
+
+		// Converting instructions
+		add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+		add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+
+		// Update tokStack
+		tokStack_Push(tokStack, TOK_decimal);
+
+		// Free string memory
+		strFree(&tmpString);
+	}
+	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
+	{
+		// Converting instruction
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);
+
+		// Update tokStack
+		tokStack_Push(tokStack, TOK_decimal);
+	}
+	else
+	{
+		expr_error("expr_convertTypes: Invalid data types combination");
+		return EXPR_RETURN_ERROR_INTERNAL;
+	}
+	
+	
+	if(logicOperator == EXPR_TRUE)	// If this is logic operation
+	{
+		tokStack_Pop(tokStack);	// Remove previous tokenType
+		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
+	}
+	
+	return EXPR_RETURN_SUCC;
 }
 
 int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
