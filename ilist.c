@@ -848,16 +848,72 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 		
 		case(LT):
-			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
 			break;
 
 		case(GT):
-			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
 			break;
 
 		case(EQ):
-			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test");
+			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
 			break;
+
+		case(NOTEQ):
+			strcpy(INST, "EQ LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "NOTS\n");
+			break;
+
+		case(LTEQ):
+			strcpy(INST, "JUMPIFNEQ ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+				
+				case(con_WHILE):
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+		
+		case(GTEQ):
+			strcpy(INST, "JUMPIFNEQ ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+				
+				case(con_WHILE):
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}
+			Instr->used_lines++;
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
+			break;
+
+
 
 		default:
 			return INTERNAL_ERROR;

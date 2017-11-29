@@ -57,6 +57,9 @@
 #define LT 46
 #define GT 47
 #define EQ 48
+#define NOTEQ 49
+#define LTEQ 50
+#define GTEQ 51
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
