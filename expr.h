@@ -130,7 +130,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  * @param tokenToken	Type of now proceessed token
  * @return 1 = no error (@todo)
  */
-int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context, int skipMaskingAsID);
+int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t tokenType, int context, int skipMaskingAsID, int *resetTempStr);
 
 
 /**
@@ -188,7 +188,7 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_global, string *func_name, st_element_t *variable);
 int expr_convertTypes(tokStack_t *tokStack, char terminal);
 tokenType_t expr_elTypeConvert(type_t el_type);
-int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context);
+int expr_finishAlgorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int context, int *resetTempStr);
 
 /**
  * @brief Check if token be used as begining of expression
