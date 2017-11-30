@@ -325,6 +325,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
 			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$test bool@false\n");
+			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
 
@@ -342,6 +344,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$str\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$test bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
@@ -960,13 +964,13 @@ void print_built_in()
     printf(".IFJcode17\njump Scope\n");
 
     /**** Length ****/
-    printf("LABEL Length\npushframe\n");
+    printf("LABEL length\npushframe\n");
     printf("defvar LF@%%retval\n");
     printf("strlen LF@%%retval LF@s\n");
     printf("popframe\nreturn\n");
 
     /**** SubStr ****/
-    printf("LABEL SubStr\npushframe\n");
+    printf("LABEL substr\npushframe\n");
 	printf("defvar LF@%%retval\n");
     printf("defvar LF@%%tmp\n");
     printf("move LF@%%tmp string@\n");
@@ -998,7 +1002,7 @@ void print_built_in()
     printf("popframe\nreturn\n");
 
     /**** Asc ****/
-    printf("LABEL Asc\npushframe\n");
+    printf("LABEL asc\npushframe\n");
     printf("defvar LF@%%retval\n");
 	printf("Move LF@%%retval int@0\n");
 	printf("defvar LF@%%tmp\n");
@@ -1014,7 +1018,7 @@ void print_built_in()
     printf("popframe\nreturn\n");
 
     /**** Chr ****/
-    printf("LABEL Chr\npushframe\n");
+    printf("LABEL chr\npushframe\n");
     printf("defvar LF@%%retval\n");
 	printf("int2char LF@%%retval LF@i\n");
     printf("popframe\nreturn\n");
