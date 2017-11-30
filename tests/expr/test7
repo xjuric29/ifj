@@ -1,10 +1,10 @@
-'Add integer var to and another integer var with no value (=0)
+'Default value of integer variable
 
 Scope
-    Dim int1 As Integer
-    Dim int2 As Integer
+    Dim int As Integer
     Dim res As Integer
 
-    int1 = 1
-    res = int1 + int2
+    res = 1 + int
+
+    print res;
 End Scope
