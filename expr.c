@@ -186,9 +186,15 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // EXPR_RETURN_NOMORETOKENS = Found token that doesn't belong to expression anymore
 		{
-                        // --- End of expression ---
+			// --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
-			*parserToken = loadedToken;	// Save token for parser to proceed // Don't need this anymore
+			*parserToken = loadedToken;	// Save token for parser to proceed 
+			
+			if(context == EXPRESSION_CONTEXT_PRINT)	// Found different token than string, plus or semicolon in print context
+			{
+				expr_error("expr_main: Found invalid token in print (semicolon is missing)");
+				return EXPR_RETURN_ERROR_SYNTAX;
+			}
 		}
 		else
 		{

@@ -1,0 +1,4 @@
+'String: Print multiple string using semicolon
+Scope
+    print !"Jedna"; !" dva"; !" tri";
+End Scope

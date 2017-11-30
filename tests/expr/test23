@@ -1,0 +1,6 @@
+'ERROR: Try to add multiple string using semicolon to variable
+Scope
+    Dim str as String
+
+    str = !"Jedna"; !" dva"; !" tri";
+End Scope

@@ -1,0 +1,5 @@
+'ERROR: print without semicolon
+
+Scope
+    print !"Blabla"
+End Scope

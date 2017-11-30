@@ -1,4 +1,4 @@
-'Add two string and print
+'String: Add two string and print
 
 Scope
     print !"Prvni " + !"Druhy";
