@@ -263,7 +263,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			if(context == EXPRESSION_CONTEXT_ASSIGN || context == EXPRESSION_CONTEXT_PRINT)
 			{
 				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
-				return EXPR_RETURN_ERROR_SEM;
+				return EXPR_RETURN_ERROR_SYNTAX;
 			}
 			break;
 

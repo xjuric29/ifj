@@ -1,0 +1,7 @@
+'ERROR: Save int to string
+
+Scope
+    Dim str As String
+
+    str = 42
+End Scope
