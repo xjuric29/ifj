@@ -7,7 +7,7 @@ Scope
     str1 = !"Jedna"
     str2 = !"Dva"
 
-    if str1 + str2 = "Jedna Dva" then
+    if str1 + str2 = !"Jedna Dva" then
         print !"chill";
     else
         print !"problem";
