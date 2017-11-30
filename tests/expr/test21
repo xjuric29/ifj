@@ -1,13 +1,13 @@
 'Conditions: Compare two different strings
 
 Scope
-    Dim str1 as String
-    Dim str2 as String
+    Dim A as String
+    Dim B as String
 
-    str1 = !"Jedna"
-    str2 = !"Dva"
+    A = !"Jedna"
+    B = !"Dva"
 
-    if str1 = str2 then
+    if A = B then
         print !"problem";
     else
         print !"chill";

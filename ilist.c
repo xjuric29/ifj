@@ -117,7 +117,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 	char c[100];	
 
-	if(Instr->alloc_lines == (Instr->used_lines + 10))
+	if(Instr->alloc_lines <= (Instr->used_lines + 15))
 	{
 		Instr = realloc(Instr, sizeof(struct I_output) + Instr->alloc_lines*2*sizeof(char*));
 		if(Instr == NULL)
@@ -328,10 +328,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "MOVE LF@$test bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$str string@\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$str2 string@\n");
 			break;
 
 		case(SCOPE):
-			strcpy(INST, "LABEL Scope");
+			strcpy(INST, "\nLABEL Scope\n");
 			Instr->used_lines++;
 			strcpy(INST, "CREATEfRAME\n");
 			Instr->used_lines++;
@@ -348,6 +352,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "MOVE LF@$test bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$str string@\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$str2 string@\n");
 			break;
 		
 		case(MOVE_LF_LF):

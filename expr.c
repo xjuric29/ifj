@@ -132,7 +132,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	// --- Loading tokens ---
 	while(continueLoading)
 	{
-		DEBUG_PRINT("[DBG] Loading token with type %d\n", loadedToken.type);
+		DEBUG_PRINT("[DBG] ---Loading token (type=%d)---\n", loadedToken.type);
 
         int skipMaskingAsID = EXPR_FALSE;	// Reset variable to default
 
@@ -151,7 +151,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 			// --- Find out variable type ---
 			tokenType_t tokenType = expr_elTypeConvert(element->el_type);
-			DEBUG_PRINT("tokenType %d\n", tokenType);
+			//DEBUG_PRINT("tokenType %d\n", tokenType);
 
 			if(tokenType == TOK_FAIL)
 			{
@@ -163,7 +163,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			{
 				// Push variable type to the stack
 				// (If it's value and not variable, then this is done in expr_algorithm())
-				DEBUG_PRINT("Pushing on tokStack type %d\n", tokenType);
+				//DEBUG_PRINT("Pushing on tokStack type %d\n", tokenType);
 				tokStack_Push(&tokStack, tokenType);
 
 				if(tokenType == TOK_string)
@@ -179,6 +179,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID, &resetTempStr);	// Use algorithm on the loaded token
 		if(retVal == EXPR_RETURN_STARTOVER)
 		{
+			DEBUG_PRINT("{DBG} Startover\n");
 			// Found semicolon in print -> Start process over
 			expr_generateResult(&tokStack, context, st_global, func_name, variable);
 			return expr_main(context, parserToken, st_global, func_name, variable);
@@ -186,6 +187,8 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // EXPR_RETURN_NOMORETOKENS = Found token that doesn't belong to expression anymore
 		{
+			DEBUG_PRINT("{DBG} No more tokens\n");
+			
 			// --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
 			*parserToken = loadedToken;	// Save token for parser to proceed 
@@ -198,6 +201,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 		}
 		else
 		{
+			DEBUG_PRINT("{DBG} Else\n");
 			// --- Check for error ---
 			if(retVal != EXPR_RETURN_SUCC)  // If an error occurred
 			{
@@ -208,6 +212,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			//DEBUG_PRINT("[DBG] retVal = %d\n", retVal);
 
 			// --- Load next token ---
+			DEBUG_PRINT("{DBG} getToken\n");
 			getToken(&loadedToken);
 		}
 	}
@@ -301,10 +306,11 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_identifier:
 			savedToken = token; // Save token because it has value
 			if(skipMaskingAsID == EXPR_FALSE)
+			{
 				type = TERM_id;	// Identifier terminal = 'i'
-			else
-				type = TERM_string;	// String terminal = 'str'
-		break;
+				break;
+			}
+			// WATCHOUT KICKASS MLG SKILLZ OVER HERE!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
 		// --- Strings ---
 		case TOK_string:
 			// Setting things for algorithm
@@ -319,7 +325,8 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			strInit(&varString);
 
 			// Switch from $str to $str2 if necessary
-			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE)	// It's not cancating of strings or it's first token
+			//if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)	// It's not cancating (term != +) of strings or it's first token ()
+			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)
 			{
 				if(firstString == EXPR_TRUE)	// Switch $str to $str2
 				{
@@ -327,7 +334,10 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 					*resetTempStr = EXPR_TRUE;	// Set flag to reset $str2
 				}
 				else
-					expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
+				{
+					DEBUG_PRINT("[DBG] @todo Risking some error leak but I don't give a f#@! anymore...");
+					//expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
+				}
 			}
 
 
@@ -396,6 +406,8 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
         // --- Nonexpression token ---
 		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
 	}
+	
+
 
 	// Getting row index (depending on terminal on top of the stack)
 	char top = stackGetTerminal(stack);	// Get character on top of the stack
@@ -534,7 +546,7 @@ char expr_getCharFromIndex(precTableIndex_t index)
 
 int expr_shift(myStack_t *stack, char character)
 {
-	DEBUG_PRINT("[DBG] Operation <\n");
+	DEBUG_PRINT("[DBG] -[Operation <]-\n");
 
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
@@ -546,7 +558,7 @@ int expr_shift(myStack_t *stack, char character)
 
 int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 {
-	DEBUG_PRINT("[DBG] Operation >\n");
+	DEBUG_PRINT("[DBG] -[Operation >]-\n");
 
 	// Initialize variable for handle
 	string handle;	// Right side of grammar rule
@@ -600,7 +612,7 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 
 int expr_specialShift(myStack_t *stack, char character)
 {
-	DEBUG_PRINT("[DBG] Operation =\n");
+	DEBUG_PRINT("[DBG] -[Operation =]-\n");
 
 	stackPush(stack, character);    // Push the terminal at the end of the stack
 
@@ -841,6 +853,11 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 			strFree(&tmpString);
 		}
 	}
+	else if(terminal == '\\')	// If not opreands are not int and operation is divInt
+	{
+		expr_error("expr_convertTypes: divInt with wrong operands types");
+		return EXPR_RETURN_ERROR_TYPES;
+	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 	{
 		tokStack_Push(tokStack, TOK_decimal);
@@ -879,7 +896,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	else
 	{
 		expr_error("expr_convertTypes: Invalid data types combination");
-		return EXPR_RETURN_ERROR_INTERNAL;
+		return EXPR_RETURN_ERROR_TYPES;
 	}
 	
 	
@@ -926,7 +943,7 @@ int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
 
 tokenType_t expr_elTypeConvert(type_t el_type)
 {
-	DEBUG_PRINT("eltype = %d\n", el_type);
+	//DEBUG_PRINT("eltype = %d\n", el_type);
 	switch(el_type)
 	{
 		case st_integer:	return TOK_integer;	break;
@@ -985,17 +1002,17 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				char *varChar = "$str";
 				strCopyConst(&varString, varChar);
 
-				// Temporary token for result variable
-				token_t *resToken = TokenInit();
-				resToken->type = TOK_identifier;
-				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
+				// Token for temporary variable $str
+				token_t *tmpToken = TokenInit();
+				tmpToken->type = TOK_identifier;
+				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
 
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, resToken, &varString, NULL);	// MOVE LF@result LF@$str
+				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str (Reversed becuase fuck my life)
 
 				// Free memory
 				strFree(&varString);
-				TokenFree(resToken);
+				TokenFree(tmpToken);
 			}
 			break;
 

@@ -113,12 +113,23 @@ void stackInfo(myStack_t *stack)
 	
 	
 	//printf("[DBG] Stack(top=%d)='", stack->top);
-        printf("[DBG] STACK='");
+	printf("[DBG] STACK=");
 	for(int i=0; i<=stack->top; i++)
 	{
-			printf("%c",stack->arr[i]);
+		switch(stack->arr[i])
+		{
+			case TERM_string:	printf("str");	break;
+			case TERM_equal:	printf("=");	break;
+			case TERM_notEqual:	printf("<>");	break;
+			case TERM_less:	printf("<");	break;
+			case TERM_lessEqual:	printf("<=");	break;
+			case TERM_greater:	printf(">");	break;
+			case TERM_greaterEqual:	printf(">=");	break;
+			default:	printf("%c",stack->arr[i]);	break;
+		}
+		printf(" ");
 	}
-	printf("'\n");
+	printf("\n");
 #endif
 }
 
