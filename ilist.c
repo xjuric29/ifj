@@ -325,6 +325,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
 			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$test bool@false\n");
+			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
 
@@ -342,6 +344,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$str\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
+			Instr->used_lines++;
+			strcpy(INST, "MOVE LF@$test bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str2\n");
 			break;
