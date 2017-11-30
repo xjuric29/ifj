@@ -40,8 +40,8 @@
 #define EXPR_SUCCESS    1  /// Intarnal return value for success
 #define EXPR_TRUE       1  /// Intarnal return value for true
 #define EXPR_FALSE      0  /// Intarnal return value for false
-#define TOK_FAIL        TOK_endOfFile	/// Representing error return with type tokenType_t
-#define TOK_BOOLEAN     100	/// Boolean data type for tokStack
+#define TOK_FAIL        TOK_endOfFile	/// Representing error return with type tokenType_t (@warning If you change this here, you must change it also in tokstack.h!)
+#define TOK_BOOLEAN     100	/// Boolean data type for tokStack (@warning If you change this here, you must change it also in tokstack.h!)
 #define RESULT_ASSIGNMENT 'R'	/// Representing result assignment with type char (in expr_convertTypes())
 // External return values (@todo This is already defined somewhere for sure)
 #define EXPR_RETURN_SUCC        0

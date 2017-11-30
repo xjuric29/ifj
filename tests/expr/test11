@@ -1,7 +1,9 @@
-'Three int values with priorities
+'Priority: Three int values with priorities
 
 Scope
     Dim int As Integer
 
     int = 5 + 10 * 3
+
+    print int;
 End Scope

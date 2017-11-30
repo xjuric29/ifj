@@ -1,4 +1,4 @@
-'Print string
+'String: Print string
 
 Scope
     print !"Blabla";

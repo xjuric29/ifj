@@ -186,9 +186,15 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		if(retVal == EXPR_RETURN_NOMORETOKENS)    // EXPR_RETURN_NOMORETOKENS = Found token that doesn't belong to expression anymore
 		{
-                        // --- End of expression ---
+			// --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
-			*parserToken = loadedToken;	// Save token for parser to proceed // Don't need this anymore
+			*parserToken = loadedToken;	// Save token for parser to proceed 
+			
+			if(context == EXPRESSION_CONTEXT_PRINT)	// Found different token than string, plus or semicolon in print context
+			{
+				expr_error("expr_main: Found invalid token in print (semicolon is missing)");
+				return EXPR_RETURN_ERROR_SYNTAX;
+			}
 		}
 		else
 		{
@@ -686,7 +692,7 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 {
 	// --- Converting types ---
 	tokenType_t topType = tokStack_Top(tokStack);
-	if(topType == TOK_integer && topType == TOK_decimal && topType == TOK_string)	// No need to convert identifier (int and dec) and string
+	if((topType == TOK_integer || topType == TOK_decimal || topType == TOK_string) && terminal != 'i' && terminal != TERM_string && terminal != ')')	// No need to convert identifier (int and dec) and string && no converting when reducing i to E or str to E
 	{
 		int retVal;
 		retVal = expr_convertTypes(tokStack, terminal);
@@ -766,6 +772,16 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 		else
 			add_instruction(GTEQS, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		break;
+		
+	// Terminals generating no instruction
+	case ')':
+	case TERM_string:	// No need to add instructuon (already done while loading token)
+		break;	
+		
+	// Invalid terminals
+	default:
+		expr_error("generateInstructuon: Unexpected terminal");
+		return EXPR_RETURN_ERROR_INTERNAL;
 	}
 	
 	return EXPR_RETURN_SUCC;

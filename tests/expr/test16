@@ -1,7 +1,9 @@
-'ERROR: Add decimal to int value and try to save it to int
+'Conversion: Add dec to int value and save to int
 
 Scope
     Dim int As Integer
 
     int = 5.3 + 10
+
+    print int;
 End Scope

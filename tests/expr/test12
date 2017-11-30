@@ -1,4 +1,4 @@
-'Try to add string to integer
+'ERROR: Try to add string to integer
 
 Scope
     Dim int As Integer
