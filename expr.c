@@ -306,10 +306,11 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_identifier:
 			savedToken = token; // Save token because it has value
 			if(skipMaskingAsID == EXPR_FALSE)
+			{
 				type = TERM_id;	// Identifier terminal = 'i'
-			else
-				type = TERM_string;	// String terminal = 'str'
-		break;
+				break;
+			}
+			// WATCHOUT KICKASS MLG SKILLZ OVER HERE!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
 		// --- Strings ---
 		case TOK_string:
 			// Setting things for algorithm
@@ -324,7 +325,8 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			strInit(&varString);
 
 			// Switch from $str to $str2 if necessary
-			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)	// It's not cancating of strings or it's first token
+			//if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)	// It's not cancating (term != +) of strings or it's first token ()
+			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)
 			{
 				if(firstString == EXPR_TRUE)	// Switch $str to $str2
 				{
@@ -332,7 +334,10 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 					*resetTempStr = EXPR_TRUE;	// Set flag to reset $str2
 				}
 				else
-					expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
+				{
+					DEBUG_PRINT("[DBG] @todo Risking some error leak but I don't give a f#@! anymore...");
+					//expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
+				}
 			}
 
 
@@ -401,6 +406,8 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
         // --- Nonexpression token ---
 		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
 	}
+	
+
 
 	// Getting row index (depending on terminal on top of the stack)
 	char top = stackGetTerminal(stack);	// Get character on top of the stack
@@ -990,17 +997,17 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				char *varChar = "$str";
 				strCopyConst(&varString, varChar);
 
-				// Temporary token for result variable
-				token_t *resToken = TokenInit();
-				resToken->type = TOK_identifier;
-				strCopyString(resToken->value.stringVal, &variable->key);	// Simulate identifier token for result variable
+				// Token for temporary variable $str
+				token_t *tmpToken = TokenInit();
+				tmpToken->type = TOK_identifier;
+				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
 
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, resToken, &varString, NULL);	// MOVE LF@result LF@$str
+				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str (Reversed becuase fuck my life)
 
 				// Free memory
 				strFree(&varString);
-				TokenFree(resToken);
+				TokenFree(tmpToken);
 			}
 			break;
 
