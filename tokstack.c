@@ -5,7 +5,10 @@
  * @todo
  */
 
+//#define TOKSTACKDEBUG
 #include "tokstack.h"
+
+
 
 int tokStack_Init(tokStack_t *stack)
 {
@@ -34,6 +37,11 @@ int tokStack_Push(tokStack_t *stack, tokenType_t tokenType)
 	// Push token to the stack
 	stack->tokArr[stack->top] = tokenType;   
 	
+	// Debug
+	#ifdef TOKSTACKDEBUG
+	tokStack_Info(stack);
+	#endif
+	
 	// Return success
 	return SUCCESS;
 }
@@ -48,6 +56,11 @@ tokenType_t tokStack_Pop(tokStack_t *stack)
 		
 	// Decrease top of the stack
 	(stack->top)--;  
+	
+	// Debug
+	#ifdef TOKSTACKDEBUG
+	tokStack_Info(stack);
+	#endif
 	
 	// Return pointer to the token on top of the stack
 	return topType;
@@ -87,3 +100,22 @@ void tokStack_Error(char* msg)
 {
 		fprintf(stderr, "[ERROR] %s\n", msg);
 }
+
+#ifdef TOKSTACKDEBUG
+void tokStack_Info(tokStack_t *stack)
+{
+	printf("[DBG] tokStack=");
+	for(int i = 0; i <= stack->top; i++)
+	{
+		switch(stack->tokArr[i])
+		{
+			case TOK_integer:	printf("int ");	break;
+			case TOK_decimal:	printf("dec ");	break;
+			case TOK_string:	printf("str ");	break;
+			case TOK_BOOLEAN:	printf("bool ");	break;
+			default:	printf("WTF ");	break;
+		}
+	}
+	printf("\n");
+}
+#endif

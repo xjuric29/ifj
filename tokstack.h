@@ -25,6 +25,7 @@
 #define TRUE 1
 #define FALSE 0
 #define TOK_FAIL	TOK_endOfFile	/// Representing error return with type tokenType_t
+#define TOK_BOOLEAN     100	/// Boolean data type for tokStack
 
 
 //	--- Strucutres ---
@@ -42,5 +43,9 @@ tokenType_t tokStack_Top(tokStack_t *stack);
 int tokStack_Empty(tokStack_t *stack);
 int tokStack_Full(tokStack_t *stack);
 void tokStack_Error(char* msg);
+
+#ifdef TOKSTACKDEBUG
+void tokStack_Info(tokStack_t *stack);
+#endif
 
 #endif
