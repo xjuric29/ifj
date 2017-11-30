@@ -1,0 +1,7 @@
+'Advanced math
+
+Scope
+    Dim dec As Double = (42 + 2*69 + 4) / 92 / 14 + 59 - 89 * (98 - 5 /2)
+
+    print dec;
+End Scope

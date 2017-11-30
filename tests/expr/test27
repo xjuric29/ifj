@@ -1,0 +1,7 @@
+'Expression in declaration
+
+Scope
+    Dim dec As Double = (42 + 2*69 + 4) / 92
+
+    print dec;
+End Scope

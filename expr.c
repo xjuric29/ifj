@@ -853,6 +853,11 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 			strFree(&tmpString);
 		}
 	}
+	else if(terminal == '\\')	// If not opreands are not int and operation is divInt
+	{
+		expr_error("expr_convertTypes: divInt with wrong operands types");
+		return EXPR_RETURN_ERROR_TYPES;
+	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 	{
 		tokStack_Push(tokStack, TOK_decimal);
@@ -891,7 +896,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	else
 	{
 		expr_error("expr_convertTypes: Invalid data types combination");
-		return EXPR_RETURN_ERROR_INTERNAL;
+		return EXPR_RETURN_ERROR_TYPES;
 	}
 	
 	

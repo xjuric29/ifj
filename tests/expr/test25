@@ -4,7 +4,7 @@ Scope
     Dim A as String
     Dim B as String
 
-    A = !"Jedna"
+    A = !"Jedna "
     B = !"Dva"
 
     if A + B = !"Jedna Dva" then
