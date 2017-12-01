@@ -179,7 +179,6 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             for(int ii = 0; ii < GlobalTable->global_size; ii++){
                 st_localTable_t *PrechadzaniePomoc = GlobalTable->functions[ii];
                 while (PrechadzaniePomoc != NULL){
-                    printf("%s\n", PrechadzaniePomoc->key.str);
                     if (!PrechadzaniePomoc->defined){
                         return SEM_ERROR_FUNC;
                     }
