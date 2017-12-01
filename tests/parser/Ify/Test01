@@ -1,0 +1,19 @@
+'If 
+
+function func(A as integer) as integer
+	if A < 5 then
+		print !"Mensie\n";
+	else 
+		print !"Vacsie\n";
+	end if 
+end function
+
+scope 
+	dim A as integer = func(2)
+	if a > 5 then
+		print !"Prve\n";
+	else
+		print !"Druhe\n";
+	end if 
+end scope
+		

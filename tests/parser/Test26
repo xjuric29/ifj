@@ -1,0 +1,11 @@
+'OK: Pretypovanie parametrov
+
+function func(A as integer, b as double) as integer
+	print A; !"\n";
+	print B; !"\n";
+end function
+
+scope 
+	dim ret as double = func(10.5, 6)
+	print !"ret = "; ret; !"\n";
+end scope

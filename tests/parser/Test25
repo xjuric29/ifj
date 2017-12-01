@@ -1,0 +1,10 @@
+'ERROR: Volanie funkcie s viacej argumentami
+
+function func (A as integer) as integer
+	return A
+end function
+
+scope 
+	dim b as integer = func(6.5, 20) 
+	print b;
+end scope
