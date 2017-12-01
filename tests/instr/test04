@@ -1,0 +1,9 @@
+scope
+	dim a as integer
+	a = 1 + 1 * 5 - 8*2 + 9*3
+	if a > 5 then
+		print !"ok\n";
+	else
+		print !"not ok\n";
+	end if
+end scope
