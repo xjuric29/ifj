@@ -37,3 +37,6 @@ tokstack.o: tokstack.c
 
 clean:
 	rm -f *.o *.out *.gch
+
+test:
+	tests/runtest.sh

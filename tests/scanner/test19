@@ -1,0 +1,4 @@
+'vypis stringu
+scope
+	print !"";
+end scope

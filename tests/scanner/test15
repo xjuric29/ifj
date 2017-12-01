@@ -1,0 +1,4 @@
+'nepodporovany zapis desetinneho cisla
+scope
+	dim ahoj as double = 0.
+end scope

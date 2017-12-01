@@ -1,0 +1,4 @@
+'mozny double
+scope
+	dim ahoj as double = 1e+2
+end scope

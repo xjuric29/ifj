@@ -1,0 +1,5 @@
+'vypis s primim eol, ktere by melo fungovat
+scope
+	print !"A
+hoj";
+end scope

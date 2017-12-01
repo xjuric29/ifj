@@ -1,0 +1,4 @@
+'mozny double
+scope
+	dim ahoj as double = 1.654
+end scope
