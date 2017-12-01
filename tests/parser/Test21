@@ -1,0 +1,10 @@
+'ERROR: Nekompatabilny parameter predany identifikatorom
+
+function func(D as double) as double
+	return 5.5
+end function
+
+scope 
+	dim str1 as string = !"string"
+	dim A as integer = func(str1)
+end scope

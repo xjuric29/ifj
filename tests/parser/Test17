@@ -1,0 +1,11 @@
+'OK
+
+function func () as string
+	return !"Spravne\n"
+end function
+
+scope 
+	dim A as string = !"Nespravne\n"
+	A = func ()
+	print a;
+end scope

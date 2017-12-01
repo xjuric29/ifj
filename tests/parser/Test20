@@ -1,0 +1,9 @@
+'ERROR: Volanie s nekompatabilnym parametrom
+
+function func(I as integer) as integer
+	return 5
+end function
+
+scope 
+	dim a as integer = func(!"String")
+end scope

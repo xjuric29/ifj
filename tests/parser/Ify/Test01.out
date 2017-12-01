@@ -1,0 +1,183 @@
+.IFJcode17
+jump Scope
+LABEL length
+pushframe
+defvar LF@%retval
+strlen LF@%retval LF@s
+popframe
+return
+LABEL substr
+pushframe
+defvar LF@%retval
+defvar LF@%tmp
+move LF@%tmp string@
+move LF@%retval string@
+sub LF@i LF@i int@1
+defvar LF@test
+lt LF@test LF@i int@0
+jumpifeq $1subLOOP LF@test bool@true
+lt LF@test LF@n int@0
+jumpifeq $1subELSE LF@test bool@true
+createframe
+defvar TF@s
+Move TF@s LF@s
+call Length
+sub TF@%retval TF@%retval LF@i
+gt LF@test LF@n TF@%retval
+add LF@n LF@n LF@i
+jumpifeq $1subELSE LF@test bool@false
+Move LF@n TF@%retval
+add LF@n LF@n LF@i
+LABEL $1subELSE
+lt LF@test LF@i LF@n
+jumpifeq $1subLOOP LF@test bool@false
+getchar LF@%tmp LF@s LF@i
+concat LF@%retval LF@%retval LF@%tmp
+add LF@i LF@i int@1
+jump $1subELSE
+LABEL $1subLOOP
+LABEL $1subIF
+popframe
+return
+LABEL asc
+pushframe
+defvar LF@%retval
+Move LF@%retval int@0
+defvar LF@%tmp
+defvar LF@%test
+sub LF@i LF@i int@1
+strlen LF@%tmp LF@s
+lt LF@%test LF@i int@0
+jumpifeq $1ascIF LF@%test bool@true
+lt LF@%test LF@i LF@%tmp
+jumpifeq $1ascIF LF@%test bool@false
+stri2int LF@%retval LF@s LF@i
+LABEL $1ascIF
+popframe
+return
+LABEL chr
+pushframe
+defvar LF@%retval
+int2char LF@%retval LF@i
+popframe
+return
+LABEL func
+
+PUSHfRAME
+
+DEFVAR LF@%retval
+
+DEFVAR LF@$int
+
+DEFVAR LF@$dec
+
+DEFVAR LF@$str
+
+DEFVAR LF@$test
+
+MOVE LF@$test bool@false
+
+DEFVAR LF@$str2
+
+MOVE LF@$str string@
+
+MOVE LF@$str2 string@
+
+MOVE LF@%retval int@0
+
+
+PUSHS LF@a
+
+PUSHS int@5
+
+LTS
+
+PUSHS bool@false
+
+JUMPIFEQS $$1$$ELSE
+
+MOVE LF@$str string@
+
+CONCAT LF@$str LF@$str string@Mensie\010
+
+WRITE LF@$str
+
+JUMP $$1$$ENDIF
+
+LABEL $$1$$ELSE
+
+MOVE LF@$str string@
+
+CONCAT LF@$str LF@$str string@Vacsie\010
+
+WRITE LF@$str
+
+LABEL $$1$$ENDIF
+
+POPFRAME
+
+RETURN 
+
+
+LABEL Scope
+
+CREATEfRAME
+
+PUSHfRAME
+
+DEFVAR LF@$int
+
+DEFVAR LF@$dec
+
+DEFVAR LF@$str
+
+DEFVAR LF@$test
+
+MOVE LF@$test bool@false
+
+DEFVAR LF@$str2
+
+MOVE LF@$str string@
+
+MOVE LF@$str2 string@
+
+DEFVAR LF@a
+
+CREATEFRAME
+
+DEFVAR TF@a
+
+MOVE TF@a int@2
+
+CALL func
+
+MOVE LF@a TF@%retval
+
+PUSHS LF@a
+
+PUSHS int@5
+
+GTS
+
+PUSHS bool@false
+
+JUMPIFEQS $$2$$ELSE
+
+MOVE LF@$str string@
+
+CONCAT LF@$str LF@$str string@Prve\010
+
+WRITE LF@$str
+
+JUMP $$2$$ENDIF
+
+LABEL $$2$$ELSE
+
+MOVE LF@$str string@
+
+CONCAT LF@$str LF@$str string@Druhe\010
+
+WRITE LF@$str
+
+LABEL $$2$$ENDIF
+

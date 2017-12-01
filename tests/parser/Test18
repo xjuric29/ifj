@@ -1,0 +1,10 @@
+'ERROR: Funkcia string do premennej double
+
+function func() as string
+	return !"Return\n"
+end function 
+
+scope 
+	dim a as double = func()
+end scope
+
