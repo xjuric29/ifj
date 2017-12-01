@@ -1,0 +1,10 @@
+Declare Function faktorial (n as integer) as integer
+
+Funtion faktorial(n as string) as integer
+	dim a as integer = 5
+	print a
+end function
+
+scope
+	faktorial(5)
+end scope

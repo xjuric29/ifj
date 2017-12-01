@@ -1,0 +1,10 @@
+'ERROR: Menej argumentov pri volani, ziadne
+
+function func(A as integer, B as double) as integer
+	return A
+end function
+
+scope 
+	dim a as integer = func()
+	print A;
+end scope

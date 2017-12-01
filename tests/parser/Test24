@@ -1,0 +1,9 @@
+'ERROR: Viacej argumentov vo volani funkcie
+
+function func () as integer 
+	return 5
+end function
+
+scope 
+	dim a as integer = func(5)
+end scope
