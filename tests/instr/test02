@@ -1,0 +1,7 @@
+Declare function faktorial (n as integer) as integer
+
+Scope
+	dim a as integer
+	dim vysl as integer
+	vysl = faktorial(a)
+end scope

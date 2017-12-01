@@ -1,0 +1,10 @@
+scope
+	dim a as string
+	dim b as string
+	a = !"prvy retazec";
+	b = !"druhy retazec";
+	a = a + b
+	b = b + a
+	print a;
+	print b;
+end scope

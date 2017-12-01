@@ -1,0 +1,10 @@
+scope
+	dim a as integer
+	a = 5 + 8 - 5
+	a = a + a
+	if a > 5 then
+		print a;
+	else
+		print !"not ok";
+	end if
+end scope

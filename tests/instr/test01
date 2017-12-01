@@ -1,0 +1,29 @@
+function func(B as double, C as integer) as double
+	dim A as integer = B + 69
+	if a < 5 then
+		print 5;
+		if A > 5 then
+		else
+			if A > 6 then
+				print 6;
+			else
+			end if
+		end if 
+	else
+		print 6;
+	end if
+	
+	if A > 6 then
+	else 
+	end if
+	return A + C
+
+end function
+
+scope 
+	dim L as integer = func(6, 5.5)
+	print l; 
+end scope
+
+
+

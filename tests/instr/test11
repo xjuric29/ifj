@@ -1,0 +1,12 @@
+scope
+	dim a as integer = 0
+	if a < 0 then
+		print !"not ok";
+	else
+		if a < 1 then
+			print !"ok";
+		else
+			print !"not ok";
+		end if
+	end if
+end scope
