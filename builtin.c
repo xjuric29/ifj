@@ -28,6 +28,7 @@ int addBuiltTable(st_globalTable_t *GlobalTable){
     if ((BuiltinFunc = st_add_func(GlobalTable, &funcName)) == NULL){
         return INTERNAL_ERROR;
     }
+    BuiltinFunc->defined = true;
     //Set parameters
     if (strCopyConst(&VariableName, "s")){
         return INTERNAL_ERROR;
@@ -79,6 +80,7 @@ int addBuiltTable(st_globalTable_t *GlobalTable){
 
     //Return value of function
     BuiltinFunc->func_type = st_string;
+    BuiltinFunc->defined = true;
 
 
     /** ADD FUNCTION asc **/
@@ -110,6 +112,7 @@ int addBuiltTable(st_globalTable_t *GlobalTable){
 
     //Return value of function
     BuiltinFunc->func_type = st_integer;
+    BuiltinFunc->defined = true;
 
 
     /** ADD FUNCTION chr **/
@@ -132,6 +135,7 @@ int addBuiltTable(st_globalTable_t *GlobalTable){
 
     //Return value of function
     BuiltinFunc->func_type = st_string;
+    BuiltinFunc->defined = true;
 
     strFree(&funcName);
     strFree(&VariableName);
