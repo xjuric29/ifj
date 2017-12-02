@@ -1100,9 +1100,29 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				return retVal;
 			}
 
-			// --- Add instruction --- (pop result value to variable)
-			add_instruction(RETVAL_POP, NULL, NULL, NULL);
+			// --- Add instruction ---
+			if(tokStack_Top(tokStack) != TOK_string)	// Returning number value
+				add_instruction(RETVAL_POP, NULL, NULL, NULL);	// Pop result value into return
+			else	// Returning string value
+			{
+				// Name for temporary string variable
+				string varString;
+				strInit(&varString);
+				char *varChar = "$str";
+				strCopyConst(&varString, varChar);
 
+				// Token for temporary variable $str
+				token_t *tmpToken = TokenInit();
+				tmpToken->type = TOK_identifier;
+				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
+
+				// Move result to result variable
+				add_instruction(RETVAL_IN, tmpToken, NULL, NULL);	// Return $str
+
+				// Free memory
+				strFree(&varString);
+				TokenFree(tmpToken);
+			}
 			break;
 		}
 	}
