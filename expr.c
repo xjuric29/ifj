@@ -107,7 +107,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	if(context != EXPRESSION_CONTEXT_ASSIGN)	// If context is arithmetic, first token is already loaded by parser
 	{
 		// Load token from scanner
-		getToken(&loadedToken);
+		int scannerReturn = getToken(&loadedToken);
+		if (scannerReturn != SUCCESS)
+		{
+			expr_error("expr_main: Scanner error");
+			return scannerReturn;
+		}
 	}
 	DEBUG_PRINT("[DBG] First token with type %d\n", loadedToken.type);
 
@@ -213,7 +218,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 			// --- Load next token ---
 			DEBUG_PRINT("{DBG} getToken\n");
-			getToken(&loadedToken);
+			int scannerReturn = getToken(&loadedToken);
+			if (scannerReturn != SUCCESS)
+			{
+				expr_error("expr_main: Scanner error");
+				return scannerReturn;
+			}
 		}
 	}
 	DEBUG_PRINT("[DBG] Loading done\n");
@@ -1026,6 +1036,8 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 		// ===== Expression context print =====
 		case EXPRESSION_CONTEXT_PRINT:
 		{
+			DEBUG_PRINT("{DBG} Generating print\n");
+			
 			// Get type of token on top of the stack
 			tokenType_t topType = tokStack_Top(tokStack);
 			if(topType == TOK_FAIL)
@@ -1036,8 +1048,12 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 
 			// Create name string for temporary variable
 			string varString;
-			strInit(&varString);
-			char varChar[4];
+			if(strInit(&varString) == STR_ERROR)
+			{
+				expr_error("expr_generateResult: Couldn't init string");
+				return EXPR_RETURN_ERROR_INTERNAL;
+			}
+			char varChar[5];
 			switch(topType)
 			{
 				case TOK_integer:	strcpy(varChar, "$int");	break;
