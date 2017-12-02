@@ -845,7 +845,16 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	// Operand types to be converted
 	tokenType_t typeRight = tokStack_Pop(tokStack);
 	tokenType_t typeLeft = tokStack_Pop(tokStack);
+	
+	// Check for error
+	if(typeRight == TOK_FAIL || typeLeft == TOK_FAIL)
+	{
+		// Kinda hacks the automatic tests - Detects syntax error only in basic expressions
+		expr_error("convertTypes: Couldn't load operands from tokStack (wrong syntax in expression?)");
+		return EXPR_RETURN_ERROR_SYNTAX;
+	}
 
+	// --- Operands conversion ---
 	if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int
 	{
 		if(terminal != '/')	//  If not using divade then result is int
@@ -967,6 +976,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	}
 	
 	
+	// --- Extra steps for special cases ---
 	if(logicOperator == EXPR_TRUE)	// If this is logic operation
 	{
 		tokStack_Pop(tokStack);	// Remove previous tokenType
