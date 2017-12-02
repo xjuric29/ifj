@@ -95,4 +95,6 @@ void print_all(); //call from main
 
 void inst_free(); //call at the end of program
 
+void addInstComment(char *comment);
+
 #endif
