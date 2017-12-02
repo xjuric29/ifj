@@ -454,10 +454,18 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case ACTION_specialShift:
 			return expr_specialShift(stack, expr_getCharFromIndex(type));
 
-		// ILEGAL OPERATON '#'
-		case ACTION_ilegal:
-			expr_error("expr_algorithm: Tried to perform an ilegal action");
-			return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+		// ILLEGAL OPERATON '#'
+		case ACTION_illegal:
+			if(row == TERM_string && type > TERM_plus && type < TERM_lBrac)	// Stack is string and operation is arithmetic (and not plus)
+			{
+				expr_error("expr_algorithm: Operation not suitable for string operands");
+				return EXPR_RETURN_ERROR_TYPES;        // Return types error				
+			}
+			else
+			{
+				expr_error("expr_algorithm: Tried to perform an illegal action");
+				return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			}
 	}
 
         // @todo Edit this function so this below doesn't look so stupid
@@ -487,11 +495,11 @@ precTableAction_t expr_readTable(precTableIndex_t rowIndex, precTableIndex_t col
 		case '<':	return ACTION_shift;
 		case '>':	return ACTION_reduce;
 		case '=':	return ACTION_specialShift;
-		case '#':	return ACTION_ilegal;
+		case '#':	return ACTION_illegal;
 
 		default:	// Invalid character
 			expr_error("expr_readTable: Invalid character in the precedent table");
-			return ACTION_ilegal;
+			return ACTION_illegal;
 	}
 }
 
@@ -1097,6 +1105,11 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 
 		// ===== Expression context logic =====
 		case EXPRESSION_CONTEXT_LOGIC:
+			if(tokStack_Top(tokStack) != TOK_BOOLEAN)
+			{
+				expr_error("expr_generateResult: Result of logic expression is not boolean");
+				return EXPR_RETURN_ERROR_TYPES;
+			}				
 			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
 
