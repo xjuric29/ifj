@@ -1,0 +1,4 @@
+'pripustna varianta identifikatoru
+scope
+	dim _ as integer
+end scope

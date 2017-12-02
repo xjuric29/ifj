@@ -35,7 +35,7 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
   {'>', '>', '>', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // \    // The space after '\' is important
   {'>', '>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // *
   {'>', '>', '>', '>', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>', '#'},  // /
-  {'<', '<', '<', '<', '<', '<', '=', '<', '#', '<', '<', '<', '<', '<', '<', '#'},  // (
+  {'<', '<', '<', '<', '<', '<', '=', '<', '#', '<', '<', '<', '<', '<', '<', '<'},  // (
   {'>', '>', '>', '>', '>', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // )
   {'>', '>', '>', '>', '>', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // i
   {'<', '<', '<', '<', '<', '<', '#', '<', '#', '<', '<', '<', '<', '<', '<', '<'},  // $
@@ -45,7 +45,7 @@ char precTable[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
   {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // <=
   {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >
   {'<', '<', '<', '<', '<', '<', '>', '<', '>', '#', '#', '#', '#', '#', '#', '<'},  // >=
-  {'>', '#', '#', '#', '#', '#', '#', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // str
+  {'>', '#', '#', '#', '#', '#', '>', '#', '>', '>', '>', '>', '>', '>', '>', '#'},  // str
 };
 
 
@@ -107,7 +107,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	if(context != EXPRESSION_CONTEXT_ASSIGN)	// If context is arithmetic, first token is already loaded by parser
 	{
 		// Load token from scanner
-		getToken(&loadedToken);
+		int scannerReturn = getToken(&loadedToken);
+		if (scannerReturn != SUCCESS)
+		{
+			expr_error("expr_main: Scanner error");
+			return scannerReturn;
+		}
 	}
 	DEBUG_PRINT("[DBG] First token with type %d\n", loadedToken.type);
 
@@ -213,7 +218,12 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 			// --- Load next token ---
 			DEBUG_PRINT("{DBG} getToken\n");
-			getToken(&loadedToken);
+			int scannerReturn = getToken(&loadedToken);
+			if (scannerReturn != SUCCESS)
+			{
+				expr_error("expr_main: Scanner error");
+				return scannerReturn;
+			}
 		}
 	}
 	DEBUG_PRINT("[DBG] Loading done\n");
@@ -263,7 +273,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			if(context == EXPRESSION_CONTEXT_ASSIGN || context == EXPRESSION_CONTEXT_PRINT)
 			{
 				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
-				return EXPR_RETURN_ERROR_SEM;
+				return EXPR_RETURN_ERROR_SYNTAX;
 			}
 			break;
 
@@ -1026,6 +1036,8 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 		// ===== Expression context print =====
 		case EXPRESSION_CONTEXT_PRINT:
 		{
+			DEBUG_PRINT("{DBG} Generating print\n");
+			
 			// Get type of token on top of the stack
 			tokenType_t topType = tokStack_Top(tokStack);
 			if(topType == TOK_FAIL)
@@ -1036,8 +1048,12 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 
 			// Create name string for temporary variable
 			string varString;
-			strInit(&varString);
-			char varChar[4];
+			if(strInit(&varString) == STR_ERROR)
+			{
+				expr_error("expr_generateResult: Couldn't init string");
+				return EXPR_RETURN_ERROR_INTERNAL;
+			}
+			char varChar[5];
 			switch(topType)
 			{
 				case TOK_integer:	strcpy(varChar, "$int");	break;
@@ -1084,9 +1100,29 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				return retVal;
 			}
 
-			// --- Add instruction --- (pop result value to variable)
-			add_instruction(RETVAL_POP, NULL, NULL, NULL);
+			// --- Add instruction ---
+			if(tokStack_Top(tokStack) != TOK_string)	// Returning number value
+				add_instruction(RETVAL_POP, NULL, NULL, NULL);	// Pop result value into return
+			else	// Returning string value
+			{
+				// Name for temporary string variable
+				string varString;
+				strInit(&varString);
+				char *varChar = "$str";
+				strCopyConst(&varString, varChar);
 
+				// Token for temporary variable $str
+				token_t *tmpToken = TokenInit();
+				tmpToken->type = TOK_identifier;
+				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
+
+				// Move result to result variable
+				add_instruction(RETVAL_IN, tmpToken, NULL, NULL);	// Return $str
+
+				// Free memory
+				strFree(&varString);
+				TokenFree(tmpToken);
+			}
 			break;
 		}
 	}

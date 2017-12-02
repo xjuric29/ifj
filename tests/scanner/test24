@@ -1,0 +1,4 @@
+'vypis s nekolika escape sekvencemi
+scope
+	print !"Ahoj\nSve'te\\ \034";
+end scope

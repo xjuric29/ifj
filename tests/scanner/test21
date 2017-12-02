@@ -1,0 +1,4 @@
+'vypis i s jednoduchou escape sekvenci
+scope
+	print !"\"";
+end scope

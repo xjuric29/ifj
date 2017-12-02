@@ -1,0 +1,9 @@
+'ERROR: Menej parametrov pri volani funkcie
+
+function func(A as integer, B as string) as integer
+	return 5
+end function
+
+scope 
+	dim a as integer = func(5)
+end scope

@@ -1,0 +1,32 @@
+'If in while
+
+function func(A as integer) as integer
+	dim b as integer
+	if A > 2 then 	
+		do while a < 10
+			print !"A = "; a; 
+			b = 0
+			do while b < 5
+				print !" - "; b ;
+				b = b + 1
+			loop 
+			a = a + 1
+			print !"\n";
+		loop
+	else 
+		print !"Mesie ako 2\n";
+	end if  
+
+	print !"--------------\n";
+	print !"Posledne while\n";
+
+	'do while b < 6 
+'		print !"-" ; b ; "-";
+'	loop
+'	print !"\n";
+
+end function
+
+scope 
+	dim b as integer = func(3)
+end scope

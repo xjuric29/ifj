@@ -1,0 +1,4 @@
+'nepripustna varianta identifikatoru
+scope
+	dim 21yolo as integer
+end scope

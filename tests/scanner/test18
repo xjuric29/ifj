@@ -1,0 +1,4 @@
+'chybny zapis double
+scope
+	dim ahoj as double = 1C2
+end scope

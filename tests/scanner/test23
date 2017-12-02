@@ -1,0 +1,4 @@
+'vypis s nekolika escape sekvencemi
+scope
+	print !"\n\t\065";
+end scope
