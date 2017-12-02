@@ -273,7 +273,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			if(context == EXPRESSION_CONTEXT_ASSIGN || context == EXPRESSION_CONTEXT_PRINT)
 			{
 				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
-				return EXPR_RETURN_ERROR_SYNTAX;
+				return EXPR_RETURN_ERROR_TYPES;
 			}
 			break;
 
@@ -743,7 +743,7 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 		break;
 	case '\\':	
 		add_instruction(DIVS, NULL, NULL, NULL);	// Div have always dec result
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// But divInt must have int result
+		add_instruction(FLOAT2INTS, NULL, NULL, NULL);	// But divInt must have int result @todo TRUCNATE
 		// Update token stack
 		tokStack_Pop(tokStack);
 		tokStack_Push(tokStack, TOK_integer);
@@ -840,7 +840,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 
 	if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int
 	{
-		if(terminal != '/' && terminal != '\\')	//  If not using divade then result is int
+		if(terminal != '/')	//  If not using divade then result is int
 			tokStack_Push(tokStack, TOK_integer);
 		else	// If using divade then operands must be decimal
 		{
@@ -863,14 +863,30 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 			strFree(&tmpString);
 		}
 	}
-	else if(terminal == '\\')	// If not opreands are not int and operation is divInt
-	{
-		expr_error("expr_convertTypes: divInt with wrong operands types");
-		return EXPR_RETURN_ERROR_TYPES;
-	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 	{
-		tokStack_Push(tokStack, TOK_decimal);
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$dec";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+
+			// Free string memory
+			strFree(&tmpString);		
+		}
+		else	// Other instructions need dec on both sides
+			tokStack_Push(tokStack, TOK_decimal);
 	}
 	else if(typeLeft == TOK_string && typeRight == TOK_string)	// str # str
 	{
@@ -878,30 +894,63 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	}
 	else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec
 	{
-		// Prepare string with temporary variable
-		string tmpString;
-		strInit(&tmpString);
-		char *tmpChar = "$dec";
-		strCopyConst(&tmpString, tmpChar);
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Convert decimal to integer
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);
+			
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+		}
+		else	// Other instructions need dec on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$dec";
+			strCopyConst(&tmpString, tmpChar);
 
-		// Converting instructions
-		add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
-		add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
 
-		// Update tokStack
-		tokStack_Push(tokStack, TOK_decimal);
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);
 
-		// Free string memory
-		strFree(&tmpString);
+			// Free string memory
+			strFree(&tmpString);
+		}
 	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
 	{
-		// Converting instruction
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$int";
+			strCopyConst(&tmpString, tmpChar);
 
-		// Update tokStack
-		tokStack_Push(tokStack, TOK_decimal);
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$int
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$int
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+
+			// Free string memory
+			strFree(&tmpString);			
+		}
+		else	// Other instructions need dec on both sides
+		{
+			// Converting instruction
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);
+		}
 	}
 	else
 	{
@@ -914,6 +963,25 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	{
 		tokStack_Pop(tokStack);	// Remove previous tokenType
 		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
+	}
+	else if(terminal == '\\')	// If operation is divInt
+	{
+		// Both operands are now int, but we can divide only decimal values
+
+		// Prepare string with temporary variable
+		string tmpString;
+		strInit(&tmpString);
+		char *tmpChar = "$dec";
+		strCopyConst(&tmpString, tmpChar);
+
+		// Converting instructions
+		add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+		add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+
+		// Free string memory
+		strFree(&tmpString);
 	}
 	
 	return EXPR_RETURN_SUCC;

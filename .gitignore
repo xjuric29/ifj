@@ -4,3 +4,5 @@ compiler
 tests/04_expressions
 *.3ac
 ic17int
+*.IFJcode17
+*.TOKEN
