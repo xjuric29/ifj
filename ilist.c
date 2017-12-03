@@ -46,7 +46,7 @@ char *convert_string(char *str)
 	int len = 0;
 	size_t max_len = 2*strlen(str);
 	char c[5];
-	char *result = malloc(max_len);
+	char *result = (char*)malloc(max_len*sizeof(char));
 	result[0] = '\0';
 	if(result == NULL)
 		return NULL;
@@ -231,9 +231,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 					case TOK_string:
 						strcat(INST, "string@");
-						char *tmp = convert_string(op1->value.stringVal->str);
-						strcat(INST, tmp);
-						free(tmp);
+						if(strlen(op1->value.stringVal->str) != 0)
+						{
+							char *tmp = convert_string(op1->value.stringVal->str);
+							strcat(INST, tmp);
+							free(tmp);
+						}
 						break;
 				
 					default:
@@ -400,9 +403,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case TOK_string:
 					strcat(INST, " string@");
-					char *tmp = convert_string(op1->value.stringVal->str);
-					strcat(INST, tmp);
-					free(tmp);
+					if(strlen(op1->value.stringVal->str) != 0)
+					{
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+					}
 					break;
 				
 				default:
@@ -437,9 +443,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case TOK_string:
 					strcat(INST, " string@");
-					char *tmp = convert_string(op1->value.stringVal->str);
-					strcat(INST, tmp);
-					free(tmp);
+					
+					if(strlen(op1->value.stringVal->str) != 0)
+					{
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+					}
 					break;
 
 				default:
@@ -473,10 +483,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case TOK_string:
 					strcat(INST, " string@");
-					char *tmp = convert_string(op1->value.stringVal->str);
-					strcat(INST, tmp);
-					free(tmp);
 
+					if(strlen(op1->value.stringVal->str) != 0)
+					{
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+					}
 					break;
 
 				default:
@@ -541,9 +554,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case TOK_string:
 					strcat(INST, " string@");
-					char *tmp = convert_string(op1->value.stringVal->str);
-					strcat(INST, tmp);
-					free(tmp);
+					if(strlen(op1->value.stringVal->str) != 0)
+					{
+						char *tmp = convert_string(op1->value.stringVal->str);
+						strcat(INST, tmp);
+						free(tmp);
+					}
 					break;
 				
 				case KW_double:
@@ -859,9 +875,16 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 	
 				case TOK_string:
 					strcat(INST, " string@");
-					char *tmp = convert_string(op1->value.stringVal->str);
-					strcat(INST, tmp);
-					free(tmp);
+					if(strlen(op1->value.stringVal->str) != 0)
+					{
+						char *tmp = convert_string(op1->value.stringVal->str);
+						if(strlen(tmp) > (INSTSIZE - 30 - 2*strlen(op2->str)))
+						{
+								INST = (char*)realloc(INST, (INSTSIZE + strlen(tmp)*sizeof(char)));
+						}
+						strcat(INST, tmp);
+						free(tmp);
+					}
 					break;
 
 				default:
