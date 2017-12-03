@@ -16,7 +16,7 @@
 
 
 //** GLobal variables, that helps in parser **//
-bool DecOrDefAndEOF = false; //To check if program have scope and then eof
+//bool DecOrDefAndEOF = false; //To check if program have scope and then eof
 int ScannerInt; //For int returned by function getToken() to control LEX_ERROR or INTERNAL_ERROR;
 string FunctionID; //To know in which function we are
 int ParamNumber; //To store number of parameter we are checking
@@ -83,21 +83,6 @@ int parse(){
     //Start recursive descent
     Result = program(CurrentToken, ToCheck, GlobalTable);
 
-    //Testy *********/
-    /*st_localTable_t *FF = st_find_func(GlobalTable, &FunctionID);
-    if (FF->params != NULL){
-        st_element_t *Param = FF->params->first;
-        int i = 0;
-        printf("Pocet parametrov je: %d\n", FF->params->params_n);
-        while(Param != NULL){
-            i++;
-            printf("Parameter %d: %s --> %d\n", i, Param->key.str, Param->el_type);
-            Param = Param->next_param;
-        }
-    }
-    printf ("Funkcii v tabulke je = %d\n", GlobalTable->global_n);
-    //printf ("Prvkov vo funkcii je = %d\n", GlobalTable->functions[40]->local_n);
-    /**********/
     strFree(&FunctionID);
     TokenFree(CurrentToken); //Free Token
     st_delete(GlobalTable); //Free Global table
@@ -132,10 +117,10 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
     switch(CurrentToken->type){
         //<prog> -> EOF
         case TOK_endOfFile: //Here just for the empty file
-            if (DecOrDefAndEOF){ //If there was declaration or definition and no scope its error
+            /*if (DecOrDefAndEOF){ //If there was declaration or definition and no scope its error
                 return SYN_ERROR;
-            }
-            return SUCCESS;
+            }*/
+            return SYN_ERROR;
 
         //<prog>	-> <function-declaration> <prog>
         case KW_declare:
@@ -144,7 +129,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
                 return RecurCallResult;
             }
 
-            DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
+            //DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
             RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
@@ -158,7 +143,7 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-            DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
+            //DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
             //<prog>
             RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
@@ -929,7 +914,7 @@ int Stats(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalT
             //<stats>
             return Stats(CurrentToken, ToCheck, GlobalTable);
 
-        //PRINT <expresion> SEMICOLON <more-print> <stats>
+        //PRINT <expresion> EOL <stats>
         case KW_print:
 
             //Call expresion
