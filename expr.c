@@ -273,7 +273,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			if(context == EXPRESSION_CONTEXT_ASSIGN || context == EXPRESSION_CONTEXT_PRINT)
 			{
 				expr_error("expr_algortihm: Logic oprator can't be in assignment or print expression");
-				return EXPR_RETURN_ERROR_SYNTAX;
+				return EXPR_RETURN_ERROR_TYPES;
 			}
 			break;
 
@@ -454,10 +454,18 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case ACTION_specialShift:
 			return expr_specialShift(stack, expr_getCharFromIndex(type));
 
-		// ILEGAL OPERATON '#'
-		case ACTION_ilegal:
-			expr_error("expr_algorithm: Tried to perform an ilegal action");
-			return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+		// ILLEGAL OPERATON '#'
+		case ACTION_illegal:
+			if(row == TERM_string && type > TERM_plus && type < TERM_lBrac)	// Stack is string and operation is arithmetic (and not plus)
+			{
+				expr_error("expr_algorithm: Operation not suitable for string operands");
+				return EXPR_RETURN_ERROR_TYPES;        // Return types error				
+			}
+			else
+			{
+				expr_error("expr_algorithm: Tried to perform an illegal action");
+				return EXPR_RETURN_ERROR_SYNTAX;        // Return syntax error
+			}
 	}
 
         // @todo Edit this function so this below doesn't look so stupid
@@ -487,11 +495,11 @@ precTableAction_t expr_readTable(precTableIndex_t rowIndex, precTableIndex_t col
 		case '<':	return ACTION_shift;
 		case '>':	return ACTION_reduce;
 		case '=':	return ACTION_specialShift;
-		case '#':	return ACTION_ilegal;
+		case '#':	return ACTION_illegal;
 
 		default:	// Invalid character
 			expr_error("expr_readTable: Invalid character in the precedent table");
-			return ACTION_ilegal;
+			return ACTION_illegal;
 	}
 }
 
@@ -743,7 +751,7 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 		break;
 	case '\\':	
 		add_instruction(DIVS, NULL, NULL, NULL);	// Div have always dec result
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// But divInt must have int result
+		add_instruction(FLOAT2INTS, NULL, NULL, NULL);	// But divInt must have int result @todo TRUCNATE
 		// Update token stack
 		tokStack_Pop(tokStack);
 		tokStack_Push(tokStack, TOK_integer);
@@ -837,10 +845,19 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	// Operand types to be converted
 	tokenType_t typeRight = tokStack_Pop(tokStack);
 	tokenType_t typeLeft = tokStack_Pop(tokStack);
+	
+	// Check for error
+	if(typeRight == TOK_FAIL || typeLeft == TOK_FAIL)
+	{
+		// Kinda hacks the automatic tests - Detects syntax error only in basic expressions
+		expr_error("convertTypes: Couldn't load operands from tokStack (wrong syntax in expression?)");
+		return EXPR_RETURN_ERROR_SYNTAX;
+	}
 
+	// --- Operands conversion ---
 	if(typeLeft == TOK_integer && typeRight == TOK_integer)	// int # int
 	{
-		if(terminal != '/' && terminal != '\\')	//  If not using divade then result is int
+		if(terminal != '/')	//  If not using divade then result is int
 			tokStack_Push(tokStack, TOK_integer);
 		else	// If using divade then operands must be decimal
 		{
@@ -863,14 +880,30 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 			strFree(&tmpString);
 		}
 	}
-	else if(terminal == '\\')	// If not opreands are not int and operation is divInt
-	{
-		expr_error("expr_convertTypes: divInt with wrong operands types");
-		return EXPR_RETURN_ERROR_TYPES;
-	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_decimal)	// dec # dec = dec
 	{
-		tokStack_Push(tokStack, TOK_decimal);
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$dec";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+
+			// Free string memory
+			strFree(&tmpString);		
+		}
+		else	// Other instructions need dec on both sides
+			tokStack_Push(tokStack, TOK_decimal);
 	}
 	else if(typeLeft == TOK_string && typeRight == TOK_string)	// str # str
 	{
@@ -878,6 +911,81 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	}
 	else if(typeLeft == TOK_integer && typeRight == TOK_decimal)	// (int) # dec
 	{
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Convert decimal to integer
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);
+			
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+		}
+		else	// Other instructions need dec on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$dec";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);
+
+			// Free string memory
+			strFree(&tmpString);
+		}
+	}
+	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
+	{
+		if(terminal == '\\')	// divInt need int on both sides
+		{
+			// Prepare string with temporary variable
+			string tmpString;
+			strInit(&tmpString);
+			char *tmpChar = "$int";
+			strCopyConst(&tmpString, tmpChar);
+
+			// Converting instructions
+			add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$int
+			add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL);	// FLOAT2R2EINTS
+			add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$int
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_integer);
+
+			// Free string memory
+			strFree(&tmpString);			
+		}
+		else	// Other instructions need dec on both sides
+		{
+			// Converting instruction
+			add_instruction(INT2FLOATS, NULL, NULL, NULL);
+
+			// Update tokStack
+			tokStack_Push(tokStack, TOK_decimal);
+		}
+	}
+	else
+	{
+		expr_error("expr_convertTypes: Invalid data types combination");
+		return EXPR_RETURN_ERROR_TYPES;
+	}
+	
+	
+	// --- Extra steps for special cases ---
+	if(logicOperator == EXPR_TRUE)	// If this is logic operation
+	{
+		tokStack_Pop(tokStack);	// Remove previous tokenType
+		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
+	}
+	else if(terminal == '\\')	// If operation is divInt
+	{
+		// Both operands are now int, but we can divide only decimal values
+
 		// Prepare string with temporary variable
 		string tmpString;
 		strInit(&tmpString);
@@ -888,32 +996,10 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 		add_instruction(POPS, NULL, &tmpString, NULL);	// POPS LF@$dec
 		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
 		add_instruction(PUSHS, NULL, &tmpString, NULL);	// PUSHS LF@$dec
-
-		// Update tokStack
-		tokStack_Push(tokStack, TOK_decimal);
+		add_instruction(INT2FLOATS, NULL, NULL, NULL);	// INT2FLOATS
 
 		// Free string memory
 		strFree(&tmpString);
-	}
-	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
-	{
-		// Converting instruction
-		add_instruction(INT2FLOATS, NULL, NULL, NULL);
-
-		// Update tokStack
-		tokStack_Push(tokStack, TOK_decimal);
-	}
-	else
-	{
-		expr_error("expr_convertTypes: Invalid data types combination");
-		return EXPR_RETURN_ERROR_TYPES;
-	}
-	
-	
-	if(logicOperator == EXPR_TRUE)	// If this is logic operation
-	{
-		tokStack_Pop(tokStack);	// Remove previous tokenType
-		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
 	}
 	
 	return EXPR_RETURN_SUCC;
@@ -1029,6 +1115,11 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 
 		// ===== Expression context logic =====
 		case EXPRESSION_CONTEXT_LOGIC:
+			if(tokStack_Top(tokStack) != TOK_BOOLEAN)
+			{
+				expr_error("expr_generateResult: Result of logic expression is not boolean");
+				return EXPR_RETURN_ERROR_TYPES;
+			}				
 			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
 
