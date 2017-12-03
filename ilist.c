@@ -127,7 +127,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 	char c[100];	
 
-	if(Instr->alloc_lines <= (Instr->used_lines + 15))
+	if(Instr->alloc_lines <= (Instr->used_lines + 40))
 	{
 		Instr = realloc(Instr, sizeof(struct I_output) + Instr->alloc_lines*2*sizeof(char*));
 		if(Instr == NULL)
@@ -371,6 +371,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "DEFVAR LF@$dec\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$int2\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$dec2\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
 			Instr->used_lines++;
