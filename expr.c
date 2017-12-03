@@ -5,7 +5,7 @@
  */
 
 // --- TESTING ---
-#define DEBUG   // Print stack, operations and table indexes
+//#define DEBUG   // Print stack, operations and table indexes
 
 
 // Header file
@@ -103,29 +103,28 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 
 	// --- Loading first token ---
-	//token_t loadedToken;	// Loaded token for this iterration of cycle
-	//loadedToken = *parserToken;	// It has no purpose, it's just to be more read friendly
+	token_t loadedToken;	// Loaded token for this iterration of cycle
+	loadedToken = *parserToken;	// It has no purpose, it's just to be more read friendly
 
 	if(context != EXPRESSION_CONTEXT_ASSIGN)	// If context is arithmetic, first token is already loaded by parser
 	{
 		// Load token from scanner
-		int scannerReturn = getToken(parserToken);
+		int scannerReturn = getToken(&loadedToken);
 		if (scannerReturn != SUCCESS)
 		{
 			expr_error("expr_main: Scanner error");
 			return scannerReturn;
 		}
-		//*parserToken = loadedToken;
 	}
-	DEBUG_PRINT("[DBG] First token with type %d\n", parserToken->type);
+	DEBUG_PRINT("[DBG] First token with type %d\n", loadedToken.type);
 
 
 	// --- Check first token type ---
-	if(expr_isFirstValid(*parserToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
+	if(expr_isFirstValid(loadedToken) == EXPR_FALSE) // Can be token used as beginning of an expression?
 	{
 		if(context == EXPRESSION_CONTEXT_PRINT)	// If found semicolon in print context
 		{
-			//*parserToken = loadedToken;	// Save token for parser
+			*parserToken = loadedToken;	// Save token for parser
 			DEBUG_PRINT("--- Expression module success ---\n");
 			return EXPR_RETURN_SUCC;	// Return to parser
 		}
@@ -140,20 +139,19 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 	// --- Loading tokens ---
 	while(continueLoading)
 	{
-		DEBUG_PRINT("[DBG] ---Loading token (type=%d)---\n", parserToken->type);
+		DEBUG_PRINT("[DBG] ---Loading token (type=%d)---\n", loadedToken.type);
 
         int skipMaskingAsID = EXPR_FALSE;	// Reset variable to default
 
 		// --- Search for varibale in symbol table ---
-		if(parserToken->type == TOK_identifier)  // If token is variable
+		if(loadedToken.type == TOK_identifier)  // If token is variable
 		{
-			st_element_t *element = st_find_element(st_global, func_name, parserToken->value.stringVal);
+			st_element_t *element = st_find_element(st_global, func_name, loadedToken.value.stringVal);
 
 			// --- Check if variable exists ---
 			if(element == NULL)   // Haven't found it in the table
 			{
 				expr_error("expr_main: Tried to work with nonexisting variable");
-				DEBUG_PRINT("[DBG] st_find_element(st_global, \"%s\", \"%s\")\n", strGetStr(func_name), strGetStr(parserToken->value.stringVal));
 				DEBUG_PRINT("--- Expression module end (error #02) ---\n");
 				return EXPR_RETURN_ERROR_SEM;   // Return semantics error
 			}
@@ -185,7 +183,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 		// --- CORE OF THE FUNCTION ---
 		int retVal;	// Internal terminal type
-		retVal = expr_algorithm(&stack, &tokStack, *parserToken, context, skipMaskingAsID, &resetTempStr);	// Use algorithm on the loaded token
+		retVal = expr_algorithm(&stack, &tokStack, loadedToken, context, skipMaskingAsID, &resetTempStr);	// Use algorithm on the loaded token
 		if(retVal == EXPR_RETURN_STARTOVER)
 		{
 			DEBUG_PRINT("{DBG} Startover\n");
@@ -200,7 +198,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 			
 			// --- End of expression ---
 			continueLoading = 0;	// Stop the loading cycle
-			//*parserToken = loadedToken;	// Save token for parser to proceed 
+			*parserToken = loadedToken;	// Save token for parser to proceed 
 			
 			if(context == EXPRESSION_CONTEXT_PRINT)	// Found different token than string, plus or semicolon in print context
 			{
@@ -222,7 +220,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 			// --- Load next token ---
 			DEBUG_PRINT("{DBG} getToken\n");
-			int scannerReturn = getToken(parserToken);
+			int scannerReturn = getToken(&loadedToken);
 			if (scannerReturn != SUCCESS)
 			{
 				expr_error("expr_main: Scanner error");
@@ -235,7 +233,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
 	// --- Finish the algorith ---
 	// (This happens when there are no more tokens to load but algorithm is still not finished)
-	int retVal = expr_finishAlgorithm(&stack, &tokStack, *parserToken, context, &resetTempStr);
+	int retVal = expr_finishAlgorithm(&stack, &tokStack, loadedToken, context, &resetTempStr);
 	if(retVal != EXPR_RETURN_SUCC)
 	{
 		// Found semicolon in print -> Start process over
