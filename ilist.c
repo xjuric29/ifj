@@ -1035,7 +1035,7 @@ void print_built_in()
     printf("jumpifeq $1subELSE LF@test bool@true\n");
 	printf("createframe\n");
     printf("defvar TF@s\nMove TF@s LF@s\n");
-    printf("call Length\n");
+    printf("call length\n");
     printf("sub TF@%%retval TF@%%retval LF@i\n");
     printf("gt LF@test LF@n TF@%%retval\n");
 	printf("add LF@n LF@n LF@i\n");
