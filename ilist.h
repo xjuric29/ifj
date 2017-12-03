@@ -60,6 +60,7 @@
 #define NOTEQ 49
 #define LTEQ 50
 #define GTEQ 51
+#define FLOAT2INTS 52
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
@@ -93,5 +94,7 @@ int instr_init(); //call from main
 void print_all(); //call from main
 
 void inst_free(); //call at the end of program
+
+void addInstComment(char *comment);
 
 #endif
