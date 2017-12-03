@@ -1,0 +1,4 @@
+'vypis s chybou
+scope
+	print !"ah;
+end scope

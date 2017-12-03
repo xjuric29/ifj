@@ -1,0 +1,4 @@
+'vypis s nekolika escape sekvencemi
+scope
+	print !"\065\104\111\106\044\032\080\101\116\101\114\101\033\010";
+end scope

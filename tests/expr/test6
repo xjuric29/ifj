@@ -6,4 +6,6 @@ Scope
 
     dec = 2.3
     res = dec + 6.9
+
+    print res;
 End Scope

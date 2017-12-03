@@ -1,0 +1,9 @@
+'Conditions: Comparing arithmetic expressions
+
+Scope
+    if 1 + 2 < 2 + 2 then
+        print !"chill";
+    else
+        print !"problem";
+    end if
+End Scope

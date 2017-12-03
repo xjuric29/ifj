@@ -5,5 +5,10 @@ Scope
     Dim dec2 As double
     Dim res As double
 
+    dec1 = 5.3
+    dec2 = 10.1
+
     res = dec1 + dec2
+
+    print res;
 End Scope

@@ -3,13 +3,13 @@
 Scope
     Dim int1 As Integer
     Dim int2 As Integer
-    Dim res As Integer
 
     int1 = 1
     int2 = 2
     if int1 < int2 then
-        res = 1
+        print !"chill";
     else
-        res = 0
+        print !"problem";
+    end if
     
 End Scope

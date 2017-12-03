@@ -1,0 +1,13 @@
+'OK: Pretypovanie pri priradeni
+
+function func(A as integer, B as double) as double
+	print A; !"\n";
+	print B; !"\n";
+end function
+
+scope 
+	dim a as double = 5
+	dim b as integer = 1.5
+	dim ret as integer = func(A, B)
+	print ret; !"\n";
+end scope

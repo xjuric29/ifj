@@ -1,0 +1,5 @@
+'ERROR: divInt on dec number
+
+Scope
+    print 1.6 \ 3;
+End Scope

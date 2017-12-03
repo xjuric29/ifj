@@ -1,0 +1,9 @@
+'ERROR : Nekompatabilny return typ - funkcia
+
+function func() as integer
+	return !"A"
+end function
+
+scope 
+	dim a as integer = func()
+end scope

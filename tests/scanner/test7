@@ -1,0 +1,4 @@
+'vhodny integer
+scope
+	dim ahoj as integer = 1234
+end scope

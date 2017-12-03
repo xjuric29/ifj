@@ -259,7 +259,7 @@ int getToken(token_t *loadedToken)
     static bool useLastChar = false;
 
     // Step for calling this function after EOF token was send.
-    if (lastChar == EOF) return setTokenType(loadedToken, TOK_endOfLine);
+    if (lastChar == EOF) return setTokenType(loadedToken, TOK_endOfFile);
     if (useLastChar)
     {
         currChar = lastChar;

@@ -1,0 +1,31 @@
+'If in if 
+
+function func(A as integer) as integer
+	dim B as integer
+	print !"Zadajte B: "; B; !"  ";
+	input B	
+	if A < 10 then
+		print !"Prvy if, true\n";
+		if B < 15 then
+			print !"Druhy if, true\n";
+
+		else 
+			print !"Druhy if, false\n";
+			if B > 10 then
+				print !"Treti if, true\n";
+			else 
+				print !"Treti if, false\n";
+			end if
+		end if 
+	else 
+		print !"Prvy if, false\n"
+	end if 
+
+end function
+
+scope 
+	dim a as integer
+	print !" Zadajte A: "
+	input A
+	dim B as double = func(A)
+end scope

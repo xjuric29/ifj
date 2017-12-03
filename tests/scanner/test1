@@ -1,0 +1,4 @@
+'pripustna varianta identifikatoru
+scope
+	dim aHoj as integer
+end scope

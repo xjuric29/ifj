@@ -1,0 +1,5 @@
+'String: Print string
+
+Scope
+    print !"Blabla";
+End Scope

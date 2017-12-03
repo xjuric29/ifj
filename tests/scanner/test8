@@ -1,0 +1,4 @@
+'dle zadani nepripustna zaporna celociselna hodnota
+scope
+	dim ahoj as integer = -650
+end scope

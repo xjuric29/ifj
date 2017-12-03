@@ -1,0 +1,15 @@
+'Conditions: Not equal operator
+
+Scope
+    Dim int1 As Integer
+    Dim int2 As Integer
+
+    int1 = 1
+    int2 = 2
+    if int1 <> int2 then
+        print !"chill";
+    else
+        print !"probllem";
+    end if    
+
+End Scope

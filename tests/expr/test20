@@ -1,0 +1,5 @@
+'ERROR: Add two string and int
+
+Scope
+    print !"Prvni " + !"Druhy" + 3;
+End Scope

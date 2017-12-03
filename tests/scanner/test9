@@ -1,0 +1,4 @@
+'mozny double
+scope
+	dim ahoj as double = 0.0
+end scope

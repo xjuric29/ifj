@@ -8,4 +8,6 @@ Scope
     int1 = 1
     int2 = 2
     res = int1 + int2
+
+    print res;
 End Scope

@@ -1,0 +1,15 @@
+'Conditions: Compare two different strings
+
+Scope
+    Dim A as String
+    Dim B as String
+
+    A = !"Jedna"
+    B = !"Dva"
+
+    if A = B then
+        print !"problem";
+    else
+        print !"chill";
+    end if
+End Scope
