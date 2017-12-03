@@ -84,6 +84,16 @@ char *convert_string(char *str)
 	return result;
 }
 
+void addInstComment(char *comment)
+{
+	if(strlen(comment) >= INSTSIZE)
+		return;
+	strcpy(INST, "#************** %s **************\n");
+	strcat(INST, comment);
+	Instr->used_lines++;
+	return;
+}
+
 
 
 void inst_free()
@@ -925,7 +935,9 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
 			break;
 
-
+		case(FLOAT2INTS):
+			strcpy(INST, "FLOAT2INTS\n");
+			break;
 
 		default:
 			return INTERNAL_ERROR;
