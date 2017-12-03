@@ -901,7 +901,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 			tokStack_Push(tokStack, TOK_integer);
 
 			// Free string memory
-			strFree(&tmpString);		
+			strFree(&tmpString);	
 		}
 		else	// Other instructions need dec on both sides
 			tokStack_Push(tokStack, TOK_decimal);
@@ -938,6 +938,9 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 
 			// Free string memory
 			strFree(&tmpString);
+			
+			// Save types after conversion (used for duplication)
+			typeLeft = TOK_decimal; 
 		}
 	}
 	else if(typeLeft == TOK_decimal && typeRight == TOK_integer)	// dec # (int)
@@ -968,6 +971,9 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 
 			// Update tokStack
 			tokStack_Push(tokStack, TOK_decimal);
+			
+			// Save types after conversion (used for duplication)
+			typeRight = TOK_decimal; 
 		}
 	}
 	else
