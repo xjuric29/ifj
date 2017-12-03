@@ -132,7 +132,15 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		Instr = realloc(Instr, sizeof(struct I_output) + Instr->alloc_lines*2*sizeof(char*));
 		if(Instr == NULL)
 			return INTERNAL_ERROR;
-		Instr->alloc_lines*=2;
+		unsigned tmp = Instr->alloc_lines*2;
+		for(unsigned i = Instr->alloc_lines; i < tmp; i++)
+		{
+			Instr->instrList[i] = (char*)malloc(INSTSIZE*sizeof(char));
+			if(Instr->instrList[i] == NULL)
+				return INTERNAL_ERROR;
+			Instr->alloc_lines++;
+		}
+	//	Instr->alloc_lines*=2;
 	}
 	
 	switch(instType)
@@ -960,6 +968,7 @@ int instr_init()
 	if(Instr == NULL)
 		return INTERNAL_ERROR;
 	Instr->used_lines = 0;
+	Instr->alloc_lines = 0;
 	
 	for(unsigned i = 0; i < INSTNUMBER; i++)
 	{
@@ -970,7 +979,7 @@ int instr_init()
 	}
 		
 	
-	Instr->alloc_lines = INSTNUMBER;
+	//Instr->alloc_lines = INSTNUMBER;
 	
 	
 	return 0;
