@@ -61,7 +61,7 @@ typedef enum
 	ACTION_shift,
 	ACTION_reduce,
 	ACTION_specialShift,
-	ACTION_ilegal	/// Trying to perform an ilegal action
+	ACTION_illegal	/// Trying to perform an illegal action
 }	precTableAction_t;
 
 

@@ -71,7 +71,7 @@ tokenType_t tokStack_Top(tokStack_t *stack)
 	// Check if stack is empty
 	if(tokStack_Empty(stack) == TRUE)      
 	{
-		tokStack_Error("tokStackPush: Tring to pop/top empty stack");
+		tokStack_Error("tokStackTop: Tring to pop/top empty stack");
 		return TOK_FAIL; // @todo checking whne called this function!!!!!!
 	}	
 		
