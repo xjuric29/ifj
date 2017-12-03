@@ -820,6 +820,7 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 
 
 
+
 // ========== CONVERT FUNCTIONS ==========
 
 int expr_convertTypes(tokStack_t *tokStack, char terminal)
@@ -981,6 +982,66 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 	{
 		tokStack_Pop(tokStack);	// Remove previous tokenType
 		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
+		
+		// --- Duplicating operands on the stack ---
+		if(terminal == TERM_greaterEqual || terminal == TERM_lessEqual)	// If instruction is made from two comparsions combined 
+		{
+			// Create name strings for temporary variables
+			string leftString;
+			string rightString;
+			if(strInit(&leftString) == STR_ERROR || strInit(&rightString) == STR_ERROR)
+			{
+				expr_error("expr_convertTypes: Couldn't init strings");
+				return EXPR_RETURN_ERROR_INTERNAL;
+			}
+		
+			
+			// Pop right operand to temporary variable
+			char rightChar[6];
+			switch(typeRight)
+			{
+				case TOK_integer:	strcpy(rightChar, "$int2");	break;
+				case TOK_decimal:	strcpy(rightChar, "$dec2");	break;
+				case TOK_string:	break;	// No need to duplicate strings, they are already in $str and $str2
+				default:
+					expr_error("expr_convertTypes: Right operadns is invalid type");
+					strFree(&leftString);
+					strFree(&rightString);
+					return EXPR_RETURN_ERROR_INTERNAL;
+			}
+			strCopyConst(&rightString, rightChar);
+			add_instruction(POPS, NULL, &rightString, NULL);	// POPS LF@$int or POPS LF@$dec
+		
+		
+			// Pop left operand to temporary variable
+			char leftChar[5];
+			switch(typeLeft)
+			{
+				case TOK_integer:	strcpy(leftChar, "$int");	break;
+				case TOK_decimal:	strcpy(leftChar, "$dec");	break;
+				case TOK_string:	break;	// No need to duplicate strings, they are already in $str and $str2
+				default:
+					expr_error("expr_convertTypes: Left operadns is invalid type");
+					strFree(&leftString);
+					strFree(&rightString);
+					return EXPR_RETURN_ERROR_INTERNAL;
+			}
+			strCopyConst(&leftString, leftChar);
+			add_instruction(POPS, NULL, &leftString, NULL);	// POPS LF@$int or POPS LF@$dec
+		
+		
+			// Push operands back to stack two times (duplication)
+			add_instruction(PUSHS, NULL, &leftString, NULL);	// PUSHS LF@$int or POPS LF@$dec
+			add_instruction(PUSHS, NULL, &rightString, NULL);	// PUSHS LF@$int or POPS LF@$dec
+			add_instruction(PUSHS, NULL, &leftString, NULL);	// PUSHS LF@$int or POPS LF@$dec
+			add_instruction(PUSHS, NULL, &rightString, NULL);	// PUSHS LF@$int or POPS LF@$dec
+		
+		
+			// Free memory
+			strFree(&leftString);
+			strFree(&rightString);
+		}
+		
 	}
 	else if(terminal == '\\')	// If operation is divInt
 	{
