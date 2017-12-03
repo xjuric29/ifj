@@ -342,6 +342,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$dec\n");
 			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$int2\n");
+			Instr->used_lines++;
+			strcpy(INST, "DEFVAR LF@$dec2\n");
+			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$str\n");
 			Instr->used_lines++;
 			strcpy(INST, "DEFVAR LF@$test\n");
@@ -691,13 +695,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					return INTERNAL_ERROR;
 			}
 			Instr->used_lines++;
-			strcpy(INST, INSTPREV3);
-			Instr->used_lines++;
-			strcpy(INST, INSTPREV3);
-			Instr->used_lines++;
+		//	strcpy(INST, INSTPREV3);
+		//	Instr->used_lines++;
+		//	strcpy(INST, INSTPREV3);
+		//	Instr->used_lines++;
 			strcpy(INST, "LTS\n");
-			Instr->used_lines++;
-			/*strcpy(INST, "PUSHS bool@false\n");
+			/*Instr->used_lines++;
+			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
@@ -741,13 +745,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					return INTERNAL_ERROR;
 			}
 			Instr->used_lines++;
-			strcpy(INST, INSTPREV3);
-			Instr->used_lines++;
-			strcpy(INST, INSTPREV3);
-			Instr->used_lines++;
+		//	strcpy(INST, INSTPREV3);
+		//	Instr->used_lines++;
+		//	strcpy(INST, INSTPREV3);
+		//	Instr->used_lines++;
 			strcpy(INST, "GTS\n");
-			Instr->used_lines++;
-			/*strcpy(INST, "PUSHS bool@false\n");
+			/*Instr->used_lines++;
+			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
