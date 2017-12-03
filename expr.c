@@ -16,6 +16,7 @@
 
 int algotihmFinished = EXPR_FALSE;  // Used static because I was lost in recursion                     first str  <  second str
 int firstString = EXPR_TRUE;  // Indicates if we are working with first string or second string (e.g. str1 + str2 < str3 + str4)
+int skipJUMPIFEQS = EXPR_FALSE;	// If true then it skips the generate result instrucion because it's done in ilist.c (used in <= and >= for int or dec)
 
 /**
  * @brief Precedental table determinating next action.
@@ -83,6 +84,7 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
  	// Reset global variables
 	algotihmFinished = EXPR_FALSE;
 	firstString = EXPR_TRUE;
+	skipJUMPIFEQS = EXPR_FALSE;
 
 
 	// --- Initializing stacks ---
@@ -990,8 +992,10 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 		tokStack_Push(tokStack, TOK_BOOLEAN);	// Push boolean type (result of logic operations is always bool)
 		
 		// --- Duplicating operands on the stack ---
-		if(terminal == TERM_greaterEqual || terminal == TERM_lessEqual)	// If instruction is made from two comparsions combined 
+		if((terminal == TERM_greaterEqual || terminal == TERM_lessEqual) && (typeLeft != TOK_string && typeRight != TOK_string))	// If instruction is made from two comparsions combined 
 		{
+			skipJUMPIFEQS = EXPR_TRUE;	// Do not generate result instruction (it is done in ilist.c)
+			
 			// Create name strings for temporary variables
 			string leftString;
 			string rightString;
@@ -1186,8 +1190,10 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 			{
 				expr_error("expr_generateResult: Result of logic expression is not boolean");
 				return EXPR_RETURN_ERROR_TYPES;
-			}				
-			add_instruction(JUMPIFEQS, NULL, NULL, NULL);
+			}	
+						
+			if(skipJUMPIFEQS == EXPR_FALSE)
+				add_instruction(JUMPIFEQS, NULL, NULL, NULL);
 			break;
 
 
