@@ -88,7 +88,8 @@ void addInstComment(char *comment)
 {
 	if(strlen(comment) >= INSTSIZE)
 		return;
-	strcpy("#************** %s **************\n", comment);
+	strcpy(INST, "#************** %s **************\n");
+	strcat(INST, comment);
 	Instr->used_lines++;
 	return;
 }
