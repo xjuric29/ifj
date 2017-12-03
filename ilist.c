@@ -671,7 +671,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(LTEQS):
-			strcpy(INST, "JUMPIFENQS ");
+			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
 			switch(context)
 			{
@@ -690,10 +690,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				default:
 					return INTERNAL_ERROR;
 			}
+			Instr->used_lines++;
+			strcpy(INST, INSTPREV3);
+			Instr->used_lines++;
+			strcpy(INST, INSTPREV3);
 			Instr->used_lines++;
 			strcpy(INST, "LTS\n");
 			Instr->used_lines++;
-			strcpy(INST, "PUSHS bool@false\n");
+			/*strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
@@ -713,34 +717,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				default:
 					return INTERNAL_ERROR;
-			}
+			}*/
 			break;
 
 		case(GTEQS):
-			strcpy(INST, "JUMPIFENQS ");
-			strcat(INST, "$$");
-			switch(context)
-			{
-				case(con_IF):
-					sprintf(c, "%d", inst_if);
-					strcat(INST, c);
-					strcat(INST, "$$ELSE\n");
-					break;
-
-				case(con_WHILE):	
-					sprintf(c, "%d", inst_while);
-					strcat(INST, c);
-					strcat(INST, "$$LOOP\n");
-					break;
-
-				default:
-					return INTERNAL_ERROR;
-			}
-			Instr->used_lines++;
-			strcpy(INST, "GTS\n");
-			Instr->used_lines++;
-			strcpy(INST, "PUSHS bool@false\n");
-			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
 			switch(context)
@@ -760,13 +740,41 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				default:
 					return INTERNAL_ERROR;
 			}
+			Instr->used_lines++;
+			strcpy(INST, INSTPREV3);
+			Instr->used_lines++;
+			strcpy(INST, INSTPREV3);
+			Instr->used_lines++;
+			strcpy(INST, "GTS\n");
+			Instr->used_lines++;
+			/*strcpy(INST, "PUSHS bool@false\n");
+			Instr->used_lines++;
+			strcpy(INST, "JUMPIFEQS ");
+			strcat(INST, "$$");
+			switch(context)
+			{
+				case(con_IF):
+					sprintf(c, "%d", inst_if);
+					strcat(INST, c);
+					strcat(INST, "$$ELSE\n");
+					break;
+
+				case(con_WHILE):	
+					sprintf(c, "%d", inst_while);
+					strcat(INST, c);
+					strcat(INST, "$$LOOP\n");
+					break;
+
+				default:
+					return INTERNAL_ERROR;
+			}*/
 			break;
 	
 
 		case(JUMPIFENQS):
 			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
-			strcpy(INST, "JUMPIFENQS ");
+			strcpy(INST, "JUMPIFNEQS ");
 			strcat(INST, "$$");
 			switch(context)
 			{
@@ -919,7 +927,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(LTEQ):
-			strcpy(INST, "JUMPIFNEQ ");
+			strcpy(INST, "JUMPIFEQ ");
 			strcat(INST, "$$");
 			switch(context)
 			{
@@ -943,7 +951,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 		
 		case(GTEQ):
-			strcpy(INST, "JUMPIFNEQ ");
+			strcpy(INST, "JUMPIFEQ ");
 			strcat(INST, "$$");
 			switch(context)
 			{
