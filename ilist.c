@@ -119,10 +119,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 	
 	
 	static int inst_if = 0;
-	static int inst_else = 0;
+	static int before_cond = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
-	static int test = 0;	
+	static int after_cond = 0;	
 	static I_context context = con_NONE;
 
 	char c[100];	
@@ -679,9 +679,20 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(LTEQS):
-			strcpy(INST, "JUMPIFEQS ");
+			before_cond++;
+			after_cond++;
+			strcpy(INST, "JUMPIFNEQS ");
 			strcat(INST, "$$");
-			switch(context)
+			sprintf(c, "%d", before_cond);
+			strcat(INST, c);
+			strcat(INST, "$$BEFORE\n");
+			Instr->used_lines++;
+			strcpy(INST, "JUMP ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", after_cond);
+			strcat(INST, c);
+			strcat(INST, "$$AFTER\n");
+	/*		switch(context)
 			{
 				case(con_IF):
 					sprintf(c, "%d", inst_if);
@@ -697,14 +708,17 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				default:
 					return INTERNAL_ERROR;
-			}
+			}*/
+
 			Instr->used_lines++;
-		//	strcpy(INST, INSTPREV3);
-		//	Instr->used_lines++;
-		//	strcpy(INST, INSTPREV3);
-		//	Instr->used_lines++;
+			strcpy(INST, "LABEL $$");
+			sprintf(c, "%d", before_cond);
+			strcat(INST, c);
+			strcat(INST, "$$BEFORE");
+
+			Instr->used_lines++;
 			strcpy(INST, "LTS\n");
-			/*Instr->used_lines++;
+			Instr->used_lines++;
 			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
@@ -725,13 +739,31 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				default:
 					return INTERNAL_ERROR;
-			}*/
+			}
+
+			Instr->used_lines++;
+			strcpy(INST, "LABEL $$");
+			sprintf(c, "%d", after_cond);
+			strcat(INST, c);
+			strcat(INST, "$$AFTER");
 			break;
 
 		case(GTEQS):
-			strcpy(INST, "JUMPIFEQS ");
+			before_cond++;
+			after_cond++;
+			strcpy(INST, "JUMPIFNEQS ");
 			strcat(INST, "$$");
-			switch(context)
+			sprintf(c, "%d", before_cond);
+			strcat(INST, c);
+			strcat(INST, "$$BEFORE\n");
+			Instr->used_lines++;
+			strcpy(INST, "JUMP ");
+			strcat(INST, "$$");
+			sprintf(c, "%d", after_cond);
+			strcat(INST, c);
+			strcat(INST, "$$AFTER\n");
+
+/*			switch(context)
 			{
 				case(con_IF):
 					sprintf(c, "%d", inst_if);
@@ -747,14 +779,18 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				default:
 					return INTERNAL_ERROR;
-			}
+			}*/
+			
 			Instr->used_lines++;
-		//	strcpy(INST, INSTPREV3);
-		//	Instr->used_lines++;
-		//	strcpy(INST, INSTPREV3);
-		//	Instr->used_lines++;
+			strcpy(INST, "LABEL $$");
+			sprintf(c, "%d", before_cond);
+			strcat(INST, c);
+			strcat(INST, "$$BEFORE");
+
+			
+			Instr->used_lines++;
 			strcpy(INST, "GTS\n");
-			/*Instr->used_lines++;
+			Instr->used_lines++;
 			strcpy(INST, "PUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
@@ -775,7 +811,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				default:
 					return INTERNAL_ERROR;
-			}*/
+			}
+
+			Instr->used_lines++;
+			strcpy(INST, "LABEL $$");
+			sprintf(c, "%d", after_cond);
+			strcat(INST, c);
+			strcat(INST, "$$AFTER");
 			break;
 	
 
