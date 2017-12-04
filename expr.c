@@ -260,7 +260,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 
 	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
-
+	int logicOperator = EXPR_FALSE;
 
 	// Check if token is valid for this expression context
 	switch(token.type)
@@ -299,12 +299,12 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
 
         // === Logic operators ===
-        case TOK_equal:	type = TERM_equal;	firstString = EXPR_FALSE;	break;			// Operator "="
-		case TOK_notEqual:	type = TERM_notEqual;	firstString = EXPR_FALSE;	break;		// Operator "<>"
-		case TOK_less:	type = TERM_less;	firstString = EXPR_FALSE;	break;			// Operator "<"
-		case TOK_lessEqual:	type = TERM_lessEqual;	firstString = EXPR_FALSE;	break;		// Operator "<="
-		case TOK_greater:	type = TERM_greater;	firstString = EXPR_FALSE;	break;		// Operator ">"
-		case TOK_greaterEqual:	type = TERM_greaterEqual;	firstString = EXPR_FALSE;	break;	// Operator ">="
+        case TOK_equal:	type = TERM_equal;	logicOperator = EXPR_TRUE;	break;			// Operator "="
+		case TOK_notEqual:	type = TERM_notEqual;	logicOperator = EXPR_TRUE;	break;		// Operator "<>"
+		case TOK_less:	type = TERM_less;	logicOperator = EXPR_TRUE;	break;			// Operator "<"
+		case TOK_lessEqual:	type = TERM_lessEqual;	logicOperator = EXPR_TRUE;	break;		// Operator "<="
+		case TOK_greater:	type = TERM_greater;	logicOperator = EXPR_TRUE;	break;		// Operator ">"
+		case TOK_greaterEqual:	type = TERM_greaterEqual;	logicOperator = EXPR_TRUE;	break;	// Operator ">="
 
 		// === Tokens with values ===
 		// --- Numbers ---
@@ -330,15 +330,15 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			savedToken = token;	// Save token because it has value
 			
 			
-			// --- Concating string ---
+			// ----- Concating string -----
 			// (It's done here instead of expr_reduce() because of first string not printed bug)
 			// Creating name string for temporary variable
 			string varString;
 			strInit(&varString);
 
-			// Switch from $str to $str2 if necessary
-			//if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)	// It's not cancating (term != +) of strings or it's first token ()
-			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)
+			// --- Switch from $str to $str2 (if necessary) ---
+			// It's not cancating (term != +) of strings or it's comparasion (logicOperator == EXPR_TRUE)
+			if((stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE) || logicOperator == EXPR_TRUE) 
 			{
 				if(firstString == EXPR_TRUE)	// Switch $str to $str2
 				{
@@ -347,7 +347,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				}
 				else
 				{
-					DEBUG_PRINT("[DBG] @todo Risking some error leak but I don't give a f#@! anymore...");
+					DEBUG_PRINT("[DBG] @todo Risking some error leak");
 					//expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
 				}
 			}
