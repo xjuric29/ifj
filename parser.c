@@ -369,10 +369,9 @@ int FunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
                         fprintf(stderr,"[ERROR] (PARSER) : Parameter in definition of function '%s' has same ID as already existing function\n", Function->key.str);
                         return SEM_ERROR_FUNC;
                     }
-                    //Copy new string
-                    if (strCopyString(&Function->params->first->key, CurrentToken->value.stringVal)){
-                        return INTERNAL_ERROR;
-                    }
+
+                    //Change parameter name
+                    st_element_move(Function, Function->params->first, CurrentToken->value.stringVal);
                 }
                 //printf("%s\n", Function->params->first->key.str);
                 //printf("-----------------\n");
@@ -474,6 +473,7 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
             if (Function->declared){
                 //Check If parameter ID isn`t also ID of any created Function
                 if (st_find_func(GlobalTable, CurrentToken->value.stringVal) != NULL){
+                    fprintf(stderr,"[ERROR] (PARSER) : Parameter in definition of function '%s' has same ID as already existing function\n", Function->key.str);
                     return SEM_ERROR_FUNC;
                 }
 
@@ -494,10 +494,9 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 
                 //Check if ID of argument is equal to argument in declaration, if not we need to save new ID
                 if (strCmpString(&Parameter->key, CurrentToken->value.stringVal)){
-                    //printf("%s\n", Parameter->key.str);
-                    if (strCopyString(&Parameter->key, CurrentToken->value.stringVal)){
-                        return INTERNAL_ERROR;
-                    }
+
+                    //ID is not equal change parameter name
+                    st_element_move(Function, Parameter, CurrentToken->value.stringVal);
                 }
                 //printf("%s\n", Parameter->key.str);
                 //printf("-----------------\n");

@@ -146,6 +146,19 @@ st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key); ///
 st_element_t *st_find_element(st_globalTable_t *st_global, string *func_name, string *key);
 
 /**
+* @brief function to change element key and move it to right line of the hash table
+* line depend of hash of key
+*
+*
+* @param func pointer to function where element is
+* @param Parameter pointer on element we are changing
+* @param NewKey new name of element
+* @return True if success
+*
+**/
+bool st_element_move(st_localTable_t *func, st_element_t *Parameter, string *NewKey);
+
+/**
 * @brief Free and delete whole Global Table with all Local Tables
 *
 * @param st_global is pointer to global hash table
