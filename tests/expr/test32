@@ -1,0 +1,9 @@
+'Greater or EQUAL
+
+Scope
+    if 8 >= 8 then    
+        print !"chill";
+    else  
+        print !"problem";
+    end if
+End Scope
