@@ -104,7 +104,6 @@ int parse(){
 int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
-    printf("program\n");
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
@@ -144,9 +143,8 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-            
+
             //<prog>
-            printf("zase sa volam\n");
             RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
@@ -582,7 +580,6 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
     st_localTable_t *Function;
-    printf("antoher one\n");
     //ID
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -714,7 +711,6 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         return SYN_ERROR;
     }
     Function->defined = true;
-    printf("Konec\n");
     return SUCCESS;
 }
 

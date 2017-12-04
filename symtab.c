@@ -121,7 +121,6 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
 {
     if(st_global == NULL || key->str == NULL)
         return NULL;
-    printf("Funkcia - %s\n", key->str);
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
 	//printf("%d\n", hash);
@@ -168,7 +167,6 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
         //st_global->functions[hash]->local_n++;
         st_global->global_n++;
     }
-    printf("END\n");
     return st_local;
 }
 
