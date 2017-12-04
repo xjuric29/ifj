@@ -332,4 +332,46 @@ void st_delete(st_globalTable_t *st_global)
     free(st_global);
 }
 
+
+
+bool st_element_move(st_localTable_t *func, st_element_t *Parameter, string *NewKey){
+    unsigned int NewHash = hash_function(NewKey->str) % func->local_size;
+    unsigned int OldHash = hash_function(Parameter->key.str) % func->local_size;
+
+    //No need to move element
+    if (OldHash == NewHash){
+        return true;
+    }
+
+    st_element_t *Oldptr = func->elements[OldHash];
+    st_element_t *OldptrPrevios; //We need to store one struct before struct we want to move
+    if (Oldptr == NULL){
+        return false;
+    }
+
+    if (strCmpString(&Parameter->key, &func->elements[OldHash]->key) == 0){ //Check first struct of queue
+        func->elements[OldHash] = Oldptr->next;
+    }else{
+        // Check other structs of queue, and starts with second
+        OldptrPrevios = Oldptr;
+        Oldptr = OldptrPrevios->next; //Second struct
+        while(Oldptr != NULL){ //if first ptr == NULL cycle doesnt start
+            if (strCmpString(&Parameter->key, &Oldptr->key) == 0){
+                OldptrPrevios->next = Oldptr->next;
+                break;
+            }else{
+                OldptrPrevios = Oldptr;
+                Oldptr = Oldptr->next;
+            }
+        }
+    }
+
+    //Put at beggining of NewHash
+    Parameter->next = func->elements[NewHash];
+    func->elements[NewHash] = Parameter;
+    strClear(&Parameter->key);
+    strCopyString(&Parameter->key, NewKey);
+    return true;
+}
+
 // Přeloženo: gcc 5.4
