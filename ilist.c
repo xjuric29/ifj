@@ -167,9 +167,9 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 	
 		case(DEFVAR_LF):
+			strcpy(INST, "DEFVAR LF@");
 			if(op1 != NULL)
 			{
-				strcpy(INST, "DEFVAR LF@");
 				strcat(INST, op1->value.stringVal->str);
 				strcat(INST, "\n");
 			}
