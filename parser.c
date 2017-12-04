@@ -104,6 +104,7 @@ int parse(){
 int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1; //Variable for checking of recursive descent
     //In global variable with type token_t will be stored token from scanner
+    printf("program\n");
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
     }
@@ -143,8 +144,9 @@ int program(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *Globa
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
             }
-            //DecOrDefAndEOF = true; //Set to true, variable is checked in switch with EOF
+            
             //<prog>
+            printf("zase sa volam\n");
             RecurCallResult = program(CurrentToken, ToCheck, GlobalTable);
             if (RecurCallResult != SUCCESS){
                 return RecurCallResult;
@@ -580,7 +582,7 @@ int MoreFunctArgs(token_t *CurrentToken, st_globalTable_t *GlobalTable){
 int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTable_t *GlobalTable){
     int RecurCallResult = -1;
     st_localTable_t *Function;
-
+    printf("antoher one\n");
     //ID
     if ((ScannerInt = getToken(CurrentToken)) != SUCCESS){
         return ScannerInt;
@@ -657,9 +659,24 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
             return SYN_ERROR;
     }
 
-    //TODO move do returnvall prazdny string alebo 0 alebo 0.0
     if (add_instruction(RETVAL_IN, CurrentToken, NULL, NULL) != SUCCESS){
         return INTERNAL_ERROR;
+    }
+
+    if (Function->params != NULL){
+        st_element_t *prm = Function->params->last;
+        while(prm != NULL){
+
+            //Create variable
+            if (add_instruction(DEFVAR_LF, NULL, &prm->key, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
+            //pop from stack
+            if (add_instruction(POPS, NULL, &prm->key, NULL) != SUCCESS){
+                return INTERNAL_ERROR;
+            }
+            prm = prm->prev_param;
+        }
     }
 
     //EOL
@@ -697,6 +714,7 @@ int FunctionDefinition(token_t *CurrentToken, struct check ToCheck, st_globalTab
         return SYN_ERROR;
     }
     Function->defined = true;
+    printf("Konec\n");
     return SUCCESS;
 }
 
@@ -1196,7 +1214,7 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
             }
 
             //Add instruction to create variable with name of first parameter on Temporary frame
-            add_instruction(DEFVAR_TF, NULL, &param->key, NULL);
+            //add_instruction(DEFVAR_TF, NULL, &param->key, NULL);
 
             //Choose what type is parameter.. Constant or variable
             switch(CurrentToken->type){
@@ -1224,22 +1242,38 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If given variable is decimal -> parameter in funct is integer
                         if (IDparameter->el_type == st_decimal){
-                            //fprintf(stderr, "Prevadzam ID z float na int\n");
-                            //Change type of given ID from int to float
-                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+
+
+                            if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                                 return INTERNAL_ERROR;
                             }
 
+                            if (add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+                            /*//Change type of given ID from int to float
+                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }*/
 
                         }
 
                         //If given variable is int -> parameter is float
                         if (IDparameter->el_type == st_integer){
 
-                            //Change type of given ID from int to float
-                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                            //Push and convert
+                            if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                                 return INTERNAL_ERROR;
                             }
+
+                            if (add_instruction(INT2FLOATS, NULL, NULL, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+
+                            /*//Change type of given ID from int to float
+                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }*/
 
                             //fprintf(stderr, "Prevadzam ID z int na float\n");
                         }
@@ -1247,13 +1281,15 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
                     }else{
 
                         //Types are same, just move
-                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                        if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                             return INTERNAL_ERROR;
                         }
+                        /*
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }*/
 
                     }
-
-                    //TODO Presunut z jedneho framu do druheho
 
                     break;
 
@@ -1273,19 +1309,31 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If parameter in definition is type of double, do conversion
                         if (param->el_type == st_decimal){
-                            //fprintf(stderr, "Prevadzam konstantu INT na DOUBLE\n");
 
-                            //Change given integer to float
-                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                            //Push and convert
+                            if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                                 return INTERNAL_ERROR;
                             }
+
+                            if (add_instruction(INT2FLOATS, NULL, NULL, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+
+                            /*//Change given integer to float
+                            if (add_instruction(INT2FLOAT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }*/
                         }
 
                     }else{
                         //Types are same, just move
-                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                        if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                             return INTERNAL_ERROR;
                         }
+
+                        /*if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }*/
                     }
 
                     break;
@@ -1305,21 +1353,30 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                         //If parameter in definition is type int, do conversion
                         if (param->el_type == st_integer){
-                            //fprintf(stderr, "Prevadzam konstantu float na int, token = %g\n", CurrentToken->value.decimal);
 
-                            //Change double to integer
-                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+                            //Push and convert
+                            if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                                 return INTERNAL_ERROR;
                             }
+
+                            if (add_instruction(FLOAT2R2EINTS, NULL, NULL, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }
+
+                            /*//Change double to integer
+                            if (add_instruction(FLOAT2R2EINT, CurrentToken, &param->key, NULL) != SUCCESS){
+                                return INTERNAL_ERROR;
+                            }*/
                         }
 
                     }else{
-                        //TODO deftvar_tf
                         //Types are same, just move
-
-                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                        if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                             return INTERNAL_ERROR;
                         }
+                        /*if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }*/
                     }
 
                     break;
@@ -1333,10 +1390,14 @@ int FuncCallCheck(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_local
 
                     }else{
 
-                        //Types are same, just move
-                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                        //Push and convert
+                        if (add_instruction(PUSHS, CurrentToken, NULL, NULL) != SUCCESS){
                             return INTERNAL_ERROR;
                         }
+                        /*//Types are same, just move
+                        if (add_instruction(MOVE_TF_LF, CurrentToken, &param->key, NULL) != SUCCESS){
+                            return INTERNAL_ERROR;
+                        }*/
 
                     }
 

@@ -121,7 +121,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
 {
     if(st_global == NULL || key->str == NULL)
         return NULL;
-
+    printf("Funkcia - %s\n", key->str);
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
 	//printf("%d\n", hash);
@@ -168,6 +168,7 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
         //st_global->functions[hash]->local_n++;
         st_global->global_n++;
     }
+    printf("END\n");
     return st_local;
 }
 
@@ -247,6 +248,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     if (st_elem == NULL){return NULL;} //Error in malloc
     st_elem->next = NULL;
     st_elem->next_param = NULL;
+    st_elem->prev_param = NULL;
     st_elem->param_number = -1; //Set to -1, if its parameter it will be changed later
     strInit(&st_elem->key);
     if (strCopyString(&st_elem->key, key)){ //error in realloc
@@ -285,6 +287,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
             {
                 st_local->params->params_n++;
                 st_local->params->last->next_param = st_elem;
+                st_elem->prev_param = st_local->params->last;
                 st_elem->param_number = st_local->params->last->param_number + 1; //Set order of parameter
                 st_local->params->last = st_elem;
             }
