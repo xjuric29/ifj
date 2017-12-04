@@ -66,6 +66,8 @@
 #define INSTSIZE 300
 
 #define INST (Instr->instrList[Instr->used_lines])
+#define INSTPREV2 (Instr->instrList[Instr->used_lines-2])
+#define INSTPREV3 (Instr->instrList[Instr->used_lines-3])
 
 typedef struct I_output
 {
