@@ -1,0 +1,5 @@
+'Comparasion: Multiple logic oprators - Types error
+
+Scope
+    if (1 > 2) > 3 then
+End Scope
