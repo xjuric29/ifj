@@ -4,9 +4,13 @@
 #include "ilist.h"
 #include "symtab.h"
 #include "scanner.h"
+#include "builtin.h"
 
 
-void print_built_in();
+void print_built_in_asc();
+void print_built_in_length();
+void print_built_in_chr();
+void print_built_in_substr();
 
 //int main()
 //{
@@ -107,8 +111,19 @@ void inst_free()
 
 void print_all()
 {
-	print_built_in();
-	
+    printf(".IFJcode17\njump Scope\n");
+	if(BuiltInUnique.Asc)
+		print_built_in_asc();
+	if(BuiltInUnique.Length)
+		print_built_in_length();
+	if(BuiltInUnique.Chr)
+		print_built_in_chr();
+	if(BuiltInUnique.SubStr)
+	{
+		if(!BuiltInUnique.Length)
+			print_built_in_length();
+		print_built_in_substr();
+	}
 	for (unsigned i = 0; i < Instr->used_lines; i++)
 		printf("%s\n", Instr->instrList[i]);
 	
@@ -1067,70 +1082,89 @@ int instr_init()
 
 }
 
-void print_built_in()
+void print_built_in_length()
 {   
 
-    /**** uvod ****/
-    printf(".IFJcode17\njump Scope\n");
-
     /**** Length ****/
-    printf("LABEL length\npushframe\n");
-    printf("defvar LF@%%retval\n");
-    printf("strlen LF@%%retval LF@s\n");
-    printf("popframe\nreturn\n");
-
-    /**** SubStr ****/
-    printf("LABEL substr\npushframe\n");
+	printf("LABEL length\npushframe\n");
+	printf("defvar LF@s\n");
+	printf("POPS LF@s\n");
 	printf("defvar LF@%%retval\n");
-    printf("defvar LF@%%tmp\n");
-    printf("move LF@%%tmp string@\n");
-    printf("move LF@%%retval string@\n");
+	printf("strlen LF@%%retval LF@s\n");
+	printf("popframe\nreturn\n");
+}
+
+void print_built_in_substr()
+{
+    /**** SubStr ****/
+	printf("LABEL substr\npushframe\n");
+	printf("defvar LF@s\n");
+	printf("defvar LF@i\n");
+	printf("defvar LF@n\n");
+	printf("POPS LF@n\n");
+	printf("POPS LF@i\n");
+	printf("POPS LF@s\n");
+	printf("defvar LF@%%retval\n");
+	printf("defvar LF@%%tmp\n");
+	printf("move LF@%%tmp string@\n");
+	printf("move LF@%%retval string@\n");
 	printf("sub LF@i LF@i int@1\n");
-    printf("defvar LF@test\n");
-    printf("lt LF@test LF@i int@0\n");
-    printf("jumpifeq $1subLOOP LF@test bool@true\n");
-    printf("lt LF@test LF@n int@0\n");
-    printf("jumpifeq $1subELSE LF@test bool@true\n");
+	printf("defvar LF@test\n");
+	printf("lt LF@test LF@i int@0\n");
+	printf("jumpifeq $1subLOOP LF@test bool@true\n");
+	printf("lt LF@test LF@n int@0\n");
+	printf("jumpifeq $1subELSE LF@test bool@true\n");
 	printf("createframe\n");
-    printf("defvar TF@s\nMove TF@s LF@s\n");
-    printf("call length\n");
-    printf("sub TF@%%retval TF@%%retval LF@i\n");
-    printf("gt LF@test LF@n TF@%%retval\n");
+	printf("pushs LF@s\n");
+	printf("call length\n");
+	printf("sub TF@%%retval TF@%%retval LF@i\n");
+	printf("gt LF@test LF@n TF@%%retval\n");
 	printf("add LF@n LF@n LF@i\n");
-    printf("jumpifeq $1subELSE LF@test bool@false\n");
-    printf("Move LF@n TF@%%retval\n");
+	printf("jumpifeq $1subELSE LF@test bool@false\n");
+	printf("Move LF@n TF@%%retval\n");
 	printf("add LF@n LF@n LF@i\n");
 	printf("LABEL $1subELSE\n");
-    printf("lt LF@test LF@i LF@n\n");
-    printf("jumpifeq $1subLOOP LF@test bool@false\n");
-    printf("getchar LF@%%tmp LF@s LF@i\n");
-    printf("concat LF@%%retval LF@%%retval LF@%%tmp\n");
-    printf("add LF@i LF@i int@1\n");
-    printf("jump $1subELSE\n");
-    printf("LABEL $1subLOOP\n");
-    printf("LABEL $1subIF\n");
-    printf("popframe\nreturn\n");
+	printf("lt LF@test LF@i LF@n\n");
+	printf("jumpifeq $1subLOOP LF@test bool@false\n");
+	printf("getchar LF@%%tmp LF@s LF@i\n");
+	printf("concat LF@%%retval LF@%%retval LF@%%tmp\n");
+	printf("add LF@i LF@i int@1\n");
+	printf("jump $1subELSE\n");
+	printf("LABEL $1subLOOP\n");
+	printf("LABEL $1subIF\n");
+	printf("popframe\nreturn\n");
+}
 
+void print_built_in_asc()
+{
     /**** Asc ****/
-    printf("LABEL asc\npushframe\n");
-    printf("defvar LF@%%retval\n");
+	printf("LABEL asc\npushframe\n");
+	printf("defvar LF@s\n");
+	printf("defvar LF@i\n");
+	printf("POPS LF@i\n");
+	printf("POPS LF@s\n");
+	printf("defvar LF@%%retval\n");
 	printf("Move LF@%%retval int@0\n");
 	printf("defvar LF@%%tmp\n");
 	printf("defvar LF@%%test\n");
 	printf("sub LF@i LF@i int@1\n");
-    printf("strlen LF@%%tmp LF@s\n");
+	printf("strlen LF@%%tmp LF@s\n");
 	printf("lt LF@%%test LF@i int@0\n");
 	printf("jumpifeq $1ascIF LF@%%test bool@true\n");
 	printf("lt LF@%%test LF@i LF@%%tmp\n");
 	printf("jumpifeq $1ascIF LF@%%test bool@false\n");
 	printf("stri2int LF@%%retval LF@s LF@i\n");
 	printf("LABEL $1ascIF\n");
-    printf("popframe\nreturn\n");
+	printf("popframe\nreturn\n");
+}
 
+void print_built_in_chr()
+{
     /**** Chr ****/
-    printf("LABEL chr\npushframe\n");
-    printf("defvar LF@%%retval\n");
+	printf("LABEL chr\npushframe\n");
+	printf("defvar LF@i\n");
+	printf("POPS LF@i\n");
+	printf("defvar LF@%%retval\n");
 	printf("int2char LF@%%retval LF@i\n");
-    printf("popframe\nreturn\n");
-	
+	printf("popframe\nreturn\n");
 }
