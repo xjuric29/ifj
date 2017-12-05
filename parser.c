@@ -22,6 +22,7 @@ string FunctionID; //To know in which function we are
 int ParamNumber; //To store number of parameter we are checking
 int AllIfsCount = 0; //Ifs counter for naming labels
 int AllWhilesCount = 0; //While counter for naming labels
+BuiltInStructure BuiltInUnique; //Extern variable for built in output checking
 //** END OF GLOBAL VARIABLES **//
 
 
@@ -58,11 +59,14 @@ void TokenFree(token_t *Token){
     }
 }
 
+
 /**DOPLNIT, zatial len na testovanie
     */
 int parse(){
     //Variable for result of syn., and sem. analyze
     int Result;
+    BuiltInUnique.Chr = true; BuiltInUnique.Asc = false;
+    BuiltInUnique.Length = false; BuiltInUnique.SubStr = false;
     //In variable token will be stored token from Scanner
     token_t *CurrentToken = TokenInit(); //Inicialize token
     if (CurrentToken == NULL){
@@ -1545,6 +1549,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 return INTERNAL_ERROR;
             }
 
+            BuiltInUnique.Length = true;
             //Find function in HashTable, no need to controle, because builtin function is in hashTable
             CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
 
@@ -1561,6 +1566,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 return INTERNAL_ERROR;
             }
 
+            BuiltInUnique.SubStr = true;
             //Find function in HashTable, no need to controle, because builtin function is in hashTable
             CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
 
@@ -1577,6 +1583,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 return INTERNAL_ERROR;
             }
 
+            BuiltInUnique.Asc = true;
             //Find function in HashTable, no need to controle, because builtin function is in hashTable
             CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
 
@@ -1593,6 +1600,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 return INTERNAL_ERROR;
             }
 
+            BuiltInUnique.Asc = true;
             //Find function in HashTable, no need to controle, because builtin function is in hashTable
             CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
 
@@ -1604,7 +1612,6 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
             break;
 
         default:
-            //TODO Call expresion
             //expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, string *func_name, st_element_t *Variable);
             if ((RecurCallResult = expr_main(EXPRESSION_CONTEXT_ASSIGN, CurrentToken, GlobalTable, &FunctionID, Variable)) != SUCCESS){
                 return RecurCallResult;
