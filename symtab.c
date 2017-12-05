@@ -341,6 +341,8 @@ bool st_element_move(st_localTable_t *func, st_element_t *Parameter, string *New
 
     //No need to move element
     if (OldHash == NewHash){
+        strClear(&Parameter->key);
+        strCopyString(&Parameter->key, NewKey);
         return true;
     }
 
