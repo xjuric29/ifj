@@ -321,6 +321,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;	
 	
 		case(READ):
+			strcpy(INST, "WRITE string@?\\032\n");
+			Instr->used_lines++;
 			strcpy(INST, "READ LF@");
 			strcat(INST, op1->value.stringVal->str);
 			switch(op1->type)
