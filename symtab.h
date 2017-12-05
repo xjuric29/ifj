@@ -39,6 +39,7 @@ typedef struct st_element_t
     bool defined;
     st_value_t val;
     struct st_element_t *next_param; ///NULL if element is not a parameter or if element is last parameter
+    struct st_element_t *prev_param;
     struct st_element_t *next;
     int param_number; //Which is in order
     type_t el_type;
