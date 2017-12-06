@@ -65,7 +65,7 @@ void TokenFree(token_t *Token){
 int parse(){
     //Variable for result of syn., and sem. analyze
     int Result;
-    BuiltInUnique.Chr = true; BuiltInUnique.Asc = false;
+    BuiltInUnique.Chr = false; BuiltInUnique.Asc = false;
     BuiltInUnique.Length = false; BuiltInUnique.SubStr = false;
     //In variable token will be stored token from Scanner
     token_t *CurrentToken = TokenInit(); //Inicialize token
@@ -1600,7 +1600,7 @@ int ResAssignInParser(token_t *CurrentToken, st_globalTable_t *GlobalTable, st_e
                 return INTERNAL_ERROR;
             }
 
-            BuiltInUnique.Asc = true;
+            BuiltInUnique.Chr = true;
             //Find function in HashTable, no need to controle, because builtin function is in hashTable
             CalledFunction = st_find_func(GlobalTable, CurrentToken->value.stringVal);
 
