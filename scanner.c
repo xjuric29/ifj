@@ -105,7 +105,7 @@ int getIDKeyword (token_t *loadedToken, char *curChar)
 
     if (strInit(&id)) return 99;
 
-    do    // String assembling
+    do    // Name assembling
     {
         if (*curChar >= 'A' && *curChar <= 'Z')
         {
@@ -121,6 +121,11 @@ int getIDKeyword (token_t *loadedToken, char *curChar)
         else break;
     } while (true);
 
+    if (id.length > 128)
+    {
+        id.str[128] = '\0'; // Max size of var name
+        id.length = 128;
+    }
     for (int i = 0; i < 35; i++)    // Finding if string is a keyword
     {
         if (!strCmpConstStr(&id, keywords[i])) {
@@ -212,7 +217,7 @@ int getString(token_t *loadedToken)
     {
         curChar = getchar();
         if (curChar == '\"' && previousChar != '\\') break;
-        if (curChar == '\n' || curChar == EOF) return 1;
+        if (curChar >= 0 && curChar <= 31) return 1;
         if (curChar == '\\')    // Escape sequences part
         {
             curChar = getchar();

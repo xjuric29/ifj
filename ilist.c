@@ -13,6 +13,7 @@ void print_built_in_chr();
 void print_built_in_substr();
 
 
+
 struct I_output *Instr = NULL;
 
 char *convert_string(char *str)
@@ -33,7 +34,7 @@ char *convert_string(char *str)
 			if(result == NULL)
 				return NULL;
 		}
-		
+
 		if((str[i] >= 0 && str[i] <= 32) || str[i] == 35 || str[i] == 92 || str[i] == 34)
 		{
 			sprintf(c, "%d", str[i]);
@@ -69,7 +70,7 @@ void addInstComment(char *comment)
 
 
 void inst_free()
-{	
+{
 	for (unsigned i = 0; i < Instr->alloc_lines; i++)
 		free(Instr->instrList[i]);
 
@@ -94,21 +95,21 @@ void print_all()
 	}
 	for (unsigned i = 0; i < Instr->used_lines; i++)
 		printf("%s\n", Instr->instrList[i]);
-	
+
 }
 
 int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 {
-	
-	
+
+
 	static int inst_if = 0;
 	static int before_cond = 0;
 	static int inst_while = 0;
 	static int inst_loop = 0;
-	static int after_cond = 0;	
+	static int after_cond = 0;
 	static I_context context = con_NONE;
 
-	char c[100];	
+	char c[100];
 
 	if(Instr->alloc_lines <= (Instr->used_lines + 40))
 	{
@@ -124,15 +125,15 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->alloc_lines++;
 		}
 	}
-	
+
 	switch(instType)
 	{
-		case(LABEL):		
+		case(LABEL):
 			strcpy(INST, "LABEL ");
 			strcat(INST, op1->value.stringVal->str);
 			strcat(INST, "\n");
 			break;
-		
+
 		case(DEFVAR_TF):
 			strcpy(INST, "DEFVAR TF@");
 			if(op1 != NULL)
@@ -147,7 +148,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				strcat(INST, "\n");
 			}
 			break;
-	
+
 		case(DEFVAR_LF):
 			strcpy(INST, "DEFVAR LF@");
 			if(op1 != NULL)
@@ -162,17 +163,17 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				strcat(INST, "\n");
 			}
 			break;
-		
+
 		case(CREATEFRAME):
 			strcpy(INST, "CREATEFRAME");
 			strcat(INST, "\n");
 			break;
-			
+
 		case(PUSHFRAME):
 			strcpy(INST, "PUSHFRAME");
 			strcat(INST, "\n");
 			break;
-		
+
 		case(CALL):
 			strcpy(INST, "CALL ");
 			strcat(INST, op2->str);
@@ -196,7 +197,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 						strcat(INST, op1->value.stringVal->str);
 						strcat(INST, "\n");
 						break;
-				
+
 					case TOK_integer:
 						strcat(INST, "int@");
 						sprintf(c, "%d", op1->value.integer);
@@ -220,10 +221,10 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 							free(tmp);
 						}
 						break;
-				
+
 					default:
 						return INTERNAL_ERROR;
-				
+
 				}
 			}
 
@@ -231,7 +232,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			{
 				strcat(INST, "LF@");
 				strcat(INST, op2->str);
-				strcat(INST, "\n");				
+				strcat(INST, "\n");
 			}
 
 			break;
@@ -244,7 +245,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			break;
 
 		case(RETVAL_POP):
-			strcpy(INST, "POPS LF@%retval\n"); 
+			strcpy(INST, "POPS LF@%retval\n");
 			break;
 
 		case(ADDS):
@@ -262,7 +263,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(DIVS):
 			strcpy(INST, "DIVS\n");
 			break;
-	
+
 		case(LTS):
 			strcpy(INST, "LTS\n");
 			break;
@@ -278,15 +279,15 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(NOTS):
 			strcpy(INST, "NOTS\n");
 			break;
-	
+
 		case(INT2FLOATS):
 			strcpy(INST, "INT2FLOATS\n");
 			break;
 
 		case(FLOAT2R2EINTS):
 			strcpy(INST, "FLOAT2R2EINTS\n");
-			break;	
-	
+			break;
+
 		case(READ):
 			strcpy(INST, "WRITE string@?\\032\n");
 			Instr->used_lines++;
@@ -297,7 +298,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case KW_integer:
 					strcat(INST, " int");
 					break;
-				
+
 				case KW_double:
 					strcat(INST, " float");
 					break;
@@ -310,7 +311,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					return INTERNAL_ERROR;
 			}
 			strcat(INST, "\n");
-			
+
 			break;
 
 		case(FUNC):
@@ -370,18 +371,18 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			Instr->used_lines++;
 			strcpy(INST, "MOVE LF@$str2 string@\n");
 			break;
-		
+
 		case(MOVE_LF_LF):
 			strcpy(INST, "MOVE LF@");
 			strcat(INST, op2->str);
 			switch(op1->type)
-			{	
+			{
 				case TOK_identifier:
 					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
-				
-				case TOK_integer:	
+
+				case TOK_integer:
 					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
 					strcat(INST, c);
@@ -402,7 +403,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 						free(tmp);
 					}
 					break;
-				
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -410,17 +411,17 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 			strcat(INST, "\n");
 			break;
-		
+
 		case(MOVE_TF_LF):
 			strcpy(INST, "MOVE TF@");
 			strcat(INST, op2->str);
 			switch(op1->type)
-			{	
+			{
 				case TOK_identifier:
-					strcat(INST, " LF@");			
+					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
-				
+
 				case TOK_integer:
 					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
@@ -435,7 +436,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 				case TOK_string:
 					strcat(INST, " string@");
-					
+
 					if(strlen(op1->value.stringVal->str) != 0)
 					{
 						char *tmp = convert_string(op1->value.stringVal->str);
@@ -455,12 +456,12 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcpy(INST, "MOVE LF@");
 			strcat(INST, op2->str);
 			switch(op1->type)
-			{	
+			{
 				case TOK_identifier:
 					strcat(INST, " TF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
-				
+
 				case TOK_integer:
 					strcat(INST, " int@");
 					sprintf(c, "%d", op1->value.integer);
@@ -521,7 +522,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, "\n");
 			break;
 
-	
+
 
 		case(RETVAL_IN):
 			strcpy(INST, "MOVE LF@%retval ");
@@ -531,7 +532,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, "LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
-				
+
 				case TOK_integer:
 					strcat(INST, "int@");
 					sprintf(c, "%d", op1->value.integer);
@@ -553,7 +554,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 						free(tmp);
 					}
 					break;
-				
+
 				case KW_double:
 					strcat(INST, "float@0.0\n");
 					break;
@@ -565,7 +566,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 				case KW_string:
 					strcat(INST, "string@\n");
 					break;
-				
+
 				default:
 					return INTERNAL_ERROR;
 			}
@@ -591,14 +592,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 		case(LOOP):
 			context = con_NONE;
 			inst_while = op1->value.integer;
-			
+
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", inst_while);
 			strcat(INST, c);
 			strcat(INST, "$$WHILE\n");
 			Instr->used_lines++;
-			
+
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", inst_while);
@@ -611,17 +612,17 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			context = con_IF;
 			inst_if = op1->value.integer;
 			return SUCCESS;
-		
+
 		case(ELSE):
 			context = con_NONE;
-			
+
 			strcpy(INST, "JUMP ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", op1->value.integer);
 			strcat(INST, c);
-			strcat(INST, "$$ENDIF\n");			
-			Instr->used_lines++;	
-	
+			strcat(INST, "$$ENDIF\n");
+			Instr->used_lines++;
+
 			strcpy(INST, "LABEL ");
 			strcat(INST, "$$");
 			sprintf(c, "%d", op1->value.integer);
@@ -649,16 +650,16 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					strcat(INST, "$$ELSE\n");
 					break;
-				
-				case(con_WHILE):	
+
+				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
 					break;
-				
+
 				default:
 					return INTERNAL_ERROR;
-				
+
 			}
 			break;
 
@@ -676,6 +677,8 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			sprintf(c, "%d", after_cond);
 			strcat(INST, c);
 			strcat(INST, "$$AFTER\n");
+
+
 
 			Instr->used_lines++;
 			strcpy(INST, "LABEL $$");
@@ -698,7 +701,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, "$$ELSE\n");
 					break;
 
-				case(con_WHILE):	
+				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
@@ -730,14 +733,14 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, c);
 			strcat(INST, "$$AFTER\n");
 
-			
+
 			Instr->used_lines++;
 			strcpy(INST, "LABEL $$");
 			sprintf(c, "%d", before_cond);
 			strcat(INST, c);
 			strcat(INST, "$$BEFORE");
 
-			
+
 			Instr->used_lines++;
 			strcpy(INST, "GTS\n");
 			Instr->used_lines++;
@@ -753,7 +756,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, "$$ELSE\n");
 					break;
 
-				case(con_WHILE):	
+				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
@@ -769,7 +772,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, c);
 			strcat(INST, "$$AFTER");
 			break;
-	
+
 
 		case(JUMPIFENQS):
 			strcpy(INST, "PUSHS bool@false\n");
@@ -784,7 +787,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, "$$ELSE\n");
 					break;
 
-				case(con_WHILE):	
+				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
 					strcat(INST, "$$LOOP\n");
@@ -794,7 +797,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					return INTERNAL_ERROR;
 			}
 			break;
-				
+
 		case(RETVAL_INT2FLOAT_OUT):
 			strcpy(INST, "INT2FLOAT LF@");
 			strcat(INST, op2->str);
@@ -844,7 +847,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			}
 			strcat(INST, "\n");
 			break;
-		
+
 		case(FLOAT2R2EINT):
 			strcpy(INST, "FLOAT2R2EINT TF@");
 			strcat(INST, op2->str);
@@ -880,7 +883,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, " LF@");
 					strcat(INST, op1->value.stringVal->str);
 					break;
-	
+
 				case TOK_string:
 					strcat(INST, " string@");
 					if(strlen(op1->value.stringVal->str) != 0)
@@ -907,7 +910,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, op2->str);
 			strcat(INST, "\n");
 			break;
-		
+
 		case(LT):
 			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\n");
 			break;
@@ -958,7 +961,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					strcat(INST, "$$ELSE");
 					break;
-				
+
 				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
@@ -975,7 +978,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, "$$AFTER");
 
 			break;
-		
+
 		case(GTEQ):
 			before_cond++;
 			after_cond++;
@@ -1009,7 +1012,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 					strcat(INST, c);
 					strcat(INST, "$$ELSE");
 					break;
-				
+
 				case(con_WHILE):
 					sprintf(c, "%d", inst_while);
 					strcat(INST, c);
@@ -1035,16 +1038,13 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 
 		default:
 			return INTERNAL_ERROR;
-
-
-
 	
 	}
 
 	Instr->used_lines++;
 
 
-	return SUCCESS;	
+	return SUCCESS;
 }
 
 int instr_init()
@@ -1054,7 +1054,7 @@ int instr_init()
 		return INTERNAL_ERROR;
 	Instr->used_lines = 0;
 	Instr->alloc_lines = 0;
-	
+
 	for(unsigned i = 0; i < INSTNUMBER; i++)
 	{
 		Instr->instrList[i] = (char*)malloc(INSTSIZE*sizeof(char));
@@ -1062,11 +1062,11 @@ int instr_init()
 			return INTERNAL_ERROR;
 		Instr->alloc_lines++;
 	}
-		
-	
+
+
 	//Instr->alloc_lines = INSTNUMBER;
-	
-	
+
+
 	return 0;
 
 }

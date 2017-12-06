@@ -260,7 +260,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 
 	// Initializing varables
 	precTableIndex_t type;	// Internal type of token = Column index
-
+	int logicOperator = EXPR_FALSE;
 
 	// Check if token is valid for this expression context
 	switch(token.type)
@@ -278,8 +278,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				return EXPR_RETURN_ERROR_TYPES;
 			}
 			break;
-
-		// For gcc to shut the fuck up
+                        
 		default:
 			break;
 	}
@@ -299,12 +298,12 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 		case TOK_endOfFile:     type = TERM_stackEnd;      break;  // End of stack terminal '$' (Not really TOK_endOfFile, see header file)
 
         // === Logic operators ===
-        case TOK_equal:	type = TERM_equal;	firstString = EXPR_FALSE;	break;			// Operator "="
-		case TOK_notEqual:	type = TERM_notEqual;	firstString = EXPR_FALSE;	break;		// Operator "<>"
-		case TOK_less:	type = TERM_less;	firstString = EXPR_FALSE;	break;			// Operator "<"
-		case TOK_lessEqual:	type = TERM_lessEqual;	firstString = EXPR_FALSE;	break;		// Operator "<="
-		case TOK_greater:	type = TERM_greater;	firstString = EXPR_FALSE;	break;		// Operator ">"
-		case TOK_greaterEqual:	type = TERM_greaterEqual;	firstString = EXPR_FALSE;	break;	// Operator ">="
+        case TOK_equal:	type = TERM_equal;	logicOperator = EXPR_TRUE;	break;			// Operator "="
+		case TOK_notEqual:	type = TERM_notEqual;	logicOperator = EXPR_TRUE;	break;		// Operator "<>"
+		case TOK_less:	type = TERM_less;	logicOperator = EXPR_TRUE;	break;			// Operator "<"
+		case TOK_lessEqual:	type = TERM_lessEqual;	logicOperator = EXPR_TRUE;	break;		// Operator "<="
+		case TOK_greater:	type = TERM_greater;	logicOperator = EXPR_TRUE;	break;		// Operator ">"
+		case TOK_greaterEqual:	type = TERM_greaterEqual;	logicOperator = EXPR_TRUE;	break;	// Operator ">="
 
 		// === Tokens with values ===
 		// --- Numbers ---
@@ -322,7 +321,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				type = TERM_id;	// Identifier terminal = 'i'
 				break;
 			}
-			// WATCHOUT KICKASS MLG SKILLZ OVER HERE!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
+			// WATCHOUT!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
 		// --- Strings ---
 		case TOK_string:
 			// Setting things for algorithm
@@ -330,15 +329,15 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			savedToken = token;	// Save token because it has value
 			
 			
-			// --- Concating string ---
+			// ----- Concating string -----
 			// (It's done here instead of expr_reduce() because of first string not printed bug)
 			// Creating name string for temporary variable
 			string varString;
 			strInit(&varString);
 
-			// Switch from $str to $str2 if necessary
-			//if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)	// It's not cancating (term != +) of strings or it's first token ()
-			if(stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE)
+			// --- Switch from $str to $str2 (if necessary) ---
+			// It's not cancating (term != +) of strings or it's comparasion (logicOperator == EXPR_TRUE)
+			if((stackGetTerminal(stack) != '+' && tokStack_Empty(tokStack) == FALSE && *resetTempStr == EXPR_FALSE) || logicOperator == EXPR_TRUE) 
 			{
 				if(firstString == EXPR_TRUE)	// Switch $str to $str2
 				{
@@ -347,7 +346,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				}
 				else
 				{
-					DEBUG_PRINT("[DBG] @todo Risking some error leak but I don't give a f#@! anymore...");
+					DEBUG_PRINT("[DBG] @todo Risking some error leak");
 					//expr_error("expr_algorithm: Third string is not allowed unless concating (not exiting yet, module should detect this error later");
 				}
 			}
@@ -787,6 +786,8 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(LTS, NULL, NULL, NULL);
 		break;
 	case TERM_lessEqual:
+                skipJUMPIFEQS = EXPR_TRUE;      // Do not generate result instruction (it is done in ilist.c)
+                
 		if(topType == TOK_string)
 			add_instruction(LTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		else
@@ -799,6 +800,8 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(GTS, NULL, NULL, NULL);
 		break;
 	case TERM_greaterEqual:
+                skipJUMPIFEQS = EXPR_TRUE;      // Do not generate result instruction (it is done in ilist.c)
+                
 		if(topType == TOK_string)
 			add_instruction(GTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		else
@@ -993,9 +996,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 		
 		// --- Duplicating operands on the stack ---
 		if((terminal == TERM_greaterEqual || terminal == TERM_lessEqual) && (typeLeft != TOK_string && typeRight != TOK_string))	// If instruction is made from two comparsions combined 
-		{
-			skipJUMPIFEQS = EXPR_TRUE;	// Do not generate result instruction (it is done in ilist.c)
-			
+		{			
 			// Create name strings for temporary variables
 			string leftString;
 			string rightString;
@@ -1175,7 +1176,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
 
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str (Reversed becuase fuck my life)
+				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str
 
 				// Free memory
 				strFree(&varString);

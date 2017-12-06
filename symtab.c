@@ -121,7 +121,6 @@ st_localTable_t *st_add_func(st_globalTable_t *st_global, string *key)
 {
     if(st_global == NULL || key->str == NULL)
         return NULL;
-
     unsigned int hash = hash_function(key->str) % st_global->global_size;
 
 	//printf("%d\n", hash);
@@ -247,6 +246,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
     if (st_elem == NULL){return NULL;} //Error in malloc
     st_elem->next = NULL;
     st_elem->next_param = NULL;
+    st_elem->prev_param = NULL;
     st_elem->param_number = -1; //Set to -1, if its parameter it will be changed later
     strInit(&st_elem->key);
     if (strCopyString(&st_elem->key, key)){ //error in realloc
@@ -285,6 +285,7 @@ st_element_t *st_add_element(st_globalTable_t *st_global, string *func_name, str
             {
                 st_local->params->params_n++;
                 st_local->params->last->next_param = st_elem;
+                st_elem->prev_param = st_local->params->last;
                 st_elem->param_number = st_local->params->last->param_number + 1; //Set order of parameter
                 st_local->params->last = st_elem;
             }
@@ -330,6 +331,50 @@ void st_delete(st_globalTable_t *st_global)
         }
     }
     free(st_global);
+}
+
+
+
+bool st_element_move(st_localTable_t *func, st_element_t *Parameter, string *NewKey){
+    unsigned int NewHash = hash_function(NewKey->str) % func->local_size;
+    unsigned int OldHash = hash_function(Parameter->key.str) % func->local_size;
+
+    //No need to move element
+    if (OldHash == NewHash){
+        strClear(&Parameter->key);
+        strCopyString(&Parameter->key, NewKey);
+        return true;
+    }
+
+    st_element_t *Oldptr = func->elements[OldHash];
+    st_element_t *OldptrPrevios; //We need to store one struct before struct we want to move
+    if (Oldptr == NULL){
+        return false;
+    }
+
+    if (strCmpString(&Parameter->key, &func->elements[OldHash]->key) == 0){ //Check first struct of queue
+        func->elements[OldHash] = Oldptr->next;
+    }else{
+        // Check other structs of queue, and starts with second
+        OldptrPrevios = Oldptr;
+        Oldptr = OldptrPrevios->next; //Second struct
+        while(Oldptr != NULL){ //if first ptr == NULL cycle doesnt start
+            if (strCmpString(&Parameter->key, &Oldptr->key) == 0){
+                OldptrPrevios->next = Oldptr->next;
+                break;
+            }else{
+                OldptrPrevios = Oldptr;
+                Oldptr = Oldptr->next;
+            }
+        }
+    }
+
+    //Put at beggining of NewHash
+    Parameter->next = func->elements[NewHash];
+    func->elements[NewHash] = Parameter;
+    strClear(&Parameter->key);
+    strCopyString(&Parameter->key, NewKey);
+    return true;
 }
 
 // Přeloženo: gcc 5.4

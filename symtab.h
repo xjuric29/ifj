@@ -39,6 +39,7 @@ typedef struct st_element_t
     bool defined;
     st_value_t val;
     struct st_element_t *next_param; ///NULL if element is not a parameter or if element is last parameter
+    struct st_element_t *prev_param;
     struct st_element_t *next;
     int param_number; //Which is in order
     type_t el_type;
@@ -144,6 +145,19 @@ st_localTable_t *st_find_func(st_globalTable_t *st_global, string *key); ///
 *
 */
 st_element_t *st_find_element(st_globalTable_t *st_global, string *func_name, string *key);
+
+/**
+* @brief function to change element key and move it to right line of the hash table
+* line depend of hash of key
+*
+*
+* @param func pointer to function where element is
+* @param Parameter pointer on element we are changing
+* @param NewKey new name of element
+* @return True if success
+*
+**/
+bool st_element_move(st_localTable_t *func, st_element_t *Parameter, string *NewKey);
 
 /**
 * @brief Free and delete whole Global Table with all Local Tables
