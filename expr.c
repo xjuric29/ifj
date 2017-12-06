@@ -79,7 +79,6 @@ int expr_main(int context, token_t *parserToken, st_globalTable_t *st_global, st
 
     // --- Setup variables ---
  	int continueLoading = 1;	// Determines if this module should read next token
- 	int firstToken = EXPR_TRUE;     // Indicates if the processed token is the first in the expression
  	int resetTempStr = EXPR_TRUE;	// Deterimines if reset of $str is necessary
  	// Reset global variables
 	algotihmFinished = EXPR_FALSE;
@@ -393,10 +392,6 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			strFree(&varString);
 			break;
 
-        // === Other tokens ===
-        case EXPR_RETURN_NOMORETOKENS:
-				type = TERM_stackEnd;	// End of input terminal '$'
-			break;
         // --- Semicolon ---
         case TOK_semicolon:
 			if(context == EXPRESSION_CONTEXT_PRINT)
@@ -414,8 +409,19 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 			else
 				return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
         break;
-        // --- Nonexpression token ---
-		default:        return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
+        
+        
+		// === Other tokens ===
+		default:
+		    if(token.type == EXPR_RETURN_NOMORETOKENS)
+				// --- No token on input ---
+				type = TERM_stackEnd;	// End of input terminal '$'
+			else
+				// --- Nonexpression token ---
+				return EXPR_RETURN_NOMORETOKENS;	// End function and report it's not an expression token
+		break;
+		
+
 	}
 	
 
@@ -570,7 +576,9 @@ int expr_shift(myStack_t *stack, char character)
 	stackShiftPush(stack); // Push '<' after closest terminal to the end of the stack
 	stackPush(stack, character);    // Push the terminal at the end of the stack
 
+	#ifdef STACKDEBUG
 	stackInfo(stack);	// Debug
+	#endif
 
 	return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
@@ -623,7 +631,9 @@ int expr_reduce(myStack_t *stack, tokStack_t *tokStack, token_t token)
 	stackPush(stack, 'E'); // Push left side of the rule to the stack (always E)
 
 	// Debug
+	#ifdef STACKDEBUG
 	stackInfo(stack);
+	#endif
 
 	// Return value
 	return EXPR_RETURN_SUCC;       // Return success
@@ -635,7 +645,9 @@ int expr_specialShift(myStack_t *stack, char character)
 
 	stackPush(stack, character);    // Push the terminal at the end of the stack
 
+	#ifdef STACKDEBUG
 	stackInfo(stack);	// Debug
+	#endif
 
 	return EXPR_RETURN_SUCC;        // @todo return values for error when working with stack
 }
@@ -695,7 +707,9 @@ int expr_isAlgotihmFinished(myStack_t *stack, int tokenType)
 		algotihmFinished = EXPR_TRUE;   // Change static int
 		return EXPR_TRUE;
 	}
+	#ifdef STACKDEBUG
 	stackInfo(stack);
+	#endif
 
 	return EXPR_FALSE;      // Otherwise return false
 }
@@ -1107,6 +1121,8 @@ int expr_convertResultType(tokStack_t *tokStack, type_t el_type)
 		expr_error("expr_convertResultType: Not compatible or convertable data types");
 		return EXPR_RETURN_ERROR_TYPES;
 	}
+	
+	return EXPR_RETURN_SUCC;
 }
 
 tokenType_t expr_elTypeConvert(type_t el_type)

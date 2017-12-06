@@ -53,7 +53,9 @@ char stackTop(myStack_t *stack);
 void stackError(stackErrorCodes_t code);
 int stackEmpty(myStack_t *stack);
 int stackFull(myStack_t *stack);
+#ifdef STACKDEBUG
 void stackInfo(myStack_t *stack);
+#endif
 
 //      --- Advanced functions ---
 /**

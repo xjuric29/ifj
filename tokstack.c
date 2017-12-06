@@ -19,6 +19,8 @@ int tokStack_Init(tokStack_t *stack)
 	}
 	
 	stack->top = NO_STACK;    // Initialize top of the stack
+	
+	return SUCCESS;
 }
 
 

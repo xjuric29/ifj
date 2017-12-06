@@ -19,8 +19,6 @@ void stackInit(myStack_t *stack)
 	
 	stack->top = -1;    // Initialize top of the stack
 	stackPush(stack, STACK_ENDCHAR);	// Push "end of stack character" as first one
-		
-	//stackInfo(stack);
 }
 	
 	
@@ -34,7 +32,6 @@ void stackPush(myStack_t *stack, char content)
 	
 	(stack->top)++;     // Increase index of the top of the stack
 	stack->arr[stack->top] = content;     // Add value to the stack	
-	
 }
 
 
@@ -102,9 +99,9 @@ int stackFull(myStack_t *stack)
 		return 0;
 }
 
+#ifdef STACKDEBUG
 void stackInfo(myStack_t *stack)
 {
-#ifdef STACKDEBUG
 	if(stack == NULL)   // If the stack is not allocated
 	{
 		stackError(ERR_STACK_NULL);
@@ -130,8 +127,9 @@ void stackInfo(myStack_t *stack)
 		printf(" ");
 	}
 	printf("\n");
-#endif
+
 }
+#endif
 
 int stackGetTerminalIndex(myStack_t *stack)
 {
