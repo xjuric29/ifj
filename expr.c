@@ -278,8 +278,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				return EXPR_RETURN_ERROR_TYPES;
 			}
 			break;
-
-		// For gcc to shut the fuck up
+                        
 		default:
 			break;
 	}
@@ -322,7 +321,7 @@ int expr_algorithm(myStack_t *stack, tokStack_t *tokStack, token_t token, int co
 				type = TERM_id;	// Identifier terminal = 'i'
 				break;
 			}
-			// WATCHOUT KICKASS MLG SKILLZ OVER HERE!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
+			// WATCHOUT!!! If token is string variable then it doesn't break here and continue to case TOK_string!!!
 		// --- Strings ---
 		case TOK_string:
 			// Setting things for algorithm
@@ -787,6 +786,8 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(LTS, NULL, NULL, NULL);
 		break;
 	case TERM_lessEqual:
+                skipJUMPIFEQS = EXPR_TRUE;      // Do not generate result instruction (it is done in ilist.c)
+                
 		if(topType == TOK_string)
 			add_instruction(LTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		else
@@ -799,6 +800,8 @@ int expr_generateInstruction(tokStack_t *tokStack, char terminal, token_t token)
 			add_instruction(GTS, NULL, NULL, NULL);
 		break;
 	case TERM_greaterEqual:
+                skipJUMPIFEQS = EXPR_TRUE;      // Do not generate result instruction (it is done in ilist.c)
+                
 		if(topType == TOK_string)
 			add_instruction(GTEQ, NULL, NULL, NULL);	// Nonexisting instruction, but ilist does some magic
 		else
@@ -993,9 +996,7 @@ int expr_convertTypes(tokStack_t *tokStack, char terminal)
 		
 		// --- Duplicating operands on the stack ---
 		if((terminal == TERM_greaterEqual || terminal == TERM_lessEqual) && (typeLeft != TOK_string && typeRight != TOK_string))	// If instruction is made from two comparsions combined 
-		{
-			skipJUMPIFEQS = EXPR_TRUE;	// Do not generate result instruction (it is done in ilist.c)
-			
+		{			
 			// Create name strings for temporary variables
 			string leftString;
 			string rightString;
@@ -1175,7 +1176,7 @@ int expr_generateResult(tokStack_t *tokStack, int context, st_globalTable_t *st_
 				strCopyString(tmpToken->value.stringVal, &varString);	// Simulate identifier token for temporary variable
 
 				// Move result to result variable
-				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str (Reversed becuase fuck my life)
+				add_instruction(MOVE_LF_LF, tmpToken, &variable->key, NULL);	// MOVE LF@result LF@$str
 
 				// Free memory
 				strFree(&varString);
