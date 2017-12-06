@@ -1001,7 +1001,7 @@ int add_instruction(int instType, token_t *op1, string *op2, token_t *op3)
 			strcat(INST, c);
 			strcat(INST, "$$BEFORE\n");
 			Instr->used_lines++;
-			strcpy(INST, "LT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\nPUSHS bool@false\n");
+			strcpy(INST, "GT LF@$test LF@$str LF@$str2\nPUSHS LF@$test\nPUSHS bool@false\n");
 			Instr->used_lines++;
 			strcpy(INST, "JUMPIFEQS ");
 			strcat(INST, "$$");
