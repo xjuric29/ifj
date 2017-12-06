@@ -5,9 +5,10 @@
 #include "scanner.h"
 #include "str.h"
 
+/***** Specific calls for creating instructions ********/
+
 #define FUNC -2 // + createframe
 #define SCOPE -1 // + createframe pushframe
-
 #define LABEL 0
 #define DEFVAR_TF 1
 #define DEFVAR_LF 2
@@ -16,7 +17,7 @@
 #define RETURN 5
 #define PUSHS 6
 #define POPS 7
-#define CLEARS 8 // TODO
+#define CLEARS 8 
 #define ADDS 9
 #define SUBS 10
 #define MULS 11
@@ -64,10 +65,7 @@
 
 #define INSTNUMBER 1000
 #define INSTSIZE 300
-
 #define INST (Instr->instrList[Instr->used_lines])
-#define INSTPREV2 (Instr->instrList[Instr->used_lines-2])
-#define INSTPREV3 (Instr->instrList[Instr->used_lines-3])
 
 typedef struct I_output
 {
