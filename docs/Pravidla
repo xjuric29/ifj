@@ -1,0 +1,54 @@
+terminaly: DIM; AS; ID; EQUAL; DECLARE; FUNCTION; LEFT_BRACKET; RIGHT_BRACKET; EOL; END; COMMA;	INPUT; SCOPE; PRINT; SEMICOLON; IF; THEN; DO; WHILE; RETURN;
+
+
+
+
+
+pravidla:
+	1) <prog>	-> SCOPE EOL <scope-body>
+	2) <prog>	-> <function-declaration> SCOPE EOL
+	3) <prog>	-> <function-definition> 
+
+premenne:
+	1) <variable-declaration>  -> DIM ID AS <data-type> 
+	2) <variable-definition>   -> DIM ID AS <data-type> EQUAL <expresion> 
+
+	3) <data-type>		-> [INTEGER, DOUBLE, STRING]
+
+input:
+	1) <inptu-id>	-> INPUT ID
+
+printf:
+	1) <print-f> 	-> PRINT <print-expresion>
+	2) <print-expresion>	-> [INTEGER, DOUBLE, STRING, ID] <print-end>
+	3) <print-end>	-> SEMICOLON
+	4) <print-end>	-> <print-expresion>
+
+if:
+	1) <if-statement>	-> IF <if-condicion> THEN EOL <commands> ELSE EOL <commands> END IF
+
+while: 
+	1) <while-statement>	-> DO WHILE <while-condition> EOL <commands> LOOP
+	
+funkcia:
+	1) <function-declaration>	-> DECLARE FUNCTION ID LEFT_BRACKET <func-parameters> AS <func-type>
+	2) <function-definition>	-> FUNCTION ID LEFT_BRACKET <func-parameters> RIGHT_BRACKET AS <func-type> EOL
+					<function-body>
+				   	   END FUNCTION
+	3) <func-type> 		-> [INTEGER, DOUBLE, STRING]
+
+Telo funkcie:
+	1) <function-body>	-> <variable-declaration> <function-body>	
+	2) <function-body>	-> <variable-definition> <function-body>
+	3) <function-body>	-> 
+
+parametre funkcie:
+	1) <func-parameters>	-> RIGHT_BRACKET
+	2) <func-parameters>	-> ID AS <data-type> <more-func-params>
+	3) <more-func-params>	-> RIGHT_BRACKET
+	4) <more-func-params>	-> COMMA <more-func-params>
+
+return: 
+	2) <return-s> 	-> RETURN <expresion>
+
+

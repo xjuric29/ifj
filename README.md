@@ -1,8 +1,17 @@
-# IFJ project
-IFJ17 (subset of FreeBasic) to IFJcode17 (Assembler)
+# IFJ - Formální jazyky a překladače
+3. semestr FIT VUT
 
-### Scanner
-Design https://docs.google.com/spreadsheets/d/15wbjGiYZpnkv8xVT2CvtY6OMABDaDph721g7HLvKSmQ/edit?usp=sharing
+### Implementace překladace imperativního jazyka IFJ17 
+* IFJ17 (podmnožina FreeBasicu) tdo IFJcode17 (Assembler)
+* Testovací rozhraní na https://github.com/thejoeejoee/VUT-FIT-IFJ-2017-toolkit
+* Dokumentace v docs/ a na:
+```
+goo.gl/UzDY2V - Scanner, texty k prezentaci
+goo.gl/14wYfs - Precedenční tabulka
+```
 
-### Precedent table
-https://docs.google.com/spreadsheets/d/1S_9ILug0ak7JUh5eQEjLLjyhXUuf_DkzCt4iOQbTlP8/edit?usp=sharing
+Hodnocení:
+* projekt samotný 15/15 b
+* prémiové body za rozšíření 0/5 b
+* dokumentace 4/5 b
+* obhajoba 4/5b

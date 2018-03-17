@@ -1,4 +1,4 @@
-'vypis s primim eol, ktere by melo fungovat
+'vypis s primim eol, ktere by nemelo fungovat
 scope
 	print !"A
 hoj";
