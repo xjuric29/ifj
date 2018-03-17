@@ -5,8 +5,8 @@
 * IFJ17 (podmnožina FreeBasicu) tdo IFJcode17 (Assembler)
 * Testovací rozhraní https://github.com/thejoeejoee/VUT-FIT-IFJ-2017-toolkit
 * Dokumentace v docs/ a na:
-** goo.gl/UzDY2V - Scanner, texty k prezentaci
-** goo.gl/14wYfs - Precedenční tabulka
+  * goo.gl/UzDY2V - Scanner, texty k prezentaci
+  * goo.gl/14wYfs - Precedenční tabulka
 
 
 Hodnocení:
