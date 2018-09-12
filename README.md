@@ -2,7 +2,7 @@
 3. semestr FIT VUT
 
 ### Implementace překladace imperativního jazyka IFJ17 
-* IFJ17 (podmnožina FreeBasicu) tdo IFJcode17 (Assembler)
+* IFJ17 (podmnožina FreeBasicu) do IFJcode17 (Assembler)
 * Testovací rozhraní https://github.com/thejoeejoee/VUT-FIT-IFJ-2017-toolkit
 * Dokumentace v docs/ a na:
   * goo.gl/UzDY2V - Scanner, texty k prezentaci
